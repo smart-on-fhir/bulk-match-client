@@ -6,7 +6,7 @@ import jose                     from "node-jose"
 import prompt                   from "prompt-sync"
 import { BulkMatchClient }      from ".."
 import { detectTokenUrl }       from "./lib/utils"
-import Client                   from "./lib/BulkMatchClient"
+import Client                   from "./client/BulkMatchClient"
 import { CLIReporter, TextReporter } from "./reporters"
 import { readFileSync } from "fs"
 import { Bundle } from "fhir/r4"
@@ -16,7 +16,7 @@ const Reporters = {
     text: TextReporter
 }
 
-const debug = util.debuglog("bulk-match")
+const debug = util.debuglog("bulk-match-app")
 
 const APP = new Command()
 

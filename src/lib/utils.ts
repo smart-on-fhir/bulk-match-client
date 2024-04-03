@@ -43,9 +43,7 @@ export async function getWellKnownSmartConfig(baseUrl: string): Promise<JsonObje
  * @param baseUrl The server base url
  */
 export async function getCapabilityStatement(baseUrl: string): Promise<fhir4.CapabilityStatement> {
-    debug('Getting Cap statement...')
     const url = new URL("metadata", baseUrl.replace(/\/*$/, "/"));
-    debug(JSON.stringify(url))
     return request<fhir4.CapabilityStatement>(url).then(async resp => {
         if (resp.status === 404) { 
             throw Error(resp.statusText)

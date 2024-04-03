@@ -31,35 +31,21 @@ export default class TextReporter extends Reporter {
         console.log("Received export manifest")
     }
 
+    onMatchError(details: {
+        body: string | fhir4.OperationOutcome | null;
+        code: number | null;
+        message?: string;
+        responseHeaders?: object;
+    }) {
+        console.error("MATCH ERROR")
+        console.error(JSON.stringify(details))
+    }
+
+
     onDownloadStart() {
         if (!this.downloadStart) {
             console.log("Begin file downloads...")
             this.downloadStart = Date.now()
-        }
-    }
-
-    onDownloadProgress(downloads: Types.FileDownload[]) {
-        const done = downloads.filter(d => d.completed)
-        const pct = Math.round(done.length / downloads.length * 100);
-        if (this.downloadedPct != pct) {
-            this.downloadedPct = pct
-            
-            // Only show up to 20 progress messages
-            if (pct % 5 === 0) {
-                const size1: number = done.reduce((prev: number, cur) => prev + cur.downloadedBytes  , 0);
-                const size2: number = done.reduce((prev: number, cur) => prev + cur.uncompressedBytes, 0);
-                
-                let line = `${pct}%`.padStart(4) + " - " +
-                    `${done.length}`.padStart(String(downloads.length).length) +
-                    ` out of ${downloads.length} files downloaded - ` +
-                    `${humanFileSize(size1)} total`;
-
-                if (size2 != size1) {
-                    line += ` (${humanFileSize(size2)} uncompressed)`
-                }
-
-                console.log(line)
-            }
         }
     }
 

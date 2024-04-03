@@ -31,30 +31,14 @@ class TextReporter extends reporter_1.default {
     onMatchComplete(manifest) {
         console.log("Received export manifest");
     }
+    onMatchError(details) {
+        console.error("MATCH ERROR");
+        console.error(JSON.stringify(details));
+    }
     onDownloadStart() {
         if (!this.downloadStart) {
             console.log("Begin file downloads...");
             this.downloadStart = Date.now();
-        }
-    }
-    onDownloadProgress(downloads) {
-        const done = downloads.filter(d => d.completed);
-        const pct = Math.round(done.length / downloads.length * 100);
-        if (this.downloadedPct != pct) {
-            this.downloadedPct = pct;
-            // Only show up to 20 progress messages
-            if (pct % 5 === 0) {
-                const size1 = done.reduce((prev, cur) => prev + cur.downloadedBytes, 0);
-                const size2 = done.reduce((prev, cur) => prev + cur.uncompressedBytes, 0);
-                let line = `${pct}%`.padStart(4) + " - " +
-                    `${done.length}`.padStart(String(downloads.length).length) +
-                    ` out of ${downloads.length} files downloaded - ` +
-                    `${(0, utils_1.humanFileSize)(size1)} total`;
-                if (size2 != size1) {
-                    line += ` (${(0, utils_1.humanFileSize)(size2)} uncompressed)`;
-                }
-                console.log(line);
-            }
         }
     }
     onDownloadComplete() {

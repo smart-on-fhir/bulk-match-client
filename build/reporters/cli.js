@@ -30,36 +30,13 @@ class CLIReporter extends reporter_1.default {
     onMatchComplete(manifest) {
         utils_1.print.commit();
     }
+    onMatchError(details) {
+        (0, utils_1.print)("MATCH ERROR");
+        (0, utils_1.print)(JSON.stringify(details));
+    }
     onDownloadStart() {
         if (!this.downloadStart)
             this.downloadStart = Date.now();
-    }
-    onDownloadProgress(downloads) {
-        let downloadedBytes = 0;
-        let uncompressedBytes = 0;
-        let downloadedFiles = 0;
-        let resources = 0;
-        let totalFiles = downloads.length;
-        downloads.forEach(d => {
-            downloadedBytes += d.downloadedBytes;
-            uncompressedBytes += d.uncompressedBytes;
-            resources += d.resources;
-            if (d.completed) {
-                downloadedFiles += 1;
-            }
-        });
-        const lines = [
-            "",
-            "Downloading exported files".bold + `: ${(0, utils_1.generateProgress)(Math.round(downloadedFiles / totalFiles * 100), 30)}`,
-            `          Downloaded Files: ${downloadedFiles} of ${totalFiles}`,
-            `            FHIR Resources: ${resources.toLocaleString()}`,
-            `           Downloaded Size: ${(0, utils_1.humanFileSize)(downloadedBytes)}`,
-        ];
-        if (uncompressedBytes != downloadedBytes) {
-            lines.push(`         Uncompressed Size: ${(0, utils_1.humanFileSize)(uncompressedBytes)}`, `         Compression ratio: 1/${(uncompressedBytes && downloadedBytes ? Math.round(uncompressedBytes / downloadedBytes) : 1)}`);
-        }
-        lines.push("");
-        (0, utils_1.print)(lines);
     }
     onDownloadComplete() {
         console.log(`Download completed in ${(0, utils_1.formatDuration)(Date.now() - this.downloadStart)}`);

@@ -2,10 +2,10 @@ import { BulkMatchClient as Types } from "../..";
 
 export class FileDownloadError extends Error
 {
-    readonly code: number;
-    readonly body: string | object | null;
-    readonly responseHeaders: Types.ResponseHeaders
-    readonly fileUrl: string
+    readonly code            : number;
+    readonly body            : string | object | null;
+    readonly responseHeaders : Types.ResponseHeaders
+    readonly fileUrl         : string
 
     constructor({
         body,
@@ -13,9 +13,9 @@ export class FileDownloadError extends Error
         responseHeaders,
         fileUrl
     }: {
+        code            : number,
         body            : string | fhir4.OperationOutcome | null, // Buffer
         responseHeaders : Types.ResponseHeaders,
-        code            : number,
         fileUrl         : string
     }) {
         super(`Downloading the file from ${fileUrl
@@ -23,9 +23,9 @@ export class FileDownloadError extends Error
             body ? " Body: " + JSON.stringify(body) : ""
         }`)
 
+        this.code            = code
         this.body            = body
         this.responseHeaders = responseHeaders
-        this.code            = code
         this.fileUrl         = fileUrl
 
         Error.captureStackTrace(this, this.constructor)

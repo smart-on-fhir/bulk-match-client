@@ -10,13 +10,13 @@ const util_1 = __importDefault(require("util"));
 const node_jose_1 = __importDefault(require("node-jose"));
 const prompt_sync_1 = __importDefault(require("prompt-sync"));
 const utils_1 = require("./lib/utils");
-const BulkMatchClient_1 = __importDefault(require("./lib/BulkMatchClient"));
+const BulkMatchClient_1 = __importDefault(require("./client/BulkMatchClient"));
 const reporters_1 = require("./reporters");
 const Reporters = {
     cli: reporters_1.CLIReporter,
     text: reporters_1.TextReporter
 };
-const debug = util_1.default.debuglog("bulk-match");
+const debug = util_1.default.debuglog("bulk-match-app");
 const APP = new commander_1.Command();
 APP.name("node .");
 APP.version("2.0.0");

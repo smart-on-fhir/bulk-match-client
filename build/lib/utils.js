@@ -36,9 +36,7 @@ exports.getWellKnownSmartConfig = getWellKnownSmartConfig;
  * @param baseUrl The server base url
  */
 async function getCapabilityStatement(baseUrl) {
-    debug('Getting Cap statement...');
     const url = new url_1.URL("metadata", baseUrl.replace(/\/*$/, "/"));
-    debug(JSON.stringify(url));
     return (0, request_1.default)(url).then(async (resp) => {
         if (resp.status === 404) {
             throw Error(resp.statusText);

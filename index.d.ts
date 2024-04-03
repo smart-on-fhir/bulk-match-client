@@ -492,50 +492,9 @@ export declare namespace BulkMatchClient {
         readonly name: string
 
         /**
-         * The FHIR resourceType
-         */
-        readonly type: string
-
-        /**
-         * `true` if the file is currently being downloaded
-         */
-        running: boolean
-
-        /**
-         * `true` if the file has been fully downloaded
-         */
-        completed: boolean
-    
-        /**
-         * Number of chunks received (downloaded as stream with chunked encoding)
-         */
-        downloadedChunks: number
-
-        /**
-         * Number of bytes downloaded
-         */
-        downloadedBytes: number
-
-        /**
-         * Number of bytes after decompression. If the response is compressed,
-         * this will be greater than downloadedBytes
-         */
-        uncompressedBytes: number
-
-        /**
-         * Number of FHIR resources in the file (applicable for FHIR NDJSON)
-         */
-        resources: number
-
-        /**
          * Download processing error (if any)
          */
         error: Error | null
-
-        /**
-         * `true` if this is a file from the "deleted" array of the export manifest
-         */
-        // readonly deleted: boolean
 
         /**
          * The value shows which part of the manifest this download comes from.
@@ -545,13 +504,6 @@ export declare namespace BulkMatchClient {
          * - "error"   - For ndjson files with error operation outcomes 
          */
         readonly exportType: "output" | "deleted" | "error"
-    }
-
-    interface FileDownloadProgress {
-        downloadedChunks: number
-        downloadedBytes: number
-        uncompressedBytes: number 
-        resources: number
     }
 
     interface TokenResponse {
