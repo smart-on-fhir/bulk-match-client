@@ -11,21 +11,22 @@ class CLIReporter extends reporter_1.default {
         super(...arguments);
         this.downloadStart = 0;
     }
-    onKickOffStart() {
-        console.log("Kick-off started");
+    onKickOffStart(requestOptions, url) {
+        (0, utils_1.print)("Kick-off started with URL: " + url).commit();
+        (0, utils_1.print)("Options: " + JSON.stringify(requestOptions)).commit();
     }
     onKickOffEnd() {
-        console.log("Kick-off completed");
+        (0, utils_1.print)("Kick-off completed").commit();
     }
     onAuthorize() {
         (0, utils_1.print)("Got new access token").commit();
     }
     onMatchStart(status) {
-        console.log(status.message);
-        console.log(`Status endpoint: ${status.statusEndpoint}`);
+        (0, utils_1.print)(status.message).commit();
+        (0, utils_1.print)(`Status endpoint: ${status.statusEndpoint}`).commit();
     }
     onMatchProgress(status) {
-        (0, utils_1.print)(status.message);
+        (0, utils_1.print)(status.message).commit();
     }
     onMatchComplete(manifest) {
         utils_1.print.commit();

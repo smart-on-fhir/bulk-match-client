@@ -12,12 +12,13 @@ import Reporter from "./reporter";
 export default class CLIReporter extends Reporter {
     private downloadStart: number = 0;
 
-    onKickOffStart() {
-        console.log("Kick-off started")
+    onKickOffStart(requestOptions: RequestInit, url: string) {
+        print("Kick-off started with URL: " + url).commit()
+        print("Options: " + JSON.stringify(requestOptions)).commit()
     }
 
     onKickOffEnd() {
-        console.log("Kick-off completed")
+        print("Kick-off completed").commit()
     }
 
     onAuthorize() {
@@ -25,12 +26,12 @@ export default class CLIReporter extends Reporter {
     }
 
     onMatchStart(status: Types.MatchStatus) {
-        console.log(status.message)
-        console.log(`Status endpoint: ${status.statusEndpoint}`)
+        print(status.message).commit()
+        print(`Status endpoint: ${status.statusEndpoint}`).commit()
     }
 
     onMatchProgress(status: Types.MatchStatus) {
-        print(status.message)
+        print(status.message).commit()
     }
 
     onMatchComplete(manifest: Types.MatchManifest) {

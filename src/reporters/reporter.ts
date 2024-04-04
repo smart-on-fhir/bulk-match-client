@@ -4,7 +4,7 @@ import { BulkMatchClient as Types } from "../.."
 
 export default abstract class Reporter { 
     private client: BulkMatchClient;
-    protected abstract onKickOffStart(): void;
+    protected abstract onKickOffStart(requestOptions: RequestInit, url: string): void;
     protected abstract onKickOffEnd(): void;
     protected abstract onAuthorize(): void;
     protected abstract onMatchStart(status: Types.MatchStatus): void;

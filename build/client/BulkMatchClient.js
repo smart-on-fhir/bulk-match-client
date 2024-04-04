@@ -40,11 +40,9 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
         const url = new url_1.URL("Patient/$bulk-match", fhirUrl);
         let capabilityStatement;
         try {
-            debug("searching for cap");
             capabilityStatement = await (0, utils_1.getCapabilityStatement)(fhirUrl);
         }
         catch {
-            debug("failed to get one");
             capabilityStatement = {};
         }
         const requestOptions = {
@@ -59,9 +57,7 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
         requestOptions.method = "POST";
         // Body must be stringified
         requestOptions.body = JSON.stringify(this.buildKickoffPayload());
-        debug("Kickoff url: ", url);
-        debug("Kickoff Options: ", requestOptions);
-        this.emit("kickOffStart", requestOptions);
+        this.emit("kickOffStart", requestOptions, String(url));
         return this._request(url, requestOptions, "kick-off patient match request")
             .then((res) => {
             const location = res.headers.get("content-location");
@@ -136,6 +132,138 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
         };
     }
     /**
+     * Handle the completed workflow of MatchStatus requests
+     * @param status The MatchStatus
+     * @param res The completed response from the relevant statusEndpoint
+     * @returns A Promise resolving to a MatchManifest
+     */
+    async _statusCompleted(status, res) {
+        const now = Date.now();
+        const elapsedTime = now - status.startedAt;
+        status.completedAt = now;
+        status.percentComplete = 100;
+        status.nextCheckAfter = -1;
+        status.message = `Patient Match completed in ${(0, utils_1.formatDuration)(elapsedTime)}`;
+        this.emit("matchProgress", { ...status, virtual: true });
+        let body = '';
+        try {
+            // This should throw a TypeError if the response is not parsable as JSON
+            // TODO: Add more checks here based on return type of match operation
+            body = (await res.text());
+            debug('statusCompleted no problem!');
+            debug(body);
+            (0, utils_1.assert)(body !== null, "No match manifest returned");
+            // expect(body.output, "The match manifest output is not an array").to.be.an.array();
+            // expect(body.output, "The match manifest output contains no files").to.not.be.empty()
+            this.emit("matchComplete", JSON.parse(body));
+        }
+        catch (ex) {
+            debug("StatusCompleted In ERROR ");
+            debug(body);
+            this.emit("matchError", {
+                body: body || null,
+                code: res.status || null,
+                message: ex.message,
+                responseHeaders: this._formatResponseHeaders(res.headers),
+            });
+            throw ex;
+        }
+        return JSON.parse(body);
+    }
+    /**
+     * Handle the pending workflow of MatchStatus requests, tracking metadata, calculating wait-time delays
+     * and recursively calling checkStatus again
+     * @param status The MatchStatus
+     * @param statusEndpoint The endpoint against which statusRequests are made; needed to recursively call checkStatus
+     * @param res The pending response from statusEndpoint
+     * @returns A promise that waits, then invokes checkStatus again, ultimately resolving to a MatchManifest (or throwing an error)
+     */
+    async _statusPending(status, statusEndpoint, res) {
+        const now = Date.now();
+        const elapsedTime = now - status.startedAt;
+        const progress = String(res.headers.get("x-progress") || "").trim();
+        const retryAfter = String(res.headers.get("retry-after") || "").trim();
+        const progressPct = parseInt(progress, 10);
+        let retryAfterMSec = this.options.retryAfterMSec;
+        if (retryAfter) {
+            if (retryAfter.match(/\d+/)) {
+                retryAfterMSec = parseInt(retryAfter, 10) * 1000;
+            }
+            else {
+                let d = new Date(retryAfter);
+                retryAfterMSec = Math.ceil(d.getTime() - now);
+            }
+        }
+        const poolDelay = Math.min(Math.max(retryAfterMSec, 100), 1000 * 60);
+        Object.assign(status, {
+            percentComplete: isNaN(progressPct) ? -1 : progressPct,
+            nextCheckAfter: poolDelay,
+            message: isNaN(progressPct)
+                ? `Patient Match: in progress for ${(0, utils_1.formatDuration)(elapsedTime)}${progress
+                    ? ". Server message: " + progress
+                    : ""}`
+                : `Patient Match: ${progressPct}% complete in ${(0, utils_1.formatDuration)(elapsedTime)}`,
+        });
+        this.emit("matchProgress", {
+            ...status,
+            retryAfterHeader: retryAfter,
+            xProgressHeader: progress,
+            body: res.body,
+        });
+        return (0, utils_1.wait)(poolDelay, this.abortController.signal).then(() => this.checkStatus(status, statusEndpoint));
+    }
+    /**
+     * Produce the error to throw when MatchStatus requests produce an unexpected response status
+     * @param status The MatchStatus
+     * @param res The statusEndpoint response
+     * @returns An error to be thrown
+     */
+    async _statusError(status, res) {
+        const msg = `Unexpected status response ${res.status} ${res.statusText}`;
+        const body = await res.text();
+        this.emit("matchError", {
+            body: body || null,
+            code: res.status || null,
+            message: msg,
+            responseHeaders: this._formatResponseHeaders(res.headers),
+        });
+        const error = new Error(msg);
+        // @ts-ignore
+        error.body = body || null;
+        return error;
+    }
+    /**
+     * A indirectly recursive method for making status requests and handling completion, pending and error cases
+     * @param status The MatchStatus up to this point
+     * @param statusEndpoint The statusEndpoint where we check on the status of the match request
+     * @returns A Promise resolving to a MatchManifest (or throws an error)
+     */
+    async checkStatus(status, statusEndpoint) {
+        debug('Making a status call');
+        return this._request(statusEndpoint, {
+            headers: {
+                accept: "application/json, application/fhir+ndjson",
+            },
+        }, "status request").then(async (res) => {
+            const now = Date.now();
+            const elapsedTime = now - status.startedAt;
+            status.elapsedTime = elapsedTime;
+            // match is complete
+            if (res.status === 200) {
+                debug('COMPLETED STATUS REQUEST, RETURNING AFTER PARSING RESPONSE');
+                return this._statusCompleted(status, res);
+            }
+            // match is in progress
+            if (res.status === 202) {
+                return this._statusPending(status, statusEndpoint, res);
+            }
+            // Match Error - await the error then throw it
+            else {
+                throw await this._statusError(status, res);
+            }
+        });
+    }
+    /**
      * Waits for the patient match to be completed and resolves with the export
      * manifest when done. Emits one "matchStart", multiple "matchProgress"
      * and one "matchComplete" events.
@@ -146,6 +274,7 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
      * Otherwise, the default pooling frequency is 1 second.
      */
     async waitForMatch(statusEndpoint) {
+        debug("Waiting for match to complete, making status requests");
         const status = {
             startedAt: Date.now(),
             completedAt: -1,
@@ -158,95 +287,7 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
             statusEndpoint,
         };
         this.emit("matchStart", status);
-        const checkStatus = async () => {
-            return this._request(statusEndpoint, {
-                headers: {
-                    accept: "application/json, application/fhir+ndjson",
-                },
-            }, "status request").then(async (res) => {
-                const now = Date.now();
-                const elapsedTime = now - status.startedAt;
-                status.elapsedTime = elapsedTime;
-                // match is complete
-                if (res.status === 200) {
-                    status.completedAt = now;
-                    status.percentComplete = 100;
-                    status.nextCheckAfter = -1;
-                    status.message = `Patient Match completed in ${(0, utils_1.formatDuration)(elapsedTime)}`;
-                    this.emit("matchProgress", { ...status, virtual: true });
-                    let body;
-                    try {
-                        // This should throw a TypeError if the response is not parsable as JSON
-                        // TODO: Add more checks here based on return type of match operation
-                        body = (await res.json());
-                        debug(JSON.stringify(body));
-                        (0, utils_1.assert)(body !== null, "No match manifest returned");
-                        // expect(body.output, "The match manifest output is not an array").to.be.an.array();
-                        // expect(body.output, "The match manifest output contains no files").to.not.be.empty()
-                        this.emit("matchComplete", body);
-                    }
-                    catch (ex) {
-                        debug(JSON.stringify(body));
-                        this.emit("matchError", {
-                            body: body || null,
-                            code: res.status || null,
-                            message: ex.message,
-                            responseHeaders: this._formatResponseHeaders(res.headers),
-                        });
-                        throw ex;
-                    }
-                    return body;
-                }
-                // match is in progress
-                if (res.status === 202) {
-                    const now = Date.now();
-                    const progress = String(res.headers.get("x-progress") || "").trim();
-                    const retryAfter = String(res.headers.get("retry-after") || "").trim();
-                    const progressPct = parseInt(progress, 10);
-                    let retryAfterMSec = this.options.retryAfterMSec;
-                    if (retryAfter) {
-                        if (retryAfter.match(/\d+/)) {
-                            retryAfterMSec = parseInt(retryAfter, 10) * 1000;
-                        }
-                        else {
-                            let d = new Date(retryAfter);
-                            retryAfterMSec = Math.ceil(d.getTime() - now);
-                        }
-                    }
-                    const poolDelay = Math.min(Math.max(retryAfterMSec, 100), 1000 * 60);
-                    Object.assign(status, {
-                        percentComplete: isNaN(progressPct) ? -1 : progressPct,
-                        nextCheckAfter: poolDelay,
-                        message: isNaN(progressPct)
-                            ? `Patient Match: in progress for ${(0, utils_1.formatDuration)(elapsedTime)}${progress
-                                ? ". Server message: " + progress
-                                : ""}`
-                            : `Patient Match: ${progressPct}% complete in ${(0, utils_1.formatDuration)(elapsedTime)}`,
-                    });
-                    this.emit("matchProgress", {
-                        ...status,
-                        retryAfterHeader: retryAfter,
-                        xProgressHeader: progress,
-                        body: res.body,
-                    });
-                    return (0, utils_1.wait)(poolDelay, this.abortController.signal).then(checkStatus);
-                }
-                else {
-                    const msg = `Unexpected status response ${res.status} ${res.statusText}`;
-                    this.emit("matchError", {
-                        body: res.body || null,
-                        code: res.status || null,
-                        message: msg,
-                        responseHeaders: this._formatResponseHeaders(res.headers),
-                    });
-                    const error = new Error(msg);
-                    // @ts-ignore
-                    error.body = res.body || null;
-                    throw error;
-                }
-            });
-        };
-        return checkStatus();
+        return this.checkStatus(status, statusEndpoint);
     }
     /**
      * Download all the ndsjson files specified in the match-response's manifest
@@ -382,6 +423,7 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
      * @returns
      */
     cancelMatch(statusEndpoint) {
+        debug("Cancelling match request at statusEndpoint: ", statusEndpoint);
         this.abort();
         return this._request(statusEndpoint, {
             method: "DELETE",

@@ -11,8 +11,9 @@ class TextReporter extends reporter_1.default {
         this.downloadedPct = 0;
         this.downloadStart = 0;
     }
-    onKickOffStart() {
-        console.log("Kick-off started");
+    onKickOffStart(requestOptions, url) {
+        console.log("Kick-off started with URL: ", url);
+        console.log("Options: ", JSON.stringify(requestOptions));
     }
     onKickOffEnd() {
         console.log("Kick-off completed");
