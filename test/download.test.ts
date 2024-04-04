@@ -1,5 +1,5 @@
 import { expect }     from "@hapi/code"
-import BulkDataClient from "../src/lib/BulkDataClient"
+import BulkMatchClient from "../src/client/BulkMatchClient"
 import baseSettings   from "../config/defaults.js"
 import { emptyFolder, invoke, isFile, mockServer } from "./lib"
 import { existsSync, readFileSync, rmSync } from "fs"
@@ -37,7 +37,7 @@ describe('download', function() {
         });
 
         // @ts-ignore
-        const client = new BulkDataClient({ ...baseSettings, fhirUrl: mockServer.baseUrl })
+        const client = new BulkMatchClient({ ...baseSettings, fhirUrl: mockServer.baseUrl })
 
         // @ts-ignore
         await client.downloadFile({
@@ -72,7 +72,7 @@ describe('download', function() {
         });
 
         // @ts-ignore
-        const client = new BulkDataClient({ ...baseSettings, fhirUrl: mockServer.baseUrl })
+        const client = new BulkMatchClient({ ...baseSettings, fhirUrl: mockServer.baseUrl })
 
         // @ts-ignore
         await client.downloadFile({
@@ -286,7 +286,7 @@ describe('download', function() {
             destination: mockServer.baseUrl + "/upload/"
         }
 
-        const client = new BulkDataClient(options as any)
+        const client = new BulkMatchClient(options as any)
 
         // @ts-ignore
         await client.downloadFile({

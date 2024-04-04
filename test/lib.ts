@@ -1,6 +1,6 @@
 import { spawn, StdioOptions }     from "child_process"
 import { join }                    from "path"
-import { BulkDataClient as types } from "../index"
+import { BulkMatchClient as types } from "../index"
 import baseSettings                from "../config/defaults.js"
 import MockServer                  from "./MockServer"
 import {
