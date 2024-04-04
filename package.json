@@ -16,7 +16,9 @@
   "homepage": "https://github.com/smart-on-fhir/bulk-match-client#readme",
   "scripts": {
     "build": "tsc",
-    "build:watch": "tsc --watch"
+    "build:watch": "tsc --watch",
+    "test": "nyc --reporter=lcov ts-mocha -p ./test/tsconfig.json ./test/*.test.ts",
+    "test:watch": "npm test -- -w --watch-files='**/*.ts'"
   },
   "author": "SMART Health IT <support@smarthealthit.org> (https://smarthealthit.org/)",
   "contributors": [
@@ -27,9 +29,12 @@
   "devDependencies": {
     "@types/fhir": "^0.0.41",
     "@types/jsonwebtoken": "^9.0.6",
+    "@types/mocha": "^10.0.6",
     "@types/node": "^20.11.30",
     "@types/node-jose": "^1.1.13",
     "@types/prompt-sync": "^4.2.3",
+    "nyc": "^15.1.0",
+    "ts-mocha": "^10.0.0",
     "typescript": "^5.4.3"
   },
   "dependencies": {

@@ -70,7 +70,13 @@ export declare namespace BulkMatchClient {
          */
         lenient?: boolean
 
-
+        /**
+         * Custom options for every request, EXCLUDING the authorization request and
+         * any upload requests (in case we use remote destination).
+         * @type {RequestInit}
+         */
+        requests: RequestInit,
+            
         destination: string
 
         log?: LoggingOptions

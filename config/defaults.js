@@ -143,20 +143,9 @@
     /**
      * Custom options for every request, EXCLUDING the authorization request and
      * any upload requests (in case we use remote destination).
-     * Many options are available so be careful what you specify here! Some
-     * useful options are hinted below.
-     * @see https://github.com/sindresorhus/got/blob/main/documentation/2-options.md
-     * @type {import("got/dist/source").OptionsOfUnknownResponseBody}
+     * @type {RequestInit}
      */
-    requests: {
-        https: {
-            rejectUnauthorized: true // reject self-signed certs
-        },
-        // timeout: 30000, // 30 seconds
-        headers: {
-            // pass custom headers
-        }
-    },
+    requests: {},
 
     /**
      * How many downloads to run in parallel. This will speed up the

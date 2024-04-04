@@ -5,17 +5,14 @@ import { default as fsPromises} from "fs/promises";
 import { existsSync, statSync, mkdirSync } from "fs";
 import FileDownload from "./FileDownload";
 import { FileDownloadError } from "../lib/errors";
-import { JsonObject, BulkMatchClient as Types } from "../..";
+import { BulkMatchClient as Types } from "../..";
 import {
     assert,
-    fhirInstant,
-    filterResponseHeaders,
     formatDuration,
-    getAccessTokenExpiration,
     getCapabilityStatement,
     wait,
 } from "../lib/utils";
-import { Bundle, FhirResource } from "fhir/r4";
+import { FhirResource } from "fhir/r4";
 import SmartOnFhirClient, {
     SmartOnFhirClientEvents,
 } from "./SmartOnFhirClient";
