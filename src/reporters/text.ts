@@ -14,6 +14,10 @@ export default class TextReporter extends Reporter {
         console.log("Kick-off completed")
     }
 
+    onKickOffError(error: Error) {
+        console.log("Kick-off failed with error: ", error)
+    }
+
     onAuthorize() {
         console.log("Got new access token")
     }
@@ -29,7 +33,7 @@ export default class TextReporter extends Reporter {
     }
 
     onMatchComplete(manifest: Types.MatchManifest) {
-        console.log("Received export manifest")
+        console.log("Received manifest manifest")
     }
 
     onMatchError(details: {

@@ -55,7 +55,7 @@ export declare namespace BulkMatchClient {
 
         
         // Patient Match Kick-off parameters -------------------------------------------------
-        resources?: string
+        resource?: string
         _outputFormat?: string,
         onlySingleMatch?: boolean
         onlyCertainMatches?: boolean
@@ -126,15 +126,6 @@ export declare namespace BulkMatchClient {
         ndjsonMaxLineLength?: number
 
         /**
-         * If `true`, verifies that every single JSON object extracted for the
-         * NDJSON file has a `resourceType` property, and that this property
-         * equals the expected `type` reported in the export manifest.
-         * 
-         * **Defaults to `true`**
-         */
-        ndjsonValidateFHIRResourceType?: boolean
-
-        /**
          * If the server reports the file `count` in the export manifest,
          * verify that the number of resources found in the file matches the
          * count reported by the server.
@@ -184,9 +175,9 @@ export declare namespace BulkMatchClient {
 
         /**
          * Patient Match Kick-off parameters
-         * TODO: Support inline resources list based on file path?
+         * TODO: Support inline resource list based on file path?
          */
-        resources?: string,
+        resource?: string,
         _outputFormat?: string,
         onlySingleMatch?: boolean
         onlyCertainMatches?: boolean
@@ -235,7 +226,7 @@ export declare namespace BulkMatchClient {
         /**
          * Patient Matching kick off parameters 
          */
-        resources: string
+        resource: string
         onlySingleMatch?: boolean
         _outputFormat?: string,
         onlyCertainMatches?: boolean
@@ -305,15 +296,6 @@ export declare namespace BulkMatchClient {
          * **Defaults to `1000000`**
          */
         ndjsonMaxLineLength: number
-
-        /**
-         * If `true`, verifies that every single JSON object extracted for the
-         * NDJSON file has a `resourceType` property, and that this property
-         * equals the expected `type` reported in the export manifest.
-         * 
-         * **Defaults to `true`**
-         */
-        ndjsonValidateFHIRResourceType: boolean
 
         /**
          * If the server reports the file `count` in the export manifest,

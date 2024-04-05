@@ -6,6 +6,7 @@ export default abstract class Reporter {
     private client: BulkMatchClient;
     protected abstract onKickOffStart(requestOptions: RequestInit, url: string): void;
     protected abstract onKickOffEnd(): void;
+    protected abstract onKickOffError(error: Error): void;
     protected abstract onAuthorize(): void;
     protected abstract onMatchStart(status: Types.MatchStatus): void;
     protected abstract onMatchProgress(status: Types.MatchStatus): void;
@@ -24,6 +25,7 @@ export default abstract class Reporter {
         this.client.on("authorize"           , this.onAuthorize)
         this.client.on("kickOffStart"        , this.onKickOffStart)
         this.client.on("kickOffEnd"          , this.onKickOffEnd)
+        this.client.on("kickOffError"        , this.onKickOffError)
         this.client.on("matchStart"          , this.onMatchStart)
         this.client.on("matchProgress"       , this.onMatchProgress)
         this.client.on("matchComplete"       , this.onMatchComplete)
@@ -37,6 +39,7 @@ export default abstract class Reporter {
             this.client.off("authorize"           , this.onAuthorize)
             this.client.off("kickOffStart"        , this.onKickOffStart)
             this.client.off("kickOffEnd"          , this.onKickOffEnd)
+            this.client.off("kickOffError"        , this.onKickOffError)
             this.client.off("matchStart"          , this.onMatchStart)
             this.client.off("matchProgress"       , this.onMatchProgress)
             this.client.off("matchComplete"       , this.onMatchComplete)

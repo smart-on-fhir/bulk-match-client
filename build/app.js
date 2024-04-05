@@ -12,6 +12,7 @@ const prompt_sync_1 = __importDefault(require("prompt-sync"));
 const utils_1 = require("./lib/utils");
 const BulkMatchClient_1 = __importDefault(require("./client/BulkMatchClient"));
 const reporters_1 = require("./reporters");
+const logger_1 = require("./logger");
 const Reporters = {
     cli: reporters_1.CLIReporter,
     text: reporters_1.TextReporter
@@ -84,6 +85,10 @@ APP.action(async (args) => {
     debug(options);
     const client = new BulkMatchClient_1.default(options);
     const reporter = new Reporters[options.reporter](client);
+    if (options.log.enabled) {
+        const logger = (0, logger_1.createLogger)(options.log);
+        client.addLogger(logger);
+    }
     process.on("SIGINT", () => {
         console.log("\nExport canceled.".magenta.bold);
         reporter.detach();
@@ -104,8 +109,6 @@ APP.action(async (args) => {
     const manifest = await client.waitForMatch(statusEndpoint);
     debug(JSON.stringify(manifest));
     const matches = await client.downloadAllFiles(manifest);
-    debug(JSON.stringify(matches));
-    // TODO: fix hacky solution of loading files into memory
     debug(JSON.stringify(matches));
     if (options.reporter === "cli") {
         const answer = (0, prompt_sync_1.default)()("Do you want to signal the server that this export can be removed? [Y/n]".cyan);

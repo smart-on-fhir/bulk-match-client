@@ -10,6 +10,7 @@ import Client                   from "./client/BulkMatchClient"
 import { CLIReporter, TextReporter } from "./reporters"
 import { readFileSync } from "fs"
 import { Bundle } from "fhir/r4"
+import { createLogger } from "./logger"
 
 const Reporters = {
     cli : CLIReporter,
@@ -40,6 +41,7 @@ APP.option("--reporter [cli|text]"             , 'Reporter to use to render the 
 APP.option("--status [url]"                    , "Status endpoint of already started export.");
 
 APP.action(async (args: BulkMatchClient.CLIOptions) => {
+    
     const { config, ...params } = args;
     const defaultsPath = resolve(__dirname, "../config/defaults.js");  
     const base: BulkMatchClient.NormalizedOptions = require(defaultsPath)
@@ -103,6 +105,11 @@ APP.action(async (args: BulkMatchClient.CLIOptions) => {
     const client = new Client(options)
     const reporter = new Reporters[(options as BulkMatchClient.NormalizedOptions).reporter](client)
 
+    if (options.log.enabled) {
+        const logger = createLogger(options.log)
+        client.addLogger(logger)
+    }
+
     process.on("SIGINT", () => {
         console.log("\nExport canceled.".magenta.bold);
         reporter.detach()
@@ -126,8 +133,6 @@ APP.action(async (args: BulkMatchClient.CLIOptions) => {
     const manifest = await client.waitForMatch(statusEndpoint)
     debug(JSON.stringify(manifest))
     const matches = await client.downloadAllFiles(manifest)
-    debug(JSON.stringify(matches))
-    // TODO: fix hacky solution of loading files into memory
     debug(JSON.stringify(matches))
     
     if (options.reporter === "cli") {

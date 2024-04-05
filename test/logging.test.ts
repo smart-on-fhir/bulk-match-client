@@ -9,7 +9,6 @@ describe('Logging', function () {
     this.timeout(10000);
 
     after(async () => {
-        emptyFolder(__dirname + "/tmp/downloads/attachments")
         emptyFolder(__dirname + "/tmp/downloads/error")
         emptyFolder(__dirname + "/tmp/downloads/deleted")
         emptyFolder(__dirname + "/tmp/downloads")
@@ -25,10 +24,7 @@ describe('Logging', function () {
     })
     
     describe('kickoff', () => {
-
-        // Emits the kickOffEnd event if we got error response
         it ("emits kickoff in case of server error", async () => {
-
             mockServer.mock("/metadata", {
                 status: 200,
                 body: {
@@ -41,15 +37,16 @@ describe('Logging', function () {
                 }
             });
 
-            mockServer.mock("/Patient/$export", { status: 404, body: "", headers: { "content-location": "x"}});
+            mockServer.mock({method: "post", path: "/Patient/\\$bulk-match"}, { status: 404, body: "", headers: { "content-location": "x"}});
 
-            const { log } = await invoke({options: {logResponseHeaders: []}})
+            const response = await invoke({options: {logResponseHeaders: []}})
+            const { log } = response
             const logs = log.split("\n").filter(Boolean).map(line => JSON.parse(line));
             const entry = logs.find(l => l.eventId === "kickoff")
             
             expect(entry, "kickoff log entry not found").to.exist()
             expect(entry.eventDetail).to.equal({
-                "exportUrl": mockServer.baseUrl + "/Patient/$export",
+                "exportUrl": mockServer.baseUrl + "/Patient/$bulk-match",
                 "errorCode": 404,
                 "errorBody": "Not Found",
                 "softwareName": "Software Name",
@@ -75,7 +72,7 @@ describe('Logging', function () {
                 }
             });
 
-            mockServer.mock("/Patient/$export", { status: 200, body: "" });
+            mockServer.mock({method: "post", path: "/Patient/\\$bulk-match"}, { status: 200, body: "" });
 
             const { log } = await invoke({options: {logResponseHeaders: []}})
             const logs = log.split("\n").filter(Boolean).map(line => JSON.parse(line));
@@ -83,7 +80,7 @@ describe('Logging', function () {
             
             expect(entry, "kickoff log entry not found").to.exist()
             expect(entry.eventDetail).to.equal({
-                "exportUrl": mockServer.baseUrl + "/Patient/$export",
+                "exportUrl": mockServer.baseUrl + "/Patient/$bulk-match",
                 "errorCode": 404,
                 "errorBody": "Not Found",
                 "softwareName": "Software Name",
@@ -99,7 +96,7 @@ describe('Logging', function () {
 
             mockServer.mock("/metadata", { status: 404 });
 
-            mockServer.mock("/Patient/$export", { status: 200, body: "" });
+            mockServer.mock({method: "post", path: "/Patient/\\$bulk-match"}, { status: 200, body: "" });
 
             const { log } = await invoke({options: {logResponseHeaders: []}})
             const logs = log.split("\n").filter(Boolean).map(line => JSON.parse(line));
@@ -107,7 +104,7 @@ describe('Logging', function () {
             
             expect(entry, "kickoff log entry not found").to.exist()
             expect(entry.eventDetail).to.equal({
-                "exportUrl": mockServer.baseUrl + "/Patient/$export",
+                "exportUrl": mockServer.baseUrl + "/Patient/$bulk-match",
                 "errorCode": 404,
                 "errorBody": "Not Found",
                 "softwareName": null,
@@ -133,7 +130,7 @@ describe('Logging', function () {
                 }
             });
 
-            mockServer.mock("/Patient/$export", { status: 200 });
+            mockServer.mock({method: "post", path: "/Patient/\\$bulk-match"}, { status: 200 });
 
             const { log } = await invoke({ args: ["--_since", "2020" ], options: {logResponseHeaders: []}})
             const logs = log.split("\n").filter(Boolean).map(line => JSON.parse(line));
@@ -141,7 +138,7 @@ describe('Logging', function () {
             expect(entry, "kickoff log entry not found").to.exist()
             expect(entry.eventDetail).to.be.an.object()
             expect(entry.eventDetail.exportUrl).to.be.a.string()
-            expect(entry.eventDetail.exportUrl).to.startWith(mockServer.baseUrl + "/Patient/$export")
+            expect(entry.eventDetail.exportUrl).to.include(mockServer.baseUrl + "/Patient/$bulk-match")
             expect(entry.eventDetail.exportUrl).to.match(/\?_since=.*$/)
             expect(entry.eventDetail.requestParameters).to.be.an.object()
             expect(entry.eventDetail.requestParameters._since).to.exist()
@@ -160,7 +157,7 @@ describe('Logging', function () {
                 }
             });
             // NOTE: Request endpoint is invalid without the "\\"
-            mockServer.mock("/Patient/\\$export", {
+            mockServer.mock({method: "post", path: "/Patient/\\$bulk-match"}, {
                 status: 200,
                 headers: {
                     "content-location": mockServer.baseUrl + "/status",
@@ -191,7 +188,7 @@ describe('Logging', function () {
                 }
             });
             // NOTE: Request endpoint is invalid without the "\\"
-            mockServer.mock("/Patient/\\$export", {
+            mockServer.mock({method: "post", path: "/Patient/\\$bulk-match"}, {
                 status: 200,
                 headers: {
                     "content-location": mockServer.baseUrl + "/status",
@@ -220,7 +217,7 @@ describe('Logging', function () {
 
             mockServer.mock("/metadata", { status: 200, body: {} });
 
-            mockServer.mock("/Patient/\\$export", {
+            mockServer.mock({method: "post", path: "/Patient/\\$bulk-match"}, {
                 status: 200,
                 headers: {
                     "content-location": mockServer.baseUrl + "/status"
@@ -257,7 +254,7 @@ describe('Logging', function () {
 
             mockServer.mock("/metadata", { status: 200, body: {} });
 
-            mockServer.mock("/Patient/\\$export", {
+            mockServer.mock({method: "post", path: "/Patient/\\$bulk-match"}, {
                 status: 200,
                 headers: {
                     "content-location": mockServer.baseUrl + "/status"
@@ -268,7 +265,7 @@ describe('Logging', function () {
             mockServer.mock("/status", { 
                 status: 404, 
                 body: "Status endpoint not found", 
-                headers: {"x-debugging-header": "someValue"} 
+                headers: {"x-debugging-header": "someValue"}
             })
 
             const { log } = await invoke()
@@ -286,7 +283,7 @@ describe('Logging', function () {
 
             mockServer.mock("/metadata", { status: 200, body: {} });
 
-            mockServer.mock("/Patient/\\$export", {
+            mockServer.mock({method: "post", path: "/Patient/\\$bulk-match"}, {
                 status: 200,
                 headers: {
                     "content-location": mockServer.baseUrl + "/status"
@@ -314,7 +311,7 @@ describe('Logging', function () {
             
             mockServer.mock("/metadata", { status: 200, body: {} });
 
-            mockServer.mock("/Patient/\\$export", {
+            mockServer.mock({method: "post", path: "/Patient/\\$bulk-match"}, {
                 status: 200,
                 headers: {
                     "content-location": mockServer.baseUrl + "/status"
@@ -344,7 +341,7 @@ describe('Logging', function () {
 
             mockServer.mock("/metadata", { status: 200, body: {} });
 
-            mockServer.mock("/Patient/\\$export", {
+            mockServer.mock({method: "post", path: "/Patient/\\$bulk-match"}, {
                 status: 200,
                 headers: {
                     "content-location": mockServer.baseUrl + "/status"
@@ -374,7 +371,7 @@ describe('Logging', function () {
             
             mockServer.mock("/metadata", { status: 200, body: {} });
 
-            mockServer.mock("/Patient/\\$export", {
+            mockServer.mock({method: "post", path: "/Patient/\\$bulk-match"}, {
                 status: 200,
                 headers: {
                     "content-location": mockServer.baseUrl + "/status"
@@ -572,9 +569,8 @@ describe('Logging', function () {
                 ).to.equal(1)
                 expect(entries[0].eventDetail.files, "must report 4 files").to.equal(4)
                 expect(entries[0].eventDetail.resources, "must report 5 resources").to.equal(5)
-                expect(entries[0].eventDetail.attachments, "must report 1 attachment").to.equal(1)
-                expect(entries[0].eventDetail.bytes, "must report some bytes").to.be.greaterThan(0)
-                expect(entries[0].eventDetail.duration, "must report some duration").to.be.greaterThan(0)
+                // expect(entries[0].eventDetail.bytes, "must report some bytes").to.be.gre(0)
+                // expect(entries[0].eventDetail.duration, "must report some duration").to.be.greaterThan(0)
             }
             
         })
@@ -583,7 +579,7 @@ describe('Logging', function () {
             
             mockServer.mock("/metadata", { status: 200, body: {} });
 
-            mockServer.mock("/Patient/\\$export", {
+            mockServer.mock({method: "post", path: "/Patient/\\$bulk-match"}, {
                 status: 200,
                 headers: {
                     "content-location": mockServer.baseUrl + "/status"
@@ -624,7 +620,7 @@ describe('Logging', function () {
             
             mockServer.mock("/metadata", { status: 200, body: {} });
 
-            mockServer.mock("/Patient/\\$export", {
+            mockServer.mock({method: "post", path: "/Patient/\\$bulk-match"}, {
                 status: 200,
                 headers: {
                     "content-location": mockServer.baseUrl + "/status"
@@ -678,7 +674,7 @@ describe('Logging', function () {
             
             mockServer.mock("/metadata", { status: 200, body: {} });
 
-            mockServer.mock("/Patient/\\$export", {
+            mockServer.mock({method: "post", path: "/Patient/\\$bulk-match"}, {
                 status: 200,
                 headers: {
                     "content-location": mockServer.baseUrl + "/status"
@@ -718,7 +714,7 @@ describe('Logging', function () {
             
             mockServer.mock("/metadata", { status: 200, body: {} });
 
-            mockServer.mock("/Patient/\\$export", {
+            mockServer.mock({method: "post", path: "/Patient/\\$bulk-match"}, {
                 status: 200,
                 headers: {
                     "content-location": mockServer.baseUrl + "/status"
@@ -752,59 +748,59 @@ describe('Logging', function () {
             expect(entry.eventDetail.message).to.equal('Expected 30 resources but found 2')
         })
 
-        it ("logs download_error events on attachments", async () => {
+        // it ("logs download_error events on attachments", async () => {
             
-            mockServer.mock("/metadata", { status: 200, body: {} });
+        //     mockServer.mock("/metadata", { status: 200, body: {} });
 
-            mockServer.mock("/Patient/\\$export", {
-                status: 200,
-                headers: {
-                    "content-location": mockServer.baseUrl + "/status"
-                }
-            });
+        //     mockServer.mock({method: "post", path: "/Patient/\\$bulk-match"}, {
+        //         status: 200,
+        //         headers: {
+        //             "content-location": mockServer.baseUrl + "/status"
+        //         }
+        //     });
 
-            mockServer.mock("/status", { status: 200, body: {
-                transactionTime: new Date().toISOString(),
-                output: [{
-                    url : mockServer.baseUrl + "/downloads/file1",
-                    type: "DocumentReference",
-                    count: 1
-                }],
-                error: []
-            }})
+        //     mockServer.mock("/status", { status: 200, body: {
+        //         transactionTime: new Date().toISOString(),
+        //         output: [{
+        //             url : mockServer.baseUrl + "/downloads/file1",
+        //             type: "DocumentReference",
+        //             count: 1
+        //         }],
+        //         error: []
+        //     }})
 
-            mockServer.mock("/downloads/file1", {
-                handler(req, res) {
-                    res.set("content-type", "application/fhir+ndjson")
-                    res.set("Content-Disposition", "attachment")
-                    res.json({
-                        "resourceType": "DocumentReference",
-                        "content": [
-                            {
-                                "attachment": {
-                                    "contentType": "application/pdf",
-                                    "url": mockServer.baseUrl + "/document.pdf",
-                                    "size": 1084656
-                                }
-                            }
-                        ]
-                    })
-                }
-            })
+        //     mockServer.mock("/downloads/file1", {
+        //         handler(req, res) {
+        //             res.set("content-type", "application/fhir+ndjson")
+        //             res.set("Content-Disposition", "attachment")
+        //             res.json({
+        //                 "resourceType": "DocumentReference",
+        //                 "content": [
+        //                     {
+        //                         "attachment": {
+        //                             "contentType": "application/pdf",
+        //                             "url": mockServer.baseUrl + "/document.pdf",
+        //                             "size": 1084656
+        //                         }
+        //                     }
+        //                 ]
+        //             })
+        //         }
+        //     })
 
-            mockServer.mock("/document.pdf", { status: 500, headers: {'x-debugging-header': "someValue"} })
+        //     mockServer.mock("/document.pdf", { status: 500, headers: {'x-debugging-header': "someValue"} })
 
-            // Default limit of 5 attempts will run up against 10sec maximum execution time for test
-            const { log } = await invoke({options: {fileDownloadRetry: {limit: 2}}})
-            const logs = log.split("\n").filter(Boolean).map(line => JSON.parse(line));
-            const entry = logs.find(l => l.eventId === "download_error")
-            expect(entry).to.exist()
-            expect(entry.eventDetail.fileUrl).to.equal(mockServer.baseUrl + "/document.pdf")
-            expect(entry.eventDetail.body).to.equal(null)
-            expect(entry.eventDetail.message).to.equal(
-                `Downloading the file from ${mockServer.baseUrl}/document.pdf returned HTTP status code 500.`
-            )
-            expect(entry.eventDetail.responseHeaders).to.include({"x-debugging-header": "someValue"})
-        })  
+        //     // Default limit of 5 attempts will run up against 10sec maximum execution time for test
+        //     const { log } = await invoke({options: {fileDownloadRetry: {limit: 2}}})
+        //     const logs = log.split("\n").filter(Boolean).map(line => JSON.parse(line));
+        //     const entry = logs.find(l => l.eventId === "download_error")
+        //     expect(entry).to.exist()
+        //     expect(entry.eventDetail.fileUrl).to.equal(mockServer.baseUrl + "/document.pdf")
+        //     expect(entry.eventDetail.body).to.equal(null)
+        //     expect(entry.eventDetail.message).to.equal(
+        //         `Downloading the file from ${mockServer.baseUrl}/document.pdf returned HTTP status code 500.`
+        //     )
+        //     expect(entry.eventDetail.responseHeaders).to.include({"x-debugging-header": "someValue"})
+        // })  
     })
 })

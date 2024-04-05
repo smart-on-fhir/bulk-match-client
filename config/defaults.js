@@ -44,6 +44,12 @@
      */
     accessTokenLifetime: 300,
 
+    resource: '{}',
+    // _outputFormat: "application/fhir+ndjson",
+    // onlySingleMatch: true,
+    // onlyCertainMatches: true,
+    // count: 3,
+
     /**
      * The default reporter is "cli". That works well in terminal and
      * renders some fancy stuff like progress bars. However, this does not
@@ -64,72 +70,12 @@
     _outputFormat: "",
 
     /**
-     * The value of the `_since` parameter for Bulk Data kick-off requests.
-     * Can also be partial date like "2002", "2020-03" etc. Can be anything that
-     * Moment can parse. Will be ignored if empty or falsy.
-     * @see https://momentjs.com/docs/#/parsing/
-     * 
-     * Can be overridden from terminal parameter `-F` or `--_outputFormat`
-     */
-    _since: "",
-
-    /**
-     * The value of the `_type` parameter for Bulk Data kick-off requests.
-     * Will be ignored if empty or falsy.
-     * 
-     * Can be overridden from terminal parameter `-t` or `--_type`
-     */
-    _type: "",
-
-    /**
-     * The value of the `_elements` parameter for Bulk Data kick-off requests.
-     * Will be ignored if empty or falsy.
-     * 
-     * Can be overridden from terminal parameter `-e` or `--_elements`
-     */
-    _elements: "",
-
-    /**
-     * The value of the `patient` parameter for Bulk Data kick-off requests.
-     * Will be ignored if empty or falsy.
-     * 
-     * Can be overridden from terminal parameter `-p` or `--patient`
-     */
-    patient: "",
-
-    /**
      * The value of the `includeAssociatedData` parameter for Bulk Data kick-off
      * requests. Will be ignored if empty or falsy.
      * 
      * Can be overridden from terminal parameter `-i` or `--includeAssociatedData`
      */
     includeAssociatedData: "",
-
-    /**
-     * The value of the `_typeFilter` parameter for Bulk Data kick-off requests.
-     * Will be ignored if empty or falsy.
-     * 
-     * Can be overridden from terminal parameter `-q` or `--_typeFilter`
-     */
-    _typeFilter: "",
-
-    /**
-     * By default this client will make patient-level exports. If this is set to
-     * true, it will make system-level exports instead.
-     * 
-     * Ignored if `group` is set!
-     * 
-     * Can be overridden from terminal parameter `--global`
-     */
-    global: false,
-
-    /**
-     * Id of FHIR group to export. If set, the client will make group-level
-     * exports.
-     * 
-     * Can be overridden from terminal parameter `-g` or `--group`
-     */
-    group: "",
 
     /**
      * If true, adds `handling=lenient` to the `prefer` request header. This may
@@ -168,13 +114,6 @@
     ndjsonMaxLineLength: 10000000,
 
     /**
-     * If `true`, verifies that every single JSON object extracted for the
-     * NDJSON file has a `resourceType` property, and that this property
-     * equals the expected `type` reported in the export manifest.
-     */
-    ndjsonValidateFHIRResourceType: true,
-
-    /**
      * If the server reports the file `count` in the export manifest,
      * verify that the number of resources found in the file matches the
      * count reported by the server.
@@ -193,7 +132,6 @@
 
     /**
      * Examples:
-     * - `s3://bucket-name/optional-subfolder/` - Upload to S3
      * - `./downloads` - Save to local folder (relative to the config file)
      * - `downloads` - Save to local folder (relative to the config file)
      * - `/path/to/downloads` - Save to local folder (absolute path)
@@ -206,21 +144,6 @@
      * Can be overridden from terminal parameter `-d` or `--destination`
      */
     destination: "./downloads",
-
-    /**
-     * **Example: `us-east-1`**
-     */
-    awsRegion: "",
-
-    /**
-     * Only needed if `destination` points to S3
-     */
-    awsAccessKeyId: "",
-    
-    /**
-     * Only needed if `destination` points to S3
-     */
-    awsSecretAccessKey: "",
 
     log: {
         enabled: true,

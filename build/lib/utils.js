@@ -272,17 +272,17 @@ function filterResponseHeaders(headers, selectedHeaders) {
     if (!headers)
         return undefined;
     // NOTE: If an empty array of headers is specified, return none of them
-    return Object
-        .entries(headers)
-        .reduce((matchedHeaders, [key, value]) => {
+    let matchedHeaders = {};
+    for (const headerPair of headers.entries()) {
+        const [key, value] = headerPair;
         // These are usually normalized to lowercase by most libraries, but just to be sure
         const lowercaseKey = key.toLocaleLowerCase();
         // Each selectedHeader is either a RegExp, where we check for matches via RegExp.test
         // or a string, where we check for matches with equality
         if (selectedHeaders.find((h) => (0, types_1.isRegExp)(h) ? h.test(lowercaseKey) : h.toLocaleLowerCase() === lowercaseKey))
-            return { ...matchedHeaders, [key]: value };
+            matchedHeaders = { ...matchedHeaders, [key]: value };
         // If we don't find a selectedHeader that matches this header, we move on
-        return matchedHeaders;
-    }, {});
+    }
+    return matchedHeaders;
 }
 exports.filterResponseHeaders = filterResponseHeaders;

@@ -60,22 +60,9 @@ interface SmartOnFhirClient {
 }
 
 /**
- * This class provides all the methods needed for making Bulk Data exports and
- * downloading data fom bulk data capable FHIR server.
+ * This class provides all the methods needed for authenticating using BackendServices auth,
+ * refreshing auth tokens, and making authenticated requests to FHIR servers
  *
- * **Example:**
- * ```ts
- * const client = new Client({ ...options })
- *
- * // Start an export and get the status location
- * const statusEndpoint = await client.kickOff()
- *
- * // Wait for the export and get the manifest
- * const manifest = await client.waitForExport(statusEndpoint)
- *
- * // Download everything in the manifest
- * const downloads = await client.downloadFiles(manifest)
- * ```
  */
 class SmartOnFhirClient extends EventEmitter {
     /**
@@ -156,7 +143,6 @@ class SmartOnFhirClient extends EventEmitter {
                 authorization: `Bearer ${accessToken}`,
             };
         }
-
         const req = request(url, _options as any);
 
         const abort = () => {
@@ -259,8 +245,8 @@ class SmartOnFhirClient extends EventEmitter {
     /**
      * Internal method for formatting response headers for some emitted events
      * based on `options.logResponseHeaders`
-     * @param headers a collection of headers to format
-     * @returns responseHeaders
+     * @param headers Response Headers to format
+     * @returns an object representation of only the relevant headers
      */
     protected _formatResponseHeaders(
         headers: Types.ResponseHeaders
@@ -274,7 +260,7 @@ class SmartOnFhirClient extends EventEmitter {
             this.options.logResponseHeaders.toString().toLocaleLowerCase() ===
             "all"
         )
-            return headers;
+            return Object.fromEntries(headers);
         // If not an array it must be a string or a RegExp
         if (!Array.isArray(this.options.logResponseHeaders)) {
             return filterResponseHeaders(headers, [

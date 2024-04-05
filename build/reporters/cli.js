@@ -18,6 +18,9 @@ class CLIReporter extends reporter_1.default {
     onKickOffEnd() {
         (0, utils_1.print)("Kick-off completed").commit();
     }
+    onKickOffError(error) {
+        (0, utils_1.print)("Kick-off failed with error: " + error.message).commit();
+    }
     onAuthorize() {
         (0, utils_1.print)("Got new access token").commit();
     }

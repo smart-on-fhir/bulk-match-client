@@ -21,6 +21,10 @@ export default class CLIReporter extends Reporter {
         print("Kick-off completed").commit()
     }
 
+    onKickOffError(error: Error) {
+        print("Kick-off failed with error: " + error.message).commit()
+    }
+
     onAuthorize() {
         print("Got new access token").commit()
     }

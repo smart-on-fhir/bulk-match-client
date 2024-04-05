@@ -6,6 +6,7 @@ class Reporter {
         this.client.on("authorize", this.onAuthorize);
         this.client.on("kickOffStart", this.onKickOffStart);
         this.client.on("kickOffEnd", this.onKickOffEnd);
+        this.client.on("kickOffError", this.onKickOffError);
         this.client.on("matchStart", this.onMatchStart);
         this.client.on("matchProgress", this.onMatchProgress);
         this.client.on("matchComplete", this.onMatchComplete);
@@ -19,6 +20,7 @@ class Reporter {
         this.client.off("authorize", this.onAuthorize);
         this.client.off("kickOffStart", this.onKickOffStart);
         this.client.off("kickOffEnd", this.onKickOffEnd);
+        this.client.off("kickOffError", this.onKickOffError);
         this.client.off("matchStart", this.onMatchStart);
         this.client.off("matchProgress", this.onMatchProgress);
         this.client.off("matchComplete", this.onMatchComplete);

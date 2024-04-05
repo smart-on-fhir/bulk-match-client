@@ -18,6 +18,9 @@ class TextReporter extends reporter_1.default {
     onKickOffEnd() {
         console.log("Kick-off completed");
     }
+    onKickOffError(error) {
+        console.log("Kick-off failed with error: ", error);
+    }
     onAuthorize() {
         console.log("Got new access token");
     }
@@ -30,7 +33,7 @@ class TextReporter extends reporter_1.default {
         console.log(status.message);
     }
     onMatchComplete(manifest) {
-        console.log("Received export manifest");
+        console.log("Received manifest manifest");
     }
     onMatchError(details) {
         console.error("MATCH ERROR");

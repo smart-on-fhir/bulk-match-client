@@ -37,7 +37,7 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
      */
     async kickOff() {
         const { fhirUrl, lenient } = this.options;
-        const url = new url_1.URL("Patient/$bulk-match", fhirUrl);
+        const url = new url_1.URL("Patient/\$bulk-match", fhirUrl);
         let capabilityStatement;
         try {
             capabilityStatement = await (0, utils_1.getCapabilityStatement)(fhirUrl);
@@ -59,24 +59,21 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
         requestOptions.body = JSON.stringify(this.buildKickoffPayload());
         this.emit("kickOffStart", requestOptions, String(url));
         return this._request(url, requestOptions, "kick-off patient match request")
-            .then((res) => {
+            .then(async (res) => {
             const location = res.headers.get("content-location");
             if (!location) {
                 throw new Error("The kick-off patient match response did not include content-location header");
             }
             this.emit("kickOffEnd", {
                 response: res,
+                requestOptions: requestOptions,
                 capabilityStatement,
                 responseHeaders: this._formatResponseHeaders(res.headers),
             });
             return location;
         })
             .catch((error) => {
-            this.emit("kickOffEnd", {
-                response: error.response || {},
-                capabilityStatement,
-                responseHeaders: this._formatResponseHeaders(error.response.headers),
-            });
+            this.emit("kickOffError", error);
             throw error;
         });
     }
@@ -93,12 +90,12 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
                 valueString: this.options._outputFormat,
             });
         }
-        // resources --------------------------------------------------------------
-        let resources = JSON.parse(this.options.resources);
-        if (!Array.isArray(resources)) {
-            resources = [resources];
+        // resource --------------------------------------------------------------
+        let resource = JSON.parse(this.options.resource);
+        if (!Array.isArray(resource)) {
+            resource = [resource];
         }
-        resources.forEach((res) => {
+        resource.forEach((res) => {
             parameters.push({
                 name: "resource",
                 // TODO - handle more than inlined JSON
@@ -345,6 +342,11 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
             });
         });
     }
+    /**
+     * Download a file from a provided URL
+     * @param param0
+     * @returns
+     */
     async downloadFile({ file, fileName, authorize = false, subFolder = "", exportType = "output", }) {
         debug("Download starting for ", file);
         let accessToken = "";
@@ -427,6 +429,87 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
         this.abort();
         return this._request(statusEndpoint, {
             method: "DELETE",
+        });
+    }
+    /**
+     * Connects a logger
+     * @param log
+     */
+    addLogger(logger) {
+        const startTime = Date.now();
+        // kickoff -----------------------------------------------------------------
+        this.on("kickOffEnd", ({ capabilityStatement, response, responseHeaders, requestOptions }) => {
+            logger.log("info", {
+                eventId: "kickoff",
+                eventDetail: {
+                    exportUrl: response.url,
+                    errorCode: response.status >= 400 ? response.status : null,
+                    errorBody: response.status >= 400 ? response.body : null,
+                    softwareName: capabilityStatement.software?.name || null,
+                    softwareVersion: capabilityStatement.software?.version || null,
+                    softwareReleaseDate: capabilityStatement.software?.releaseDate || null,
+                    fhirVersion: capabilityStatement.fhirVersion || null,
+                    requestOptions: requestOptions,
+                    responseHeaders,
+                }
+            });
+        });
+        // status_progress ---------------------------------------------------------
+        this.on("matchProgress", e => {
+            if (!e.virtual) { // skip the artificially triggered 100% event
+                logger.log("info", {
+                    eventId: "status_progress",
+                    eventDetail: {
+                        body: e.body,
+                        xProgress: e.xProgressHeader,
+                        retryAfter: e.retryAfterHeader
+                    }
+                });
+            }
+        });
+        // status_error ------------------------------------------------------------
+        this.on("matchError", eventDetail => {
+            logger.log("error", {
+                eventId: "status_error",
+                eventDetail
+            });
+        });
+        // status_complete ---------------------------------------------------------
+        this.on("matchComplete", manifest => {
+            logger.log("info", {
+                eventId: "status_complete",
+                eventDetail: {
+                    transactionTime: manifest.transactionTime,
+                    outputFileCount: manifest.output.length,
+                    deletedFileCount: manifest.deleted?.length || 0,
+                    errorFileCount: manifest.error.length
+                }
+            });
+        });
+        // download_request --------------------------------------------------------
+        this.on("downloadStart", eventDetail => {
+            logger.log("info", { eventId: "download_request", eventDetail });
+        });
+        // download_complete -------------------------------------------------------
+        this.on("downloadComplete", eventDetail => {
+            logger.log("info", { eventId: "download_complete", eventDetail });
+        });
+        // download_error ----------------------------------------------------------
+        this.on("downloadError", eventDetail => {
+            logger.log("info", { eventId: "download_error", eventDetail });
+        });
+        // export_complete ---------------------------------------------------------
+        this.on("allDownloadsComplete", downloads => {
+            const eventDetail = {
+                files: 0,
+                resources: 0,
+                bytes: 0,
+                duration: Date.now() - startTime
+            };
+            downloads.forEach(d => {
+                eventDetail.files += 1;
+            });
+            logger.log("info", { eventId: "export_complete", eventDetail });
         });
     }
 }
