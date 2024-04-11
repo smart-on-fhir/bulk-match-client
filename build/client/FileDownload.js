@@ -16,6 +16,7 @@ class FileDownload {
         const { signal, accessToken, requestOptions = {} } = options;
         const localOptions = {
             ...requestOptions,
+            signal,
             headers: {
                 ...requestOptions.headers,
             },

@@ -1,6 +1,6 @@
 import "colors";
 import { Command } from "commander";
-import { join, resolve } from "path";
+import { resolve } from "path";
 import util from "util";
 import jose from "node-jose";
 import prompt from "prompt-sync";
@@ -8,8 +8,6 @@ import { BulkMatchClient } from "..";
 import { detectTokenUrl } from "./lib/utils";
 import Client from "./client/BulkMatchClient";
 import { CLIReporter, TextReporter } from "./reporters";
-import { readFileSync } from "fs";
-import { Bundle } from "fhir/r4";
 import { createLogger } from "./logger";
 
 const Reporters = {

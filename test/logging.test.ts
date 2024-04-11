@@ -7,7 +7,6 @@ describe("Logging", function () {
 
   after(async () => {
     emptyFolder(__dirname + "/tmp/downloads/error");
-    emptyFolder(__dirname + "/tmp/downloads/deleted");
     emptyFolder(__dirname + "/tmp/downloads");
   });
 
@@ -391,7 +390,6 @@ describe("Logging", function () {
         body: {
           transactionTime: new Date().toISOString(),
           output: [{}, {}, {}],
-          deleted: [{}, {}],
           error: [{}],
         },
       });
@@ -405,7 +403,6 @@ describe("Logging", function () {
       expect(entry).to.exist();
       expect(entry.eventDetail.transactionTime).to.exist();
       expect(entry.eventDetail.outputFileCount).to.equal(3);
-      expect(entry.eventDetail.deletedFileCount).to.equal(2);
       expect(entry.eventDetail.errorFileCount).to.equal(1);
     });
 
@@ -471,12 +468,6 @@ describe("Logging", function () {
               type: "DocumentReference",
             },
           ],
-          deleted: [
-            {
-              url: mockServer.baseUrl + "/downloads/deleted",
-              type: "Bundle",
-            },
-          ],
           error: [
             {
               url: mockServer.baseUrl + "/downloads/errors",
@@ -499,14 +490,6 @@ describe("Logging", function () {
           res.set("content-type", "application/fhir+ndjson");
           res.set("Content-Disposition", "attachment");
           res.end('{"resourceType":"OperationOutcome"}');
-        },
-      });
-
-      mockServer.mock("/downloads/deleted", {
-        handler(req, res) {
-          res.set("content-type", "application/fhir+ndjson");
-          res.set("Content-Disposition", "attachment");
-          res.end('{"resourceType":"Bundle"}');
         },
       });
 
@@ -608,39 +591,6 @@ describe("Logging", function () {
         ).to.equal(1);
         expect(entries[0].eventDetail.fileUrl, "invalid fileUrl").to.equal(
           mockServer.baseUrl + "/downloads/docRef",
-        );
-      }
-
-      // /downloads/deleted ----------------------------------------------
-      {
-        const entries = logs.filter(
-          (e) =>
-            e.eventId === "download_request" &&
-            e.eventDetail.fileUrl === mockServer.baseUrl + "/downloads/deleted",
-        );
-        expect(
-          entries.length,
-          'download_request should be logged once for "/downloads/deleted"',
-        ).to.equal(1);
-        expect(entries[0].eventDetail.fileUrl, "invalid fileUrl").to.equal(
-          mockServer.baseUrl + "/downloads/deleted",
-        );
-        expect(entries[0].eventDetail.itemType).to.equal("deleted");
-        expect(entries[0].eventDetail.resourceType).to.equal("Bundle");
-      }
-
-      {
-        const entries = logs.filter(
-          (e) =>
-            e.eventId === "download_complete" &&
-            e.eventDetail.fileUrl === mockServer.baseUrl + "/downloads/deleted",
-        );
-        expect(
-          entries.length,
-          'download_complete should be logged once for "/downloads/deleted"',
-        ).to.equal(1);
-        expect(entries[0].eventDetail.fileUrl, "invalid fileUrl").to.equal(
-          mockServer.baseUrl + "/downloads/deleted",
         );
       }
 

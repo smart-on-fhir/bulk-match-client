@@ -8,7 +8,7 @@
  *
  * @type {import("..").BulkMatchClient.ConfigFileOptions}
  */
-module.exports = {
+export default {
   /**
    * FHIR server base URL. Can be overridden by the `-f` or `--fhir-url`
    * CLI parameter.
@@ -88,13 +88,6 @@ module.exports = {
    * file along with the downloaded NDJSON files.
    */
   saveManifest: false,
-
-  /**
-   * If the server reports the file `count` in the export manifest,
-   * verify that the number of resources found in the file matches the
-   * count reported by the server.
-   */
-  ndjsonValidateFHIRResourceCount: true,
 
   /**
    * The original export manifest will have an `url` property for each

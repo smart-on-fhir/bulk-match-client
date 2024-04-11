@@ -10,7 +10,6 @@ describe("download", function () {
 
   after(async () => {
     emptyFolder(__dirname + "/tmp/downloads/error");
-    emptyFolder(__dirname + "/tmp/downloads/deleted");
     emptyFolder(__dirname + "/tmp/downloads");
   });
 
@@ -76,7 +75,6 @@ describe("download", function () {
             url: mockServer.baseUrl + "/output/file_1.ndjson",
           },
         ],
-        deleted: [],
         error: [],
       },
     });

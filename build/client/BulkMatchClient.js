@@ -479,7 +479,6 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
                 eventDetail: {
                     transactionTime: manifest.transactionTime,
                     outputFileCount: manifest.output.length,
-                    deletedFileCount: manifest.deleted?.length || 0,
                     errorFileCount: manifest.error.length,
                 },
             });

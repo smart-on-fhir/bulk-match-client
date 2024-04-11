@@ -46,7 +46,7 @@ async function augmentedFetch(
               payload ?? "",
               response.status,
               response.statusText,
-              response.headers,
+              JSON.stringify(response.headers.entries()),
               payload ?? "",
             );
 

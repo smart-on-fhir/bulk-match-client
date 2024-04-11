@@ -2,11 +2,77 @@ import { Algorithm } from "jsonwebtoken";
 import jose from "node-jose";
 
 export declare namespace BulkMatchClient {
+  /**
+   * An object controlling logging behavior; provided by config file
+   */
+  interface LoggingOptions {
+    /**
+     * Should logging be enabled?
+     * Defaults to true
+     */
+    enabled?: boolean;
+
+    /**
+     * Key/value pairs to be added to every log entry. Can be used to add
+     * useful information, for example which site imported this data.
+     */
+    metadata?: Record<string, any>;
+
+    /**
+     * Path to log file. Absolute, or relative to process CWD. If not
+     * provided, the file will be called log.ndjson and will be stored in
+     * the downloads folder.
+     */
+    file?: string;
+  }
+
+  /**
+   * All match-client configuration options specifiable from the CLI
+   */
+  interface CLIOptions {
+    /**
+     * FHIR server base URL. Must be set either as parameter or in the
+     * configuration file.
+     */
+    fhirUrl?: string;
+
+    /**
+     * Patient Match Kick-off parameters
+     * TODO: Support inline resource list based on file path?
+     */
+    resource?: string;
+    _outputFormat?: string;
+    onlySingleMatch?: boolean;
+    onlyCertainMatches?: boolean;
+    count?: number;
+
+    custom?: string[];
+
+    /**
+     * Relative path to config file. Defaults to "config.js".
+     */
+    config?: string;
+
+    reporter?: "cli" | "text";
+
+    /**
+     * Use if you have a status endpoint of an export that has already been
+     * started.
+     */
+    status?: string;
+  }
+
   interface ConfigFileOptions {
     /**
      * FHIR server base URL. Should be set either here, or as CLI parameter
      */
     fhirUrl?: string;
+    // Patient Match Kick-off parameters -------------------------------------------------
+    resource?: string;
+    _outputFormat?: string;
+    onlySingleMatch?: boolean;
+    onlyCertainMatches?: boolean;
+    count?: number;
 
     // Authorization -------------------------------------------------------
     /**
@@ -41,13 +107,6 @@ export declare namespace BulkMatchClient {
      */
     accessTokenLifetime?: number;
 
-    // Patient Match Kick-off parameters -------------------------------------------------
-    resource?: string;
-    _outputFormat?: string;
-    onlySingleMatch?: boolean;
-    onlyCertainMatches?: boolean;
-    count?: number;
-
     /**
      * Custom options for every request, EXCLUDING the authorization request and
      * any upload requests (in case we use remote destination).
@@ -77,7 +136,7 @@ export declare namespace BulkMatchClient {
 
     /**
      * The original export manifest will have an `url` property for each
-     * file, containing the source location. It his is set to `true`, add
+     * file, containing the source location. If this is set to `true`, add
      * a `destination` property to each file containing the path (relative
      * to the manifest file) to the saved file.
      *
@@ -115,60 +174,6 @@ export declare namespace BulkMatchClient {
      * **Defaults to `cli`**
      */
     reporter?: "cli" | "text";
-  }
-
-  interface LoggingOptions {
-    /**
-     * Should logging be enabled?
-     * Defaults to true
-     */
-    enabled?: boolean;
-
-    /**
-     * Key/value pairs to be added to every log entry. Can be used to add
-     * useful information, for example which site imported this data.
-     */
-    metadata?: Record<string, any>;
-
-    /**
-     * Path to log file. Absolute, or relative to process CWD. If not
-     * provided, the file will be called log.ndjson and will be stored in
-     * the downloads folder.
-     */
-    file?: string;
-  }
-
-  interface CLIOptions {
-    /**
-     * FHIR server base URL. Must be set either as parameter or in the
-     * configuration file.
-     */
-    fhirUrl?: string;
-
-    /**
-     * Patient Match Kick-off parameters
-     * TODO: Support inline resource list based on file path?
-     */
-    resource?: string;
-    _outputFormat?: string;
-    onlySingleMatch?: boolean;
-    onlyCertainMatches?: boolean;
-    count?: number;
-
-    custom?: string[];
-
-    /**
-     * Relative path to config file. Defaults to "config.js".
-     */
-    config?: string;
-
-    reporter?: "cli" | "text";
-
-    /**
-     * Use if you have a status endpoint of an export that has already been
-     * started.
-     */
-    status?: string;
   }
 
   interface NormalizedOptions {
@@ -242,7 +247,7 @@ export declare namespace BulkMatchClient {
 
     /**
      * The original export manifest will have an `url` property for each
-     * file, containing the source location. It his is set to `true`, add
+     * file, containing the source location. If this is set to `true`, add
      * a `destination` property to each file containing the path (relative
      * to the manifest file) to the saved file.
      *
@@ -318,40 +323,6 @@ export declare namespace BulkMatchClient {
     error: MatchManifestFile<"OperationOutcome">[];
 
     /**
-     * An array of deleted file items following the same structure as the
-     * output array.
-     *
-     * When a `_since` timestamp is supplied in the export request, this
-     * array SHALL be populated with output files containing FHIR
-     * Transaction Bundles that indicate which FHIR resources would have
-     * been returned, but have been deleted subsequent to that date. If no
-     * resources have been deleted or the _since parameter was not supplied,
-     * the server MAY omit this key or MAY return an empty array.
-     *
-     * Each line in the output file SHALL contain a FHIR Bundle with a type
-     * of transaction which SHALL contain one or more entry items that
-     * reflect a deleted resource. In each entry, the request.url and
-     * request.method elements SHALL be populated. The request.method
-     * element SHALL be set to DELETE.
-     *
-     * Example deleted resource bundle (represents one line in output file):
-     * @example
-     * ```json
-     * {
-     *     "resourceType": "Bundle",
-     *     "id": "bundle-transaction",
-     *     "meta": { "lastUpdated": "2020-04-27T02:56:00Z" },
-     *     "type": "transaction",
-     *     "entry":[{
-     *         "request": { "method": "DELETE", "url": "Patient/123" }
-     *         ...
-     *     }]
-     * }
-     * ```
-     */
-    deleted?: MatchManifestFile<"Bundle">[];
-
-    /**
      * To support extensions, this implementation guide reserves the name
      * extension and will never define a field with that name, allowing
      * server implementations to use it to provide custom behavior and
@@ -390,8 +361,6 @@ export declare namespace BulkMatchClient {
     count?: number;
   }
 
-  // export type StatusResponse<T=MatchManifest | OperationOutcome | void> = Response<T>
-
   interface KickOffParams {
     resources?: string;
     onlySingleMatch?: boolean;
@@ -419,10 +388,9 @@ export declare namespace BulkMatchClient {
      * The value shows which part of the manifest this download comes from.
      * Can be:
      * - "output"  - For exported files
-     * - "deleted" - The "deleted" bundles
      * - "error"   - For ndjson files with error operation outcomes
      */
-    readonly exportType: "output" | "deleted" | "error";
+    readonly exportType: "output" | "error";
   }
 
   interface TokenResponse {

@@ -10,53 +10,11 @@ import {
   filterResponseHeaders,
   getAccessTokenExpiration,
 } from "../lib/utils";
+import { SmartOnFhirClientType } from "./SmartOnFhirClient.types";
 
 EventEmitter.defaultMaxListeners = 30;
 
 const debug = debuglog("bulk-match-SOF-client");
-
-/**>>
- * The SmartOnFhirClient instances emit the following events:
- */
-export interface SmartOnFhirClientEvents {
-  /**
-   * Emitted every time new access token is received
-   * @event
-   */
-  authorize: (this: SmartOnFhirClient, accessToken: string) => void;
-
-  /**
-   * Emitted on error
-   * @event
-   */
-  error: (this: SmartOnFhirClient, error: Error) => void;
-
-  /**
-   * Emitted when the flow is aborted by the user
-   * @event
-   */
-  abort: (this: SmartOnFhirClient) => void;
-}
-
-export interface SmartOnFhirClientType {
-  on<U extends keyof SmartOnFhirClientEvents>(
-    event: U,
-    listener: SmartOnFhirClientEvents[U],
-  ): this;
-  // on(event: string, listener: Function): this;
-
-  emit<U extends keyof SmartOnFhirClientEvents>(
-    event: U,
-    ...args: Parameters<SmartOnFhirClientEvents[U]>
-  ): boolean;
-  // emit(event: string, ...args: any[]): boolean;
-
-  off<U extends keyof SmartOnFhirClientEvents>(
-    event: U,
-    listener: SmartOnFhirClientEvents[U],
-  ): this;
-  // on(event: string, listener: Function): this;
-}
 
 /**
  * This class provides all the methods needed for authenticating using BackendServices auth,
