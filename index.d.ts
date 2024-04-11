@@ -8,21 +8,7 @@ export declare namespace BulkMatchClient {
      */
     fhirUrl?: string;
 
-    /**
-     * The default reporter is "cli". That works well in terminal and
-     * renders some fancy stuff like progress bars. However, this does not
-     * look good when your STDOUT ends up in log files. For example, if
-     * you are using this tool as part of some kind of pipeline and want to
-     * maintain clean logs, then consider changing this to "text".
-     *
-     * Can be overridden from terminal parameter `--reporter`.
-     *
-     * **Defaults to `cli`**
-     */
-    reporter?: "cli" | "text";
-
     // Authorization -------------------------------------------------------
-
     /**
      * Ideally, this can be auto-detected from fhirUrl using metadata in the
      * CapabilityStatement or from /.well-known/smart-configuration.
@@ -39,6 +25,10 @@ export declare namespace BulkMatchClient {
      */
     privateKey?: JWK;
 
+    /**
+     * The client id to include in authenticated requests
+     * Not needed if connecting to open servers
+     */
     clientId?: string;
 
     /**
@@ -59,24 +49,16 @@ export declare namespace BulkMatchClient {
     count?: number;
 
     /**
-     * If true, adds `handling=lenient` to the `prefer` request header. This may
-     * enable a "retry" option after certain errors. It can also be used to
-     * signal the server to silently ignore unsupported parameters.
-     *
-     * Can be overridden from terminal parameter `--lenient`
-     */
-    lenient?: boolean;
-
-    /**
      * Custom options for every request, EXCLUDING the authorization request and
      * any upload requests (in case we use remote destination).
      * @type {RequestInit}
      */
     requests: RequestInit;
 
+    /**
+     * The destination where patient match payloads should be
+     */
     destination: string;
-
-    log?: LoggingOptions;
 
     /**
      * If the server does not provide `Retry-after` header use this number of
@@ -84,24 +66,7 @@ export declare namespace BulkMatchClient {
      */
     retryAfterMSec?: number;
 
-    /**
-     * ResponseHeaders to include in error logs for debugging purposes
-     * When 'all' is specified, all responseHeaders are returned
-     * When 'none' is specified, no responseHeaders are returned
-     * Otherwise, log any responseHeaders matches against 1...* strings/regexp
-     * NOTE: When an empty array is specified, an empty object of responseHeaders will be returned
-     */
-    logResponseHeaders: "all" | "none" | string | RegExp | (string | RegExp)[];
-
     // Download ------------------------------------------------------------
-    /**
-     * How many downloads to run in parallel. This will speed up the
-     * download but can also overload the server. Don't be too greedy and
-     * don't set this to more than 10!
-     *
-     * **Defaults to `5`**
-     */
-    parallelDownloads?: number;
 
     /**
      * In some cases it might be useful to also save the export manifest
@@ -109,26 +74,6 @@ export declare namespace BulkMatchClient {
      * **Defaults to `false`**
      */
     saveManifest?: boolean;
-
-    // Post processing options ---------------------------------------------
-
-    /**
-     * While parsing NDJSON files every single (non-empty) line is parsed
-     * as JSON. It is recommended to set a reasonable limit for the line
-     * length so that a huge line does not consume the entire memory.
-     *
-     * **Defaults to `1000000`**
-     */
-    ndjsonMaxLineLength?: number;
-
-    /**
-     * If the server reports the file `count` in the export manifest,
-     * verify that the number of resources found in the file matches the
-     * count reported by the server.
-     *
-     * **Defaults to `true`**
-     */
-    ndjsonValidateFHIRResourceCount?: boolean;
 
     /**
      * The original export manifest will have an `url` property for each
@@ -141,9 +86,42 @@ export declare namespace BulkMatchClient {
      * **Defaults to `false`**
      */
     addDestinationToManifest?: boolean;
+
+    // Logging and output ------------------------------------------------
+
+    /**
+     * Logging information,
+     */
+    log?: LoggingOptions;
+
+    /**
+     * ResponseHeaders to include in error logs for debugging purposes
+     * When 'all' is specified, all responseHeaders are returned
+     * When 'none' is specified, no responseHeaders are returned
+     * Otherwise, log any responseHeaders matches against 1...* strings/regexp
+     * NOTE: When an empty array is specified, an empty object of responseHeaders will be returned
+     */
+    logResponseHeaders: "all" | "none" | string | RegExp | (string | RegExp)[];
+
+    /**
+     * The default reporter is "cli". That works well in terminal and
+     * renders some fancy stuff like progress bars. However, this does not
+     * look good when your STDOUT ends up in log files. For example, if
+     * you are using this tool as part of some kind of pipeline and want to
+     * maintain clean logs, then consider changing this to "text".
+     *
+     * Can be overridden from terminal parameter `--reporter`.
+     *
+     * **Defaults to `cli`**
+     */
+    reporter?: "cli" | "text";
   }
 
   interface LoggingOptions {
+    /**
+     * Should logging be enabled?
+     * Defaults to true
+     */
     enabled?: boolean;
 
     /**
@@ -226,15 +204,6 @@ export declare namespace BulkMatchClient {
     onlyCertainMatches?: boolean;
     count?: number;
 
-    /**
-     * If true, adds `handling=lenient` to the `prefer` request header. This may
-     * enable a "retry" option after certain errors. It can also be used to
-     * signal the server to silently ignore unsupported parameters.
-     *
-     * Can be overridden from terminal parameter `--lenient`
-     */
-    lenient: boolean;
-
     requests: RequestInit;
 
     // Destination options -------------------------------------------------
@@ -265,40 +234,11 @@ export declare namespace BulkMatchClient {
 
     // Download ------------------------------------------------------------
     /**
-     * How many downloads to run in parallel. This will speed up the
-     * download but can also overload the server. Don't be too greedy and
-     * don't set this to more than 10!
-     *
-     * **Defaults to `5`**
-     */
-    parallelDownloads: number;
-
-    /**
      * In some cases it might be useful to also save the export manifest
      * file along with the downloaded NDJSON files.
      * **Defaults to `false`**
      */
     saveManifest: boolean;
-
-    // Post processing options ---------------------------------------------
-
-    /**
-     * While parsing NDJSON files every single (non-empty) line is parsed
-     * as JSON. It is recommended to set a reasonable limit for the line
-     * length so that a huge line does not consume the entire memory.
-     *
-     * **Defaults to `1000000`**
-     */
-    ndjsonMaxLineLength: number;
-
-    /**
-     * If the server reports the file `count` in the export manifest,
-     * verify that the number of resources found in the file matches the
-     * count reported by the server.
-     *
-     * **Defaults to `true`**
-     */
-    ndjsonValidateFHIRResourceCount: boolean;
 
     /**
      * The original export manifest will have an `url` property for each
@@ -324,7 +264,7 @@ export declare namespace BulkMatchClient {
 
   interface JWK {
     alg: Algorithm;
-    [key: string]: any;
+    [key: string]: unknown;
   }
 
   interface TokenResponse {

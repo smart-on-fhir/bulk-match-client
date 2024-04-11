@@ -77,15 +77,6 @@ module.exports = {
   includeAssociatedData: "",
 
   /**
-   * If true, adds `handling=lenient` to the `prefer` request header. This may
-   * enable a "retry" option after certain errors. It can also be used to
-   * signal the server to silently ignore unsupported parameters.
-   *
-   * Can be overridden from terminal parameter `--lenient`
-   */
-  lenient: true,
-
-  /**
    * Custom options for every request, EXCLUDING the authorization request and
    * any upload requests (in case we use remote destination).
    * @type {RequestInit}
@@ -93,24 +84,10 @@ module.exports = {
   requests: {},
 
   /**
-   * How many downloads to run in parallel. This will speed up the
-   * download but can also overload the server. Don't be too greedy and
-   * don't set this to more than 10!
-   */
-  parallelDownloads: 5,
-
-  /**
    * In some cases it might be useful to also save the export manifest
    * file along with the downloaded NDJSON files.
    */
   saveManifest: false,
-
-  /**
-   * While parsing NDJSON files every single (non-empty) line is parsed
-   * as JSON. It is recommended to set a reasonable limit for the line
-   * length so that a huge line does not consume the entire memory.
-   */
-  ndjsonMaxLineLength: 10000000,
 
   /**
    * If the server reports the file `count` in the export manifest,

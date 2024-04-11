@@ -36,7 +36,7 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
      * Makes the kick-off request for Patient Match and resolves with the status endpoint URL
      */
     async kickOff() {
-        const { fhirUrl, lenient } = this.options;
+        const { fhirUrl } = this.options;
         const url = new url_1.URL("Patient/$bulk-match", fhirUrl);
         let capabilityStatement;
         try {
@@ -50,8 +50,6 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
                 "Content-Type": "application/json",
                 accept: "application/fhir+ndjson",
                 prefer: `respond-async`,
-                // TODO: Add back in lenient? Server needs to be flexible in parsing the prefer header
-                // prefer: `respond-async${lenient ? ", handling=lenient" : ""}`
             },
         };
         requestOptions.method = "POST";
@@ -187,7 +185,7 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
                 retryAfterMSec = parseInt(retryAfter, 10) * 1000;
             }
             else {
-                let d = new Date(retryAfter);
+                const d = new Date(retryAfter);
                 retryAfterMSec = Math.ceil(d.getTime() - now);
             }
         }
@@ -293,7 +291,7 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
         debug("Downloading All Files");
         return new Promise((resolve, reject) => {
             const createDownloadJob = async (f, initialState = {}) => {
-                let fileName = (0, path_1.basename)(f.url);
+                const fileName = (0, path_1.basename)(f.url);
                 const downloadMetadata = {
                     url: f.url,
                     name: fileName,
@@ -506,7 +504,8 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
                 bytes: 0,
                 duration: Date.now() - startTime,
             };
-            downloads.forEach((d) => {
+            // TODO: Add download object back in?
+            downloads.forEach(() => {
                 eventDetail.files += 1;
             });
             logger.log("info", { eventId: "export_complete", eventDetail });

@@ -49,10 +49,6 @@ APP.option(
 );
 APP.option("-F, --_outputFormat [string]", `The output format you expect.`);
 APP.option(
-  "--lenient",
-  'Sets a "Prefer: handling=lenient" request header to tell the server to ignore unsupported parameters',
-);
-APP.option(
   "-d, --destination [destination]",
   "Download destination. See config/defaults.js for examples",
 );

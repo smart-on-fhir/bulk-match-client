@@ -29,7 +29,6 @@ APP.option("-s, --onlySingleMatch", "If there are multiple potential matches, th
 APP.option("-C, --onlyCertainMatches", "If there are multiple potential matches, the server should be certain that each of the records are for the same patient. This could happen if the records are duplicates, are the same person for the purpose of data segregation, or other reasons; defaults to false");
 APP.option("-c, --count [number]", "The maximum number of records to return per resource. If no value is provided, the server may decide how many matches to return. Note that clients should be careful when using this, as it may prevent probable - and valid - matches from being returned.");
 APP.option("-F, --_outputFormat [string]", `The output format you expect.`);
-APP.option("--lenient", 'Sets a "Prefer: handling=lenient" request header to tell the server to ignore unsupported parameters');
 APP.option("-d, --destination [destination]", "Download destination. See config/defaults.js for examples");
 APP.option("--config <path>", "Relative path to config file.");
 APP.option("--reporter [cli|text]", 'Reporter to use to render the output. "cli" renders fancy progress bars and tables. "text" is better for log files. Defaults to "cli".');

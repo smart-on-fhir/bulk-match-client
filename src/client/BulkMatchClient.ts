@@ -15,6 +15,7 @@ import {
 } from "../lib/utils";
 import { FhirResource } from "fhir/r4";
 import SmartOnFhirClient, {
+  SmartOnFhirClientType,
   SmartOnFhirClientEvents,
 } from "./SmartOnFhirClient";
 
@@ -130,7 +131,7 @@ export interface BulkMatchClientEvents extends SmartOnFhirClientEvents {
   ) => void;
 }
 
-interface BulkMatchClient extends SmartOnFhirClient {
+interface BulkMatchClientType extends SmartOnFhirClientType {
   on<U extends keyof BulkMatchClientEvents>(
     event: U,
     listener: BulkMatchClientEvents[U],
@@ -173,7 +174,7 @@ class BulkMatchClient extends SmartOnFhirClient {
    * Makes the kick-off request for Patient Match and resolves with the status endpoint URL
    */
   public async kickOff(): Promise<string> {
-    const { fhirUrl, lenient } = this.options;
+    const { fhirUrl } = this.options;
 
     const url = new URL("Patient/$bulk-match", fhirUrl);
 
@@ -189,8 +190,6 @@ class BulkMatchClient extends SmartOnFhirClient {
         "Content-Type": "application/json",
         accept: "application/fhir+ndjson",
         prefer: `respond-async`,
-        // TODO: Add back in lenient? Server needs to be flexible in parsing the prefer header
-        // prefer: `respond-async${lenient ? ", handling=lenient" : ""}`
       },
     };
 
@@ -349,7 +348,7 @@ class BulkMatchClient extends SmartOnFhirClient {
       if (retryAfter.match(/\d+/)) {
         retryAfterMSec = parseInt(retryAfter, 10) * 1000;
       } else {
-        let d = new Date(retryAfter);
+        const d = new Date(retryAfter);
         retryAfterMSec = Math.ceil(d.getTime() - now);
       }
     }
@@ -492,7 +491,7 @@ class BulkMatchClient extends SmartOnFhirClient {
         f: Types.MatchManifestFile,
         initialState: Partial<Types.FileDownload> = {},
       ): Promise<Types.FileDownload> => {
-        let fileName = basename(f.url);
+        const fileName = basename(f.url);
 
         const downloadMetadata: Types.FileDownload = {
           url: f.url,
@@ -763,7 +762,8 @@ class BulkMatchClient extends SmartOnFhirClient {
         duration: Date.now() - startTime,
       };
 
-      downloads.forEach((d) => {
+      // TODO: Add download object back in?
+      downloads.forEach(() => {
         eventDetail.files += 1;
       });
 

@@ -1,7 +1,7 @@
 import { debuglog } from "util";
 import jwt from "jsonwebtoken";
 import jose from "node-jose";
-import { URL, fileURLToPath } from "url";
+import { URL } from "url";
 import { EventEmitter } from "events";
 import request from "../lib/request";
 import { BulkMatchClient as Types } from "../..";
@@ -10,7 +10,6 @@ import {
   filterResponseHeaders,
   getAccessTokenExpiration,
 } from "../lib/utils";
-import { FhirResource } from "fhir/r4";
 
 EventEmitter.defaultMaxListeners = 30;
 
@@ -39,7 +38,7 @@ export interface SmartOnFhirClientEvents {
   abort: (this: SmartOnFhirClient) => void;
 }
 
-interface SmartOnFhirClient {
+export interface SmartOnFhirClientType {
   on<U extends keyof SmartOnFhirClientEvents>(
     event: U,
     listener: SmartOnFhirClientEvents[U],
@@ -64,7 +63,7 @@ interface SmartOnFhirClient {
  * refreshing auth tokens, and making authenticated requests to FHIR servers
  *
  */
-class SmartOnFhirClient extends EventEmitter {
+class SmartOnFhirClient extends EventEmitter implements SmartOnFhirClientType {
   /**
    * The options of the instance
    */
