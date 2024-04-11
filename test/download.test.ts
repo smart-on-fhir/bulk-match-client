@@ -1,7 +1,7 @@
 import { expect } from "@hapi/code";
 import BulkMatchClient from "../src/client/BulkMatchClient";
 import baseSettings from "../config/defaults.js";
-import { emptyFolder, invoke, isFile, mockServer } from "./lib";
+import { emptyFolder, invoke, mockServer } from "./lib";
 import { existsSync, readFileSync, rmSync } from "fs";
 import { join } from "path";
 

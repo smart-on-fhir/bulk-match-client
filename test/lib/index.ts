@@ -75,7 +75,7 @@ export async function invoke({
   log: string;
   exitCode: number | null;
 }> {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     const logFile = join(__dirname, "../tmp/log.ndjson");
     const fullOptions = {
       ...baseSettings,
@@ -104,7 +104,7 @@ export async function invoke({
       {
         cwd: join(__dirname, "../.."),
         timeout,
-        stdio: [process.stdin, process.stdout, process.stderr],
+        stdio,
         env: {
           ...process.env,
         },
