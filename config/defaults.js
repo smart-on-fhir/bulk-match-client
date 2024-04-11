@@ -8,7 +8,7 @@
  *
  * @type {import("..").BulkMatchClient.ConfigFileOptions}
  */
-export default {
+module.exports = {
   /**
    * FHIR server base URL. Can be overridden by the `-f` or `--fhir-url`
    * CLI parameter.

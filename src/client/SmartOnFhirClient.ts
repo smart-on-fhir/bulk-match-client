@@ -2,26 +2,35 @@ import { debuglog } from "util";
 import jwt from "jsonwebtoken";
 import jose from "node-jose";
 import { URL } from "url";
-import { EventEmitter } from "events";
 import request from "../lib/request";
 import { BulkMatchClient as Types } from "../..";
-import {
-  assert,
-  filterResponseHeaders,
-  getAccessTokenExpiration,
-} from "../lib/utils";
-import { SmartOnFhirClientType } from "./SmartOnFhirClient.types";
-
-EventEmitter.defaultMaxListeners = 30;
+import { assert, getAccessTokenExpiration } from "../lib/utils";
+import { SmartOnFhirClientEvents } from "../events";
+import { EventEmitter } from "stream";
 
 const debug = debuglog("bulk-match-SOF-client");
+
+interface SmartOnFhirClient {
+  on<U extends keyof SmartOnFhirClientEvents>(
+    event: U,
+    listener: SmartOnFhirClientEvents[U],
+  ): this;
+  // on(event: string, listener: Function): this;
+
+  emit<U extends keyof SmartOnFhirClientEvents>(
+    event: U,
+    ...args: Parameters<SmartOnFhirClientEvents[U]>
+  ): boolean;
+  // emit(event: string, ...args: any[]): boolean;
+}
 
 /**
  * This class provides all the methods needed for authenticating using BackendServices auth,
  * refreshing auth tokens, and making authenticated requests to FHIR servers
  *
  */
-class SmartOnFhirClient extends EventEmitter implements SmartOnFhirClientType {
+class SmartOnFhirClient extends EventEmitter {
+  // implements TypedEventEmitter<SmartOnFhirClientEvents>
   /**
    * The options of the instance
    */
@@ -30,18 +39,18 @@ class SmartOnFhirClient extends EventEmitter implements SmartOnFhirClientType {
   /**
    * Used internally to emit abort signals to pending requests and other async jobs.
    */
-  protected abortController: AbortController;
+  public abortController: AbortController;
 
   /**
    * The last known access token is stored here. It will be renewed when it expires.
    */
-  protected accessToken: string = "";
+  public accessToken: string = "";
 
   /**
    * Every time we get new access token, we set this field
    * based on the token's expiration time.
    */
-  protected accessTokenExpiresAt: number = 0;
+  public accessTokenExpiresAt: number = 0;
 
   /**
    * Nothing special is done here - just remember the options and create
@@ -73,7 +82,7 @@ class SmartOnFhirClient extends EventEmitter implements SmartOnFhirClientType {
    * @param options Any request options
    * @param label Used to render an error message if the request is aborted
    */
-  protected async _request(
+  public async _request(
     url: RequestInfo | URL,
     options: RequestInit,
     label = "request",
@@ -92,7 +101,7 @@ class SmartOnFhirClient extends EventEmitter implements SmartOnFhirClientType {
       },
     };
 
-    const accessToken = await this._getAccessToken();
+    const accessToken = await this.getAccessToken();
 
     if (accessToken) {
       _options.headers = {
@@ -100,7 +109,7 @@ class SmartOnFhirClient extends EventEmitter implements SmartOnFhirClientType {
         authorization: `Bearer ${accessToken}`,
       };
     }
-    const req = request(url, _options as any);
+    const req = request(url, _options);
 
     const abort = () => {
       debug(`Aborting ${label}`);
@@ -122,7 +131,7 @@ class SmartOnFhirClient extends EventEmitter implements SmartOnFhirClientType {
    * If the token is expired (or will expire in the next 10 seconds), a new
    * one will be requested and cached.
    */
-  protected async _getAccessToken() {
+  public async getAccessToken() {
     if (
       this.accessToken &&
       this.accessTokenExpiresAt - 10 > Date.now() / 1000
@@ -194,31 +203,6 @@ class SmartOnFhirClient extends EventEmitter implements SmartOnFhirClientType {
       .finally(() => {
         this.abortController.signal.removeEventListener("abort", abort);
       });
-  }
-
-  /**
-   * Internal method for formatting response headers for some emitted events
-   * based on `options.logResponseHeaders`
-   * @param headers Response Headers to format
-   * @returns an object representation of only the relevant headers
-   */
-  protected _formatResponseHeaders(
-    headers: Types.ResponseHeaders,
-  ): object | undefined {
-    if (
-      this.options.logResponseHeaders.toString().toLocaleLowerCase() === "none"
-    )
-      return undefined;
-    if (
-      this.options.logResponseHeaders.toString().toLocaleLowerCase() === "all"
-    )
-      return Object.fromEntries(headers);
-    // If not an array it must be a string or a RegExp
-    if (!Array.isArray(this.options.logResponseHeaders)) {
-      return filterResponseHeaders(headers, [this.options.logResponseHeaders]);
-    }
-    // Else it must be an array
-    return filterResponseHeaders(headers, this.options.logResponseHeaders);
   }
 }
 

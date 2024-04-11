@@ -1,25 +1,6 @@
 import { BulkMatchClient as Types } from "../..";
-import {
-  SmartOnFhirClientType,
-  SmartOnFhirClientEvents,
-} from "./SmartOnFhirClient.types";
-
-export interface BulkMatchClientType extends SmartOnFhirClientType {
-  on<U extends keyof BulkMatchClientEvents>(
-    event: U,
-    listener: BulkMatchClientEvents[U],
-  ): this;
-
-  emit<U extends keyof BulkMatchClientEvents>(
-    event: U,
-    ...args: Parameters<BulkMatchClientEvents[U]>
-  ): boolean;
-
-  off<U extends keyof BulkMatchClientEvents>(
-    event: U,
-    listener: BulkMatchClientEvents[U],
-  ): this;
-}
+import { BulkMatchClient } from "../client";
+import { SmartOnFhirClientEvents } from "./SmartOnFhirClientEvents";
 
 /**>>
  * The BulkMatchClient instances emit the following events:
@@ -30,7 +11,7 @@ export interface BulkMatchClientEvents extends SmartOnFhirClientEvents {
    * @event
    */
   kickOffStart: (
-    this: BulkMatchClientType,
+    this: BulkMatchClient,
     requestOptions: RequestInit,
     url: string,
   ) => void;
@@ -40,7 +21,7 @@ export interface BulkMatchClientEvents extends SmartOnFhirClientEvents {
    * @event
    */
   kickOffEnd: (
-    this: BulkMatchClientType,
+    this: BulkMatchClient,
     data: {
       response: Response;
       capabilityStatement: fhir4.CapabilityStatement;
@@ -53,22 +34,22 @@ export interface BulkMatchClientEvents extends SmartOnFhirClientEvents {
    * Emitted when a kick-off patient match response is received
    * @event
    */
-  kickOffError: (this: BulkMatchClientType, error: Error) => void;
+  kickOffError: (this: BulkMatchClient, error: Error) => void;
 
   /**
    * Emitted when the patient match has began
    * @event
    */
-  matchStart: (this: BulkMatchClientType, status: Types.MatchStatus) => void;
+  matchStart: (this: BulkMatchClient, status: Types.MatchStatus) => void;
 
   /**
    * Emitted for every status change while waiting for the patient match
    * @event
    */
-  matchProgress: (this: BulkMatchClientType, status: Types.MatchStatus) => void;
+  matchProgress: (this: BulkMatchClient, status: Types.MatchStatus) => void;
 
   matchError: (
-    this: BulkMatchClientType,
+    this: BulkMatchClient,
     details: {
       body: string | fhir4.OperationOutcome | null;
       code: number | null;
@@ -81,17 +62,14 @@ export interface BulkMatchClientEvents extends SmartOnFhirClientEvents {
    * Emitted when the export is completed
    * @event
    */
-  matchComplete: (
-    this: BulkMatchClientType,
-    manifest: Types.MatchManifest,
-  ) => void;
+  matchComplete: (this: BulkMatchClient, manifest: Types.MatchManifest) => void;
 
   /**
    * Emitted when the download starts
    * @event
    */
   downloadStart: (
-    this: BulkMatchClientType,
+    this: BulkMatchClient,
     detail: {
       fileUrl: string;
       itemType: string;
@@ -103,7 +81,7 @@ export interface BulkMatchClientEvents extends SmartOnFhirClientEvents {
    * @event
    */
   downloadError: (
-    this: BulkMatchClientType,
+    this: BulkMatchClient,
     details: {
       body: string | fhir4.OperationOutcome | null; // Buffer
       code: number | null;
@@ -118,7 +96,7 @@ export interface BulkMatchClientEvents extends SmartOnFhirClientEvents {
    * @event
    */
   downloadComplete: (
-    this: BulkMatchClientType,
+    this: BulkMatchClient,
     detail: {
       fileUrl: string;
     },
@@ -129,7 +107,7 @@ export interface BulkMatchClientEvents extends SmartOnFhirClientEvents {
    * @event
    */
   allDownloadsComplete: (
-    this: BulkMatchClientType,
+    this: BulkMatchClient,
     downloads: (Types.FileDownload | PromiseRejectedResult)[],
   ) => void;
 }

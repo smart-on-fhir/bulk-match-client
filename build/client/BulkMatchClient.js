@@ -12,33 +12,58 @@ const FileDownload_1 = __importDefault(require("./FileDownload"));
 const errors_1 = require("../lib/errors");
 const utils_1 = require("../lib/utils");
 const SmartOnFhirClient_1 = __importDefault(require("./SmartOnFhirClient"));
+const stream_1 = require("stream");
 const debug = (0, util_1.debuglog)("bulk-match-client");
 /**
- * This class provides all the methods needed for making Bulk Data exports and
- * downloading data fom bulk data capable FHIR server.
+ * This class provides all the methods needed for making Bulk matches and
+ * downloading data fom bulk match capable FHIR server.
  *
  * **Example:**
  * ```ts
  * const client = new Client({ ...options })
  *
- * // Start an export and get the status location
+ * // Start an match and get the status location
  * const statusEndpoint = await client.kickOff()
  *
- * // Wait for the export and get the manifest
- * const manifest = await client.waitForExport(statusEndpoint)
+ * // Wait for the match and get the manifest
+ * const manifest = await client.waitForMatch(statusEndpoint)
  *
  * // Download everything in the manifest
- * const downloads = await client.downloadFiles(manifest)
+ * const downloads = await client.downloadAllFiles(manifest)
  * ```
  */
-class BulkMatchClient extends SmartOnFhirClient_1.default {
+class BulkMatchClient extends stream_1.EventEmitter {
+    // Encapsulation used to access SmartOnFhirClient
+    constructor(options) {
+        super();
+        this.options = options;
+        this.client = new SmartOnFhirClient_1.default(options);
+    }
+    /**
+     * Internal method for formatting response headers for some emitted events
+     * based on `options.logResponseHeaders`
+     * @param headers Response Headers to format
+     * @returns an object representation of only the relevant headers
+     */
+    formatResponseHeaders(headers) {
+        if (this.options.logResponseHeaders.toString().toLocaleLowerCase() === "none")
+            return undefined;
+        if (this.options.logResponseHeaders.toString().toLocaleLowerCase() === "all")
+            return Object.fromEntries(headers);
+        // If not an array it must be a string or a RegExp
+        if (!Array.isArray(this.options.logResponseHeaders)) {
+            return (0, utils_1.filterResponseHeaders)(headers, [this.options.logResponseHeaders]);
+        }
+        // Else it must be an array
+        return (0, utils_1.filterResponseHeaders)(headers, this.options.logResponseHeaders);
+    }
     /**
      * Makes the kick-off request for Patient Match and resolves with the status endpoint URL
      */
     async kickOff() {
         const { fhirUrl } = this.options;
         const url = new url_1.URL("Patient/$bulk-match", fhirUrl);
-        let capabilityStatement;
+        let capabilityStatement = {};
         try {
             capabilityStatement = await (0, utils_1.getCapabilityStatement)(fhirUrl);
         }
@@ -56,7 +81,8 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
         // Body must be stringified
         requestOptions.body = JSON.stringify(this.buildKickoffPayload());
         this.emit("kickOffStart", requestOptions, String(url));
-        return this._request(url, requestOptions, "kick-off patient match request")
+        return this.client
+            ._request(url, requestOptions, "kick-off patient match request")
             .then(async (res) => {
             const location = res.headers.get("content-location");
             if (!location) {
@@ -65,8 +91,8 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
             this.emit("kickOffEnd", {
                 response: res,
                 requestOptions: requestOptions,
-                capabilityStatement,
-                responseHeaders: this._formatResponseHeaders(res.headers),
+                capabilityStatement: capabilityStatement,
+                responseHeaders: this.formatResponseHeaders(res.headers),
             });
             return location;
         })
@@ -159,7 +185,7 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
                 body: body || null,
                 code: res.status || null,
                 message: ex.message,
-                responseHeaders: this._formatResponseHeaders(res.headers),
+                responseHeaders: this.formatResponseHeaders(res.headers),
             });
             throw ex;
         }
@@ -203,7 +229,7 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
             xProgressHeader: progress,
             body: res.body,
         });
-        return (0, utils_1.wait)(poolDelay, this.abortController.signal).then(() => this.checkStatus(status, statusEndpoint));
+        return (0, utils_1.wait)(poolDelay, this.client.abortController.signal).then(() => this.checkStatus(status, statusEndpoint));
     }
     /**
      * Produce the error to throw when MatchStatus requests produce an unexpected response status
@@ -218,11 +244,9 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
             body: body || null,
             code: res.status || null,
             message: msg,
-            responseHeaders: this._formatResponseHeaders(res.headers),
+            responseHeaders: this.formatResponseHeaders(res.headers),
         });
         const error = new Error(msg);
-        // @ts-ignore
-        error.body = body || null;
         return error;
     }
     /**
@@ -233,11 +257,13 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
      */
     async checkStatus(status, statusEndpoint) {
         debug("Making a status call");
-        return this._request(statusEndpoint, {
+        return this.client
+            ._request(statusEndpoint, {
             headers: {
                 accept: "application/json, application/fhir+ndjson",
             },
-        }, "status request").then(async (res) => {
+        }, "status request")
+            .then(async (res) => {
             const now = Date.now();
             const elapsedTime = now - status.startedAt;
             status.elapsedTime = elapsedTime;
@@ -289,7 +315,7 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
      */
     async downloadAllFiles(manifest) {
         debug("Downloading All Files");
-        return new Promise((resolve, reject) => {
+        return new Promise(() => {
             const createDownloadJob = async (f, initialState = {}) => {
                 const fileName = (0, path_1.basename)(f.url);
                 const downloadMetadata = {
@@ -348,7 +374,7 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
         debug("Download starting for ", file);
         let accessToken = "";
         if (authorize) {
-            accessToken = await this._getAccessToken();
+            accessToken = await this.client.getAccessToken();
         }
         this.emit("downloadStart", {
             fileUrl: file.url,
@@ -359,11 +385,11 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
         return download
             .run({
             accessToken,
-            signal: this.abortController.signal,
+            signal: this.client.abortController.signal,
             requestOptions: this.options.requests,
         })
             .then(async (resp) => {
-            // Download is finished – emit event and save file off
+            // Download is finished – emit event and save file off
             this.emit("downloadComplete", {
                 fileUrl: file.url,
             });
@@ -378,7 +404,7 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
                     code: e.code || null,
                     fileUrl: e.fileUrl,
                     message: String(e.message || "File download failed"),
-                    responseHeaders: this._formatResponseHeaders(e.responseHeaders),
+                    responseHeaders: this.formatResponseHeaders(e.responseHeaders),
                 });
             }
             throw e;
@@ -423,8 +449,8 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
      */
     cancelMatch(statusEndpoint) {
         debug("Cancelling match request at statusEndpoint: ", statusEndpoint);
-        this.abort();
-        return this._request(statusEndpoint, {
+        this.client.abort();
+        return this.client._request(statusEndpoint, {
             method: "DELETE",
         });
     }
@@ -509,6 +535,9 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
             });
             logger.log("info", { eventId: "export_complete", eventDetail });
         });
+    }
+    abort() {
+        this.client.abort();
     }
 }
 exports.default = BulkMatchClient;

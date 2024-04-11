@@ -6,17 +6,16 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const util_1 = require("util");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const node_jose_1 = __importDefault(require("node-jose"));
-const events_1 = require("events");
 const request_1 = __importDefault(require("../lib/request"));
 const utils_1 = require("../lib/utils");
-events_1.EventEmitter.defaultMaxListeners = 30;
+const stream_1 = require("stream");
 const debug = (0, util_1.debuglog)("bulk-match-SOF-client");
 /**
  * This class provides all the methods needed for authenticating using BackendServices auth,
  * refreshing auth tokens, and making authenticated requests to FHIR servers
  *
  */
-class SmartOnFhirClient extends events_1.EventEmitter {
+class SmartOnFhirClient extends stream_1.EventEmitter {
     /**
      * Nothing special is done here - just remember the options and create
      * AbortController instance
@@ -68,7 +67,7 @@ class SmartOnFhirClient extends events_1.EventEmitter {
                 interactive: this.options.reporter === "cli",
             },
         };
-        const accessToken = await this._getAccessToken();
+        const accessToken = await this.getAccessToken();
         if (accessToken) {
             _options.headers = {
                 ..._options.headers,
@@ -93,7 +92,7 @@ class SmartOnFhirClient extends events_1.EventEmitter {
      * If the token is expired (or will expire in the next 10 seconds), a new
      * one will be requested and cached.
      */
-    async _getAccessToken() {
+    async getAccessToken() {
         if (this.accessToken &&
             this.accessTokenExpiresAt - 10 > Date.now() / 1000) {
             return this.accessToken;
@@ -145,24 +144,6 @@ class SmartOnFhirClient extends events_1.EventEmitter {
             .finally(() => {
             this.abortController.signal.removeEventListener("abort", abort);
         });
-    }
-    /**
-     * Internal method for formatting response headers for some emitted events
-     * based on `options.logResponseHeaders`
-     * @param headers Response Headers to format
-     * @returns an object representation of only the relevant headers
-     */
-    _formatResponseHeaders(headers) {
-        if (this.options.logResponseHeaders.toString().toLocaleLowerCase() === "none")
-            return undefined;
-        if (this.options.logResponseHeaders.toString().toLocaleLowerCase() === "all")
-            return Object.fromEntries(headers);
-        // If not an array it must be a string or a RegExp
-        if (!Array.isArray(this.options.logResponseHeaders)) {
-            return (0, utils_1.filterResponseHeaders)(headers, [this.options.logResponseHeaders]);
-        }
-        // Else it must be an array
-        return (0, utils_1.filterResponseHeaders)(headers, this.options.logResponseHeaders);
     }
 }
 exports.default = SmartOnFhirClient;

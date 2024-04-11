@@ -20,7 +20,7 @@ class FileDownload {
 
   public run(options: FileDownloadOptions = {}): Promise<Response> {
     const { signal, accessToken, requestOptions = {} } = options;
-    const localOptions: any = {
+    const localOptions: RequestInit = {
       ...requestOptions,
       signal,
       headers: {
@@ -28,7 +28,9 @@ class FileDownload {
       },
     };
     if (accessToken) {
-      localOptions.headers.authorization = `Bearer ${accessToken}`;
+      // We know headers is going to be an object since we set it above
+      (localOptions.headers as Record<string, string>)!.authorization =
+        `Bearer ${accessToken}`;
     }
 
     debug(

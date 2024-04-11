@@ -22,7 +22,9 @@ class FileDownload {
             },
         };
         if (accessToken) {
-            localOptions.headers.authorization = `Bearer ${accessToken}`;
+            // We know headers is going to be an object since we set it above
+            localOptions.headers.authorization =
+                `Bearer ${accessToken}`;
         }
         debug(`Making download request to ${this.url} with options:\n ${JSON.stringify(localOptions)}`);
         return (0, request_1.default)(this.url, localOptions);

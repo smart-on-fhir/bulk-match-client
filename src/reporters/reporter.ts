@@ -24,7 +24,7 @@ export default abstract class Reporter {
   protected abstract onError(error: Error): void;
   constructor(client: BulkMatchClient) {
     this.client = client;
-    this.client.on("authorize", this.onAuthorize);
+    this.client.on<"authorize">("authorize", this.onAuthorize);
     this.client.on("kickOffStart", this.onKickOffStart);
     this.client.on("kickOffEnd", this.onKickOffEnd);
     this.client.on("kickOffError", this.onKickOffError);
