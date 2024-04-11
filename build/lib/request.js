@@ -9,14 +9,15 @@ const package_json_1 = __importDefault(require("../../package.json"));
 require("colors");
 const debug = util_1.default.debuglog("bulk-match-request");
 async function augmentedFetch(input, options = {}) {
-    debug('in bulk-match-request');
+    debug("in bulk-match-request");
     // Before requests: augment options to include a custom header
     if (!options.headers) {
         options.headers = {};
     }
     // @ts-ignore
-    options.headers["user-agent"] = `SMART-On-FHIR Bulk Match Client / ${package_json_1.default.version}`;
-    debug('options: ', JSON.stringify(options));
+    options.headers["user-agent"] =
+        `SMART-On-FHIR Bulk Match Client / ${package_json_1.default.version}`;
+    debug("options: ", JSON.stringify(options));
     return (fetch(input, options)
         // After requests – handle logging and retrying
         .then(async (response) => {
@@ -81,11 +82,11 @@ async function augmentedFetch(input, options = {}) {
         //     }
         //   }
         // }
-        debug('about to return response');
+        debug("about to return response");
         return response;
     })
         .catch((e) => {
-        debug('FAILED fetch: ', e.message);
+        debug("FAILED fetch: ", e.message);
         console.error(e);
         throw e;
     }));

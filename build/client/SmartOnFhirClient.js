@@ -153,17 +153,13 @@ class SmartOnFhirClient extends events_1.EventEmitter {
      * @returns an object representation of only the relevant headers
      */
     _formatResponseHeaders(headers) {
-        if (this.options.logResponseHeaders.toString().toLocaleLowerCase() ===
-            "none")
+        if (this.options.logResponseHeaders.toString().toLocaleLowerCase() === "none")
             return undefined;
-        if (this.options.logResponseHeaders.toString().toLocaleLowerCase() ===
-            "all")
+        if (this.options.logResponseHeaders.toString().toLocaleLowerCase() === "all")
             return Object.fromEntries(headers);
         // If not an array it must be a string or a RegExp
         if (!Array.isArray(this.options.logResponseHeaders)) {
-            return (0, utils_1.filterResponseHeaders)(headers, [
-                this.options.logResponseHeaders,
-            ]);
+            return (0, utils_1.filterResponseHeaders)(headers, [this.options.logResponseHeaders]);
         }
         // Else it must be an array
         return (0, utils_1.filterResponseHeaders)(headers, this.options.logResponseHeaders);

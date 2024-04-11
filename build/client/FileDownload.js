@@ -18,7 +18,7 @@ class FileDownload {
             ...requestOptions,
             headers: {
                 ...requestOptions.headers,
-            }
+            },
         };
         if (accessToken) {
             localOptions.headers.authorization = `Bearer ${accessToken}`;

@@ -18,13 +18,14 @@ const debug = util_1.default.debuglog("bulk-match-utils");
  * @param baseUrl The server base url
  */
 async function getWellKnownSmartConfig(baseUrl) {
-    // BUGFIX: Previously a leading slash here would ignore any slugs past the base path   
+    // BUGFIX: Previously a leading slash here would ignore any slugs past the base path
     const url = new url_1.URL(".well-known/smart-configuration", baseUrl);
     return (0, request_1.default)(url)
         .then(async (x) => {
         debug("Fetched .well-known/smart-configuration from %s", url);
         return await x.json();
-    }).catch(e => {
+    })
+        .catch((e) => {
         debug("Failed to fetch .well-known/smart-configuration from %s", url, e.response?.status, e.response?.statusText);
         throw e;
     });
@@ -37,13 +38,15 @@ exports.getWellKnownSmartConfig = getWellKnownSmartConfig;
  */
 async function getCapabilityStatement(baseUrl) {
     const url = new url_1.URL("metadata", baseUrl.replace(/\/*$/, "/"));
-    return (0, request_1.default)(url).then(async (resp) => {
+    return (0, request_1.default)(url)
+        .then(async (resp) => {
         if (resp.status === 404) {
             throw Error(resp.statusText);
         }
         debug("Fetched CapabilityStatement from %s", url);
-        return await resp.json();
-    }).catch(e => {
+        return (await resp.json());
+    })
+        .catch((e) => {
         debug("Failed to fetch CapabilityStatement from %s", url, e.response?.status, e.response?.statusText);
         throw e;
     });
@@ -59,11 +62,11 @@ async function getTokenEndpointFromCapabilityStatement(baseUrl) {
     const response = await getCapabilityStatement(baseUrl);
     try {
         // @ts-ignore
-        const rest = response.rest.find(x => x.mode === "server");
+        const rest = response.rest.find((x) => x.mode === "server");
         // @ts-ignore
-        const ext = rest.security.extension.find(x => x.url === oauthUrisUrl).extension;
+        const ext = rest.security.extension.find((x) => x.url === oauthUrisUrl).extension;
         // @ts-ignore
-        const node = ext.find(x => x.url === "token");
+        const node = ext.find((x) => x.url === "token");
         // @ts-ignore
         return node.valueUri || node.valueUrl || node.valueString || "";
     }
@@ -82,7 +85,7 @@ async function detectTokenUrl(baseUrl) {
     try {
         const tokenUrl = await Promise.any([
             getTokenEndpointFromWellKnownSmartConfig(baseUrl),
-            getTokenEndpointFromCapabilityStatement(baseUrl)
+            getTokenEndpointFromCapabilityStatement(baseUrl),
         ]);
         return tokenUrl;
     }
@@ -126,7 +129,7 @@ function formatDuration(ms) {
         { n: 1000 * 60 * 60 * 24, label: "day" },
         { n: 1000 * 60 * 60, label: "hour" },
         { n: 1000 * 60, label: "minute" },
-        { n: 1000, label: "second" }
+        { n: 1000, label: "second" },
     ];
     meta.reduce((prev, cur, i, all) => {
         let chunk = Math.floor(prev / cur.n); // console.log(chunk)
@@ -198,7 +201,7 @@ exports.getAccessTokenExpiration = getAccessTokenExpiration;
 function humanFileSize(fileSizeInBytes = 0, useBits = false) {
     let i = 0;
     const base = useBits ? 1000 : 1024;
-    const units = [' ', ' k', ' M', ' G', ' T', 'P', 'E', 'Z', 'Y'].map(u => {
+    const units = [" ", " k", " M", " G", " T", "P", "E", "Z", "Y"].map((u) => {
         return useBits ? u + "b" : u + "B";
     });
     while (fileSizeInBytes > base && i < units.length - 1) {
@@ -209,7 +212,7 @@ function humanFileSize(fileSizeInBytes = 0, useBits = false) {
 }
 exports.humanFileSize = humanFileSize;
 function assert(condition, error, ctor = Error) {
-    if (!(condition)) {
+    if (!condition) {
         if (typeof error === "function") {
             throw new error();
         }
@@ -245,7 +248,7 @@ function generateProgress(pct = 0, length = 40) {
     }
     let spinner = "", bold = [], grey = [];
     for (let i = 0; i < length; i++) {
-        if (i / length * 100 >= pct) {
+        if ((i / length) * 100 >= pct) {
             grey.push("▉");
         }
         else {
@@ -279,7 +282,9 @@ function filterResponseHeaders(headers, selectedHeaders) {
         const lowercaseKey = key.toLocaleLowerCase();
         // Each selectedHeader is either a RegExp, where we check for matches via RegExp.test
         // or a string, where we check for matches with equality
-        if (selectedHeaders.find((h) => (0, types_1.isRegExp)(h) ? h.test(lowercaseKey) : h.toLocaleLowerCase() === lowercaseKey))
+        if (selectedHeaders.find((h) => (0, types_1.isRegExp)(h)
+            ? h.test(lowercaseKey)
+            : h.toLocaleLowerCase() === lowercaseKey))
             matchedHeaders = { ...matchedHeaders, [key]: value };
         // If we don't find a selectedHeader that matches this header, we move on
     }

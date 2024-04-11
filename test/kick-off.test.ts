@@ -1,47 +1,54 @@
-import { BulkMatchClient } from "../src/client"
-import baseSettings   from "../config/defaults.js"
-import { mockServer } from "./lib"
+import { BulkMatchClient } from "../src/client";
+import baseSettings from "../config/defaults.js";
+import { mockServer } from "./lib";
 
+describe("kick-off", () => {
+  it("makes a patient-level match by default", async () => {
+    mockServer.mock("/metadata", { status: 200, body: {} });
+    mockServer.mock(
+      { method: "post", path: "/Patient/\\$bulk-match" },
+      { status: 202, body: "", headers: { "content-location": "x" } },
+    );
+    // @ts-ignore
+    const client = new BulkMatchClient({
+      ...baseSettings,
+      fhirUrl: mockServer.baseUrl,
+    });
+    await client.kickOff();
+  });
+});
 
-describe('kick-off', () => {
-    it("makes a patient-level match by default", async () => {
-        mockServer.mock("/metadata", { status: 200, body: {} });
-        mockServer.mock({method: "post", path: "/Patient/\\$bulk-match"}, { status: 202, body: "", headers: { "content-location": "x" }});
-        // @ts-ignore
-        const client = new BulkMatchClient({ ...baseSettings, fhirUrl: mockServer.baseUrl })
-        await client.kickOff()
-    })
-})
+describe("status", () => {
+  describe("complete", () => {
+    it("returns the manifest", async () => {
+      mockServer.mock("/status", { status: 200, body: { output: [{}] } });
+      // @ts-ignore
+      const client = new BulkMatchClient({
+        ...baseSettings,
+        fhirUrl: mockServer.baseUrl,
+      });
+      await client.waitForMatch(mockServer.baseUrl + "/status");
+    });
+  });
 
-describe('status', () => {
-    describe("complete", () => {
-        it("returns the manifest", async() => {
-            mockServer.mock("/status", { status: 200, body: { output: [{}] }});
-            // @ts-ignore
-            const client = new BulkMatchClient({ ...baseSettings, fhirUrl: mockServer.baseUrl })
-            await client.waitForMatch(mockServer.baseUrl + "/status")
-        })
-    })
+  describe("error", () => {
+    it("throws the error", async () => {
+      mockServer.mock("/status", { status: 400 });
 
-    describe("error", () => {
-        it("throws the error", async () => {
-            mockServer.mock("/status", { status: 400 });
+      // @ts-ignore
+      const client = new BulkMatchClient({
+        ...baseSettings,
+        fhirUrl: mockServer.baseUrl,
+      });
 
-            // @ts-ignore
-            const client = new BulkMatchClient({
-                ...baseSettings,
-                fhirUrl: mockServer.baseUrl,
-            })
-
-            await client.waitForMatch(mockServer.baseUrl + "/status")
-            .then(
-                () => {
-                    throw new Error("The test should have failed")
-                },
-                () => {
-                    // Error was expected so we are good to go
-                }
-            )
-        })
-    })
-})
+      await client.waitForMatch(mockServer.baseUrl + "/status").then(
+        () => {
+          throw new Error("The test should have failed");
+        },
+        () => {
+          // Error was expected so we are good to go
+        },
+      );
+    });
+  });
+});

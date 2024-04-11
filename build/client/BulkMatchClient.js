@@ -37,7 +37,7 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
      */
     async kickOff() {
         const { fhirUrl, lenient } = this.options;
-        const url = new url_1.URL("Patient/\$bulk-match", fhirUrl);
+        const url = new url_1.URL("Patient/$bulk-match", fhirUrl);
         let capabilityStatement;
         try {
             capabilityStatement = await (0, utils_1.getCapabilityStatement)(fhirUrl);
@@ -142,12 +142,12 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
         status.nextCheckAfter = -1;
         status.message = `Patient Match completed in ${(0, utils_1.formatDuration)(elapsedTime)}`;
         this.emit("matchProgress", { ...status, virtual: true });
-        let body = '';
+        let body = "";
         try {
             // This should throw a TypeError if the response is not parsable as JSON
             // TODO: Add more checks here based on return type of match operation
-            body = (await res.text());
-            debug('statusCompleted no problem!');
+            body = await res.text();
+            debug("statusCompleted no problem!");
             debug(body);
             (0, utils_1.assert)(body !== null, "No match manifest returned");
             // expect(body.output, "The match manifest output is not an array").to.be.an.array();
@@ -196,9 +196,7 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
             percentComplete: isNaN(progressPct) ? -1 : progressPct,
             nextCheckAfter: poolDelay,
             message: isNaN(progressPct)
-                ? `Patient Match: in progress for ${(0, utils_1.formatDuration)(elapsedTime)}${progress
-                    ? ". Server message: " + progress
-                    : ""}`
+                ? `Patient Match: in progress for ${(0, utils_1.formatDuration)(elapsedTime)}${progress ? ". Server message: " + progress : ""}`
                 : `Patient Match: ${progressPct}% complete in ${(0, utils_1.formatDuration)(elapsedTime)}`,
         });
         this.emit("matchProgress", {
@@ -236,7 +234,7 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
      * @returns A Promise resolving to a MatchManifest (or throws an error)
      */
     async checkStatus(status, statusEndpoint) {
-        debug('Making a status call');
+        debug("Making a status call");
         return this._request(statusEndpoint, {
             headers: {
                 accept: "application/json, application/fhir+ndjson",
@@ -247,7 +245,7 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
             status.elapsedTime = elapsedTime;
             // match is complete
             if (res.status === 200) {
-                debug('COMPLETED STATUS REQUEST, RETURNING AFTER PARSING RESPONSE');
+                debug("COMPLETED STATUS REQUEST, RETURNING AFTER PARSING RESPONSE");
                 return this._statusCompleted(status, res);
             }
             // match is in progress
@@ -292,7 +290,7 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
      * @returns
      */
     async downloadAllFiles(manifest) {
-        debug('Downloading All Files');
+        debug("Downloading All Files");
         return new Promise((resolve, reject) => {
             const createDownloadJob = async (f, initialState = {}) => {
                 let fileName = (0, path_1.basename)(f.url);
@@ -314,7 +312,9 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
                 });
                 if (this.options.addDestinationToManifest) {
                     // @ts-ignore
-                    f.destination = (0, path_1.join)(this.options.destination, downloadMetadata.exportType === "output" ? "" : downloadMetadata.exportType, fileName);
+                    f.destination = (0, path_1.join)(this.options.destination, downloadMetadata.exportType === "output"
+                        ? ""
+                        : downloadMetadata.exportType, fileName);
                 }
                 return downloadMetadata;
             };
@@ -322,16 +322,15 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
                 ...(manifest.output || []).map((f) => createDownloadJob(f, { exportType: "output" })),
                 ...(manifest.error || []).map((f) => createDownloadJob(f, { exportType: "error" })),
             ];
-            Promise.allSettled(downloadJobs)
-                .then((downloadOutcomes) => {
-                debug('All downloads settled, processing them and saving manifest');
+            Promise.allSettled(downloadJobs).then((downloadOutcomes) => {
+                debug("All downloads settled, processing them and saving manifest");
                 // Save manifest if requested
                 if (this.options.saveManifest) {
                     this.saveFile(JSON.stringify(manifest, null, 4), "manifest.json");
                 }
                 // Get outcome of downloads if they succeeded; else get failure instances
                 const downloads = downloadOutcomes.map((outcome) => {
-                    if (outcome.status === 'fulfilled') {
+                    if (outcome.status === "fulfilled") {
                         return outcome.value;
                     }
                     else {
@@ -395,18 +394,18 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
      * @returns A promise corresponding to that save operation
      */
     async saveFile(data, fileName, subFolder = "") {
-        debug(`Saving ${fileName} ${subFolder ? `with subfolder ${subFolder}` : ''}`);
+        debug(`Saving ${fileName} ${subFolder ? `with subfolder ${subFolder}` : ""}`);
         const destination = String(this.options.destination || "none").trim();
         // No destination, write nothing ---------------------------------------
         if (!destination || destination.toLowerCase() === "none") {
             return;
         }
         // local filesystem destinations ---------------------------------------
-        let path = destination.startsWith("file://") ?
-            (0, url_1.fileURLToPath)(destination) :
-            destination.startsWith(path_1.sep) ?
-                destination :
-                (0, path_1.resolve)(__dirname, "../..", destination);
+        let path = destination.startsWith("file://")
+            ? (0, url_1.fileURLToPath)(destination)
+            : destination.startsWith(path_1.sep)
+                ? destination
+                : (0, path_1.resolve)(__dirname, "../..", destination);
         (0, utils_1.assert)((0, fs_1.existsSync)(path), `Destination "${path}" does not exist`);
         (0, utils_1.assert)((0, fs_1.statSync)(path).isDirectory, `Destination "${path}" is not a directory`);
         // Create any necessary subfolders (for error responses)
@@ -451,62 +450,63 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
                     fhirVersion: capabilityStatement.fhirVersion || null,
                     requestOptions: requestOptions,
                     responseHeaders,
-                }
+                },
             });
         });
         // status_progress ---------------------------------------------------------
-        this.on("matchProgress", e => {
-            if (!e.virtual) { // skip the artificially triggered 100% event
+        this.on("matchProgress", (e) => {
+            if (!e.virtual) {
+                // skip the artificially triggered 100% event
                 logger.log("info", {
                     eventId: "status_progress",
                     eventDetail: {
                         body: e.body,
                         xProgress: e.xProgressHeader,
-                        retryAfter: e.retryAfterHeader
-                    }
+                        retryAfter: e.retryAfterHeader,
+                    },
                 });
             }
         });
         // status_error ------------------------------------------------------------
-        this.on("matchError", eventDetail => {
+        this.on("matchError", (eventDetail) => {
             logger.log("error", {
                 eventId: "status_error",
-                eventDetail
+                eventDetail,
             });
         });
         // status_complete ---------------------------------------------------------
-        this.on("matchComplete", manifest => {
+        this.on("matchComplete", (manifest) => {
             logger.log("info", {
                 eventId: "status_complete",
                 eventDetail: {
                     transactionTime: manifest.transactionTime,
                     outputFileCount: manifest.output.length,
                     deletedFileCount: manifest.deleted?.length || 0,
-                    errorFileCount: manifest.error.length
-                }
+                    errorFileCount: manifest.error.length,
+                },
             });
         });
         // download_request --------------------------------------------------------
-        this.on("downloadStart", eventDetail => {
+        this.on("downloadStart", (eventDetail) => {
             logger.log("info", { eventId: "download_request", eventDetail });
         });
         // download_complete -------------------------------------------------------
-        this.on("downloadComplete", eventDetail => {
+        this.on("downloadComplete", (eventDetail) => {
             logger.log("info", { eventId: "download_complete", eventDetail });
         });
         // download_error ----------------------------------------------------------
-        this.on("downloadError", eventDetail => {
+        this.on("downloadError", (eventDetail) => {
             logger.log("info", { eventId: "download_error", eventDetail });
         });
         // export_complete ---------------------------------------------------------
-        this.on("allDownloadsComplete", downloads => {
+        this.on("allDownloadsComplete", (downloads) => {
             const eventDetail = {
                 files: 0,
                 resources: 0,
                 bytes: 0,
-                duration: Date.now() - startTime
+                duration: Date.now() - startTime,
             };
-            downloads.forEach(d => {
+            downloads.forEach((d) => {
                 eventDetail.files += 1;
             });
             logger.log("info", { eventId: "export_complete", eventDetail });

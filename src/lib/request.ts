@@ -1,7 +1,7 @@
 import util from "util";
 import { print } from "./utils";
 import prompt from "prompt-sync";
-import { BulkMatchClient as Types } from "../.."
+import { BulkMatchClient as Types } from "../..";
 // @ts-ignore
 import pkg from "../../package.json";
 import "colors";
@@ -9,20 +9,19 @@ import "colors";
 const debug = util.debuglog("bulk-match-request");
 
 async function augmentedFetch<T>(
-  input: RequestInfo |URL,
-  options: Types.AugmentedRequestInit = {}
+  input: RequestInfo | URL,
+  options: Types.AugmentedRequestInit = {},
 ): Promise<Response> {
-  debug('in bulk-match-request')
+  debug("in bulk-match-request");
   // Before requests: augment options to include a custom header
   if (!options.headers) {
     options.headers = {};
   }
   // @ts-ignore
-  options.headers[
-    "user-agent"
-  ] = `SMART-On-FHIR Bulk Match Client / ${pkg.version}`;
-  
-  debug('options: ', JSON.stringify(options))
+  options.headers["user-agent"] =
+    `SMART-On-FHIR Bulk Match Client / ${pkg.version}`;
+
+  debug("options: ", JSON.stringify(options));
   return (
     fetch(input, options)
       // After requests – handle logging and retrying
@@ -90,11 +89,11 @@ async function augmentedFetch<T>(
         //   }
         // }
 
-        debug('about to return response')
+        debug("about to return response");
         return response;
       })
       .catch((e: Error) => {
-        debug('FAILED fetch: ', e.message)
+        debug("FAILED fetch: ", e.message);
         console.error(e);
         throw e;
       })

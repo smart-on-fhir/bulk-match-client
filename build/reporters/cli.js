@@ -44,7 +44,7 @@ class CLIReporter extends reporter_1.default {
     }
     onDownloadComplete() {
         console.log(`Download completed in ${(0, utils_1.formatDuration)(Date.now() - this.downloadStart)}`);
-        // Reset to 0 
+        // Reset to 0
         this.downloadStart = 0;
     }
     onError(error) {

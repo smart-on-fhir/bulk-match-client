@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.FileDownloadError = void 0;
 class FileDownloadError extends Error {
-    constructor({ body, code, responseHeaders, fileUrl }) {
+    constructor({ body, code, responseHeaders, fileUrl, }) {
         super(`Downloading the file from ${fileUrl} returned HTTP status code ${code}.${body ? " Body: " + JSON.stringify(body) : ""}`);
         this.code = code;
         this.body = body;

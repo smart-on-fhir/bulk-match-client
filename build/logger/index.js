@@ -19,16 +19,16 @@ function createLogger(options = {}) {
                 maxsize: 1024 * 1024 * 50,
                 tailable: true,
                 level: "silly",
-                eol: "\n"
-            })
+                eol: "\n",
+            }),
         ],
-        format: combine(timestamp({ format: "isoDateTime" }), uncolorize(), printf(info => JSON.stringify({
+        format: combine(timestamp({ format: "isoDateTime" }), uncolorize(), printf((info) => JSON.stringify({
             ...options.metadata,
             matchId,
             timestamp: info.timestamp,
             eventId: info.eventId,
-            eventDetail: info.eventDetail
-        })))
+            eventDetail: info.eventDetail,
+        }))),
     });
 }
 exports.createLogger = createLogger;
