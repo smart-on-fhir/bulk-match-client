@@ -201,7 +201,7 @@ class SmartOnFhirClient extends EventEmitter {
     );
     authRequestFormData.append("client_assertion", token);
 
-    const authRequest = request<Types.TokenResponse>(tokenUrl, {
+    const authRequest = request(tokenUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",

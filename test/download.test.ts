@@ -103,8 +103,11 @@ describe("download", function () {
       },
     });
 
+    // Parse both JSON objects to avoid encoding quirks re: quotation marks
     expect(
-      readFileSync(join(__dirname, "./tmp/downloads/file_1.ndjson"), "utf8"),
-    ).to.equal(JSON.stringify(mockResponse));
+      JSON.parse(
+        readFileSync(join(__dirname, "./tmp/downloads/file_1.ndjson"), "utf8"),
+      ),
+    ).to.equal(JSON.parse(mockResponse.body));
   });
 });

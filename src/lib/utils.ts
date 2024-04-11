@@ -1,12 +1,10 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 import "colors";
 import jwt from "jsonwebtoken";
 import { URL } from "url";
 import moment from "moment";
-import prompt from "prompt-sync";
 import util from "util";
-import zlib from "zlib";
 import request from "./request";
-import { Transform } from "stream";
 import { JsonObject, BulkMatchClient as Types } from "../..";
 import { isRegExp } from "util/types";
 
@@ -47,7 +45,7 @@ export async function getCapabilityStatement(
   baseUrl: string,
 ): Promise<fhir4.CapabilityStatement> {
   const url = new URL("metadata", baseUrl.replace(/\/*$/, "/"));
-  return request<fhir4.CapabilityStatement>(url)
+  return request(url)
     .then(async (resp) => {
       if (resp.status === 404) {
         throw Error(resp.statusText);
@@ -142,8 +140,8 @@ export function wait(ms: number, signal?: AbortSignal): Promise<void> {
 }
 
 export function formatDuration(ms: number) {
-  let out = [];
-  let meta = [
+  const out = [];
+  const meta = [
     { n: 1000 * 60 * 60 * 24 * 7, label: "week" },
     { n: 1000 * 60 * 60 * 24, label: "day" },
     { n: 1000 * 60 * 60, label: "hour" },
@@ -151,8 +149,8 @@ export function formatDuration(ms: number) {
     { n: 1000, label: "second" },
   ];
 
-  meta.reduce((prev, cur, i, all) => {
-    let chunk = Math.floor(prev / cur.n); // console.log(chunk)
+  meta.reduce((prev, cur) => {
+    const chunk = Math.floor(prev / cur.n); // console.log(chunk)
     if (chunk) {
       out.push(`${chunk} ${cur.label}${chunk > 1 ? "s" : ""}`);
       return prev - chunk * cur.n;
@@ -166,7 +164,7 @@ export function formatDuration(ms: number) {
   }
 
   if (out.length > 1) {
-    let last = out.pop();
+    const last = out.pop();
     out[out.length - 1] += " and " + last;
   }
 
@@ -216,7 +214,7 @@ export function getAccessTokenExpiration(
 
   // Option 2 - using the exp property of JWT tokens (must not assume JWT!)
   if (tokenResponse.access_token) {
-    let tokenBody = jwt.decode(tokenResponse.access_token);
+    const tokenBody = jwt.decode(tokenResponse.access_token);
     if (tokenBody && typeof tokenBody == "object" && tokenBody.exp) {
       return tokenBody.exp;
     }
@@ -247,7 +245,7 @@ export function humanFileSize(fileSizeInBytes = 0, useBits = false): string {
 }
 
 export function assert(
-  condition: any,
+  condition: unknown,
   error?: string | ErrorConstructor,
   ctor = Error,
 ): asserts condition {
@@ -260,10 +258,10 @@ export function assert(
   }
 }
 
-export function fhirInstant(input: any): string {
+export function fhirInstant(input: unknown): string {
   input = String(input || "");
   if (input) {
-    const instant = moment(new Date(input));
+    const instant = moment(new Date(input as string));
     if (instant.isValid()) {
       return instant.format();
     } else {
@@ -283,9 +281,9 @@ export function generateProgress(pct = 0, length = 40) {
   if (isNaN(pct) || !isFinite(pct)) {
     pct = 0;
   }
-  let spinner = "",
-    bold = [],
-    grey = [];
+  let spinner = "";
+  const bold = [];
+  const grey = [];
   for (let i = 0; i < length; i++) {
     if ((i / length) * 100 >= pct) {
       grey.push("▉");

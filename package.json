@@ -23,8 +23,10 @@
   "scripts": {
     "build": "tsc",
     "build:watch": "tsc --watch",
+    "lint": "npx eslint ",
+    "lint-fix": "npx eslint --fix",
     "prettier": "npx prettier . --write",
-    "prettier-check": "npx prettier . --check",
+    "prettier-fix": "npx prettier . --write",
     "test": "nyc --reporter=lcov ts-mocha -p ./test/tsconfig.json ./test/*.test.ts",
     "test:watch": "npm test -- -w --watch-files='**/*.ts'",
     "prepare": "husky"

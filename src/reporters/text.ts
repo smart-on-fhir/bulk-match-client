@@ -1,5 +1,5 @@
 import { BulkMatchClient as Types } from "../..";
-import { formatDuration, humanFileSize } from "../lib/utils";
+import { formatDuration } from "../lib/utils";
 import Reporter from "./reporter";
 export default class TextReporter extends Reporter {
   private downloadedPct = 0;

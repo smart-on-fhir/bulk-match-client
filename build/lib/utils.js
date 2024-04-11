@@ -4,6 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.filterResponseHeaders = exports.generateProgress = exports.fhirInstant = exports.assert = exports.humanFileSize = exports.getAccessTokenExpiration = exports.print = exports.formatDuration = exports.wait = exports.detectTokenUrl = exports.getTokenEndpointFromCapabilityStatement = exports.getTokenEndpointFromWellKnownSmartConfig = exports.getCapabilityStatement = exports.getWellKnownSmartConfig = void 0;
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 require("colors");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const url_1 = require("url");
@@ -123,16 +124,16 @@ function wait(ms, signal) {
 }
 exports.wait = wait;
 function formatDuration(ms) {
-    let out = [];
-    let meta = [
+    const out = [];
+    const meta = [
         { n: 1000 * 60 * 60 * 24 * 7, label: "week" },
         { n: 1000 * 60 * 60 * 24, label: "day" },
         { n: 1000 * 60 * 60, label: "hour" },
         { n: 1000 * 60, label: "minute" },
         { n: 1000, label: "second" },
     ];
-    meta.reduce((prev, cur, i, all) => {
-        let chunk = Math.floor(prev / cur.n); // console.log(chunk)
+    meta.reduce((prev, cur) => {
+        const chunk = Math.floor(prev / cur.n); // console.log(chunk)
         if (chunk) {
             out.push(`${chunk} ${cur.label}${chunk > 1 ? "s" : ""}`);
             return prev - chunk * cur.n;
@@ -144,7 +145,7 @@ function formatDuration(ms) {
         out.push(`0 ${meta.pop().label}s`);
     }
     if (out.length > 1) {
-        let last = out.pop();
+        const last = out.pop();
         out[out.length - 1] += " and " + last;
     }
     return out.join(", ");
@@ -184,7 +185,7 @@ function getAccessTokenExpiration(tokenResponse) {
     }
     // Option 2 - using the exp property of JWT tokens (must not assume JWT!)
     if (tokenResponse.access_token) {
-        let tokenBody = jsonwebtoken_1.default.decode(tokenResponse.access_token);
+        const tokenBody = jsonwebtoken_1.default.decode(tokenResponse.access_token);
         if (tokenBody && typeof tokenBody == "object" && tokenBody.exp) {
             return tokenBody.exp;
         }
@@ -246,7 +247,9 @@ function generateProgress(pct = 0, length = 40) {
     if (isNaN(pct) || !isFinite(pct)) {
         pct = 0;
     }
-    let spinner = "", bold = [], grey = [];
+    let spinner = "";
+    const bold = [];
+    const grey = [];
     for (let i = 0; i < length; i++) {
         if ((i / length) * 100 >= pct) {
             grey.push("▉");
