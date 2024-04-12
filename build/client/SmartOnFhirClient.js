@@ -3,12 +3,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const util_1 = require("util");
+/* eslint-disable @typescript-eslint/no-unsafe-declaration-merging */
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const node_jose_1 = __importDefault(require("node-jose"));
+const stream_1 = require("stream");
+const util_1 = require("util");
 const request_1 = __importDefault(require("../lib/request"));
 const utils_1 = require("../lib/utils");
-const stream_1 = require("stream");
 const debug = (0, util_1.debuglog)("bulk-match-SOF-client");
 /**
  * This class provides all the methods needed for authenticating using BackendServices auth,

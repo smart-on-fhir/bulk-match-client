@@ -1,7 +1,5 @@
 import util from "util";
-import request from "../lib/request";
-// import { BulkMatchClient as Types } from "../.."
-// import { FileDownloadError }  from "./errors"
+import request from "./request";
 
 const debug = util.debuglog("bulk-match-file-download");
 

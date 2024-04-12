@@ -6,8 +6,9 @@
  * OVERRIDE THE PROPERTIES YOU NEED TO CHANGE. Then use the `--config` parameter
  * in CLI to load your configuration file.
  *
- * @type {import("..").BulkMatchClient.ConfigFileOptions}
+ * @type {import("../build/app").BulkMatchClient.ConfigFileOptions}
  */
+// eslint-disable-next-line no-undef
 module.exports = {
   /**
    * FHIR server base URL. Can be overridden by the `-f` or `--fhir-url`

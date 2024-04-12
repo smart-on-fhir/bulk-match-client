@@ -2,7 +2,7 @@ import { expect } from "@hapi/code";
 import { existsSync, readFileSync, rmSync } from "fs";
 import { join } from "path";
 import baseSettings from "../config/defaults.js";
-import BulkMatchClient from "../src/client/BulkMatchClient";
+import { BulkMatchClient } from "../src/client";
 import { emptyFolder, invoke, mockServer } from "./lib";
 
 describe("download", function () {
@@ -31,14 +31,14 @@ describe("download", function () {
       },
     });
 
-    // @ts-ignore
     const client = new BulkMatchClient({
       ...baseSettings,
       fhirUrl: mockServer.baseUrl,
       destination: join(__dirname, "./tmp/downloads"),
     });
 
-    // @ts-ignore
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-expect-error
     await client.downloadFile({
       file: {
         type: "Patient",
@@ -94,7 +94,7 @@ describe("download", function () {
     };
     mockServer.mock("/output/file_1.ndjson", mockResponse);
 
-    const result = await invoke({
+    await invoke({
       options: {
         fhirUrl: mockServer.baseUrl,
         destination: join(__dirname, "./tmp/downloads"),

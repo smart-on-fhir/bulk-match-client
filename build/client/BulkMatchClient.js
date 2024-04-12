@@ -1,18 +1,39 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const util_1 = require("util");
-const url_1 = require("url");
-const path_1 = require("path");
-const promises_1 = __importDefault(require("fs/promises"));
 const fs_1 = require("fs");
-const FileDownload_1 = __importDefault(require("./FileDownload"));
-const errors_1 = require("../lib/errors");
-const utils_1 = require("../lib/utils");
-const SmartOnFhirClient_1 = __importDefault(require("./SmartOnFhirClient"));
+const promises_1 = __importDefault(require("fs/promises"));
+const path_1 = __importStar(require("path"));
 const stream_1 = require("stream");
+const url_1 = require("url");
+const util_1 = require("util");
+const lib_1 = require("../lib");
+const SmartOnFhirClient_1 = __importDefault(require("./SmartOnFhirClient"));
 const debug = (0, util_1.debuglog)("bulk-match-client");
 /**
  * This class provides all the methods needed for making Bulk matches and
@@ -52,10 +73,12 @@ class BulkMatchClient extends stream_1.EventEmitter {
             return Object.fromEntries(headers);
         // If not an array it must be a string or a RegExp
         if (!Array.isArray(this.options.logResponseHeaders)) {
-            return (0, utils_1.filterResponseHeaders)(headers, [this.options.logResponseHeaders]);
+            return lib_1.Utils.filterResponseHeaders(headers, [
+                this.options.logResponseHeaders,
+            ]);
         }
         // Else it must be an array
-        return (0, utils_1.filterResponseHeaders)(headers, this.options.logResponseHeaders);
+        return lib_1.Utils.filterResponseHeaders(headers, this.options.logResponseHeaders);
     }
     /**
      * Makes the kick-off request for Patient Match and resolves with the status endpoint URL
@@ -65,7 +88,7 @@ class BulkMatchClient extends stream_1.EventEmitter {
         const url = new url_1.URL("Patient/$bulk-match", fhirUrl);
         let capabilityStatement = {};
         try {
-            capabilityStatement = await (0, utils_1.getCapabilityStatement)(fhirUrl);
+            capabilityStatement = await lib_1.Utils.getCapabilityStatement(fhirUrl);
         }
         catch {
             capabilityStatement = {};
@@ -102,11 +125,67 @@ class BulkMatchClient extends stream_1.EventEmitter {
         });
     }
     /**
+     * Parses all possible string representations of resources into JSON
+     * @param resource A resource parameter either as a filePath or stringified JSON
+     * @returns JSON representation of FHIR resource(s) to match
+     */
+    _parseResourceStringOption(resource) {
+        let localResource;
+        // String resources can be inline JSON as string or paths to files
+        try {
+            localResource = JSON.parse(resource);
+        }
+        catch {
+            try {
+                // let resourcePath = resource;
+                // Should resolve both relative and absolute paths, assuming they are valid relative to CWD
+                // if (!path.isAbsolute(resource)) {
+                const resourcePath = path_1.default.resolve(resource);
+                // }
+                localResource = JSON.parse((0, fs_1.readFileSync)(resourcePath, "utf8"));
+            }
+            catch (e) {
+                // Isn't stringified JSON or a valid path, must be incorrectly specified
+                throw new Error(`Unknown string value provided as resource; must be valid, stringified JSON or valid filePath. Instead received: ${resource}`);
+            }
+        }
+        return localResource;
+    }
+    /**
+     * Parses all possible resource parameter representations into a standard format – an array of resources to match
+     * @param resource A resource parameter to match against
+     * @returns FHIR resources to match, represented as an array
+     */
+    _parseResourceOption(resource) {
+        let localResource = resource;
+        // Turn strings into JSON representation
+        if (typeof resource === "string") {
+            localResource = this._parseResourceStringOption(resource);
+        }
+        // Then turn all JSON into JsonArray
+        if (Array.isArray(resource)) {
+            // noop – already an array
+        }
+        else {
+            // Else, must be an object – needs to be turned into an array
+            localResource = [resource];
+        }
+        return localResource;
+    }
+    /**
      * Build a POST-request JSON payload for a bulk match request
      * @returns
      */
     buildKickoffPayload() {
         const parameters = [];
+        // resource --------------------------------------------------------------
+        const resource = this._parseResourceOption(this.options.resource);
+        resource.forEach((res) => {
+            parameters.push({
+                name: "resource",
+                resource: res,
+            });
+        });
         // _outputFormat ----------------------------------------------------------
         if (this.options._outputFormat) {
             parameters.push({
@@ -114,18 +193,6 @@ class BulkMatchClient extends stream_1.EventEmitter {
                 valueString: this.options._outputFormat,
             });
         }
-        // resource --------------------------------------------------------------
-        let resource = JSON.parse(this.options.resource);
-        if (!Array.isArray(resource)) {
-            resource = [resource];
-        }
-        resource.forEach((res) => {
-            parameters.push({
-                name: "resource",
-                // TODO - handle more than inlined JSON
-                resource: res,
-            });
-        });
         // onlySingleMatch ---------------------------------------------------------------
         if (this.options.onlySingleMatch) {
             parameters.push({
@@ -164,7 +231,7 @@ class BulkMatchClient extends stream_1.EventEmitter {
         status.completedAt = now;
         status.percentComplete = 100;
         status.nextCheckAfter = -1;
-        status.message = `Patient Match completed in ${(0, utils_1.formatDuration)(elapsedTime)}`;
+        status.message = `Patient Match completed in ${lib_1.Utils.formatDuration(elapsedTime)}`;
         this.emit("matchProgress", { ...status, virtual: true });
         let body = "";
         try {
@@ -173,7 +240,7 @@ class BulkMatchClient extends stream_1.EventEmitter {
             body = await res.text();
             debug("statusCompleted no problem!");
             debug(body);
-            (0, utils_1.assert)(body !== null, "No match manifest returned");
+            lib_1.Utils.assert(body !== null, "No match manifest returned");
             // expect(body.output, "The match manifest output is not an array").to.be.an.array();
             // expect(body.output, "The match manifest output contains no files").to.not.be.empty()
             this.emit("matchComplete", JSON.parse(body));
@@ -220,8 +287,8 @@ class BulkMatchClient extends stream_1.EventEmitter {
             percentComplete: isNaN(progressPct) ? -1 : progressPct,
             nextCheckAfter: poolDelay,
             message: isNaN(progressPct)
-                ? `Patient Match: in progress for ${(0, utils_1.formatDuration)(elapsedTime)}${progress ? ". Server message: " + progress : ""}`
-                : `Patient Match: ${progressPct}% complete in ${(0, utils_1.formatDuration)(elapsedTime)}`,
+                ? `Patient Match: in progress for ${lib_1.Utils.formatDuration(elapsedTime)}${progress ? ". Server message: " + progress : ""}`
+                : `Patient Match: ${progressPct}% complete in ${lib_1.Utils.formatDuration(elapsedTime)}`,
         });
         this.emit("matchProgress", {
             ...status,
@@ -229,7 +296,7 @@ class BulkMatchClient extends stream_1.EventEmitter {
             xProgressHeader: progress,
             body: res.body,
         });
-        return (0, utils_1.wait)(poolDelay, this.client.abortController.signal).then(() => this.checkStatus(status, statusEndpoint));
+        return lib_1.Utils.wait(poolDelay, this.client.abortController.signal).then(() => this.checkStatus(status, statusEndpoint));
     }
     /**
      * Produce the error to throw when MatchStatus requests produce an unexpected response status
@@ -335,7 +402,6 @@ class BulkMatchClient extends stream_1.EventEmitter {
                     exportType: downloadMetadata.exportType,
                 });
                 if (this.options.addDestinationToManifest) {
-                    // @ts-ignore
                     f.destination = (0, path_1.join)(this.options.destination, downloadMetadata.exportType === "output"
                         ? ""
                         : downloadMetadata.exportType, fileName);
@@ -380,7 +446,7 @@ class BulkMatchClient extends stream_1.EventEmitter {
             fileUrl: file.url,
             itemType: exportType,
         });
-        const download = new FileDownload_1.default(file.url);
+        const download = new lib_1.FileDownload(file.url);
         // Start the download, then parse as json
         return download
             .run({
@@ -398,7 +464,7 @@ class BulkMatchClient extends stream_1.EventEmitter {
             await this.saveFile(response, fileName, subFolder);
         })
             .catch((e) => {
-            if (e instanceof errors_1.FileDownloadError) {
+            if (e instanceof lib_1.Errors.FileDownloadError) {
                 this.emit("downloadError", {
                     body: null,
                     code: e.code || null,
@@ -430,8 +496,8 @@ class BulkMatchClient extends stream_1.EventEmitter {
             : destination.startsWith(path_1.sep)
                 ? destination
                 : (0, path_1.resolve)(__dirname, "../..", destination);
-        (0, utils_1.assert)((0, fs_1.existsSync)(path), `Destination "${path}" does not exist`);
-        (0, utils_1.assert)((0, fs_1.statSync)(path).isDirectory, `Destination "${path}" is not a directory`);
+        lib_1.Utils.assert((0, fs_1.existsSync)(path), `Destination "${path}" does not exist`);
+        lib_1.Utils.assert((0, fs_1.statSync)(path).isDirectory, `Destination "${path}" is not a directory`);
         // Create any necessary subfolders (for error responses)
         if (subFolder) {
             path = (0, path_1.join)(path, subFolder);

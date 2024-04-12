@@ -1,5 +1,5 @@
 import { BulkMatchClient as Types } from "../..";
-import { formatDuration } from "../lib/utils";
+import { Utils } from "../lib";
 import Reporter from "./reporter";
 export default class TextReporter extends Reporter {
   private downloadedPct = 0;
@@ -32,7 +32,7 @@ export default class TextReporter extends Reporter {
     console.log(status.message);
   }
 
-  onMatchComplete(manifest: Types.MatchManifest) {
+  onMatchComplete() {
     console.log("Received manifest manifest");
   }
 
@@ -55,7 +55,7 @@ export default class TextReporter extends Reporter {
 
   onDownloadComplete() {
     console.log(
-      `Download completed in ${formatDuration(Date.now() - this.downloadStart)}`,
+      `Download completed in ${Utils.formatDuration(Date.now() - this.downloadStart)}`,
     );
     this.downloadStart = 0;
   }

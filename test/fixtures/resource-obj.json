@@ -1,0 +1,20 @@
+{
+  "resourceType": "Patient",
+  "id": "234",
+  "identifier": [
+    {
+      "type": {
+        "coding": [
+          {
+            "system": "http://terminology.hl7.org/CodeSystem/v2-0203",
+            "code": "MR",
+            "display": "Medical Record Number"
+          }
+        ],
+        "text": "Medical Record Number"
+      },
+      "system": "http://hospital.smarthealthit.org",
+      "value": "cb22b7e5-7355-b298-a938-2aa88dd5b081"
+    }
+  ]
+}

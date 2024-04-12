@@ -22,7 +22,14 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Errors = exports.Utils = void 0;
-exports.Utils = __importStar(require("./utils"));
+exports.Utils = exports.request = exports.Errors = exports.FileDownload = void 0;
+var FileDownload_1 = require("./FileDownload");
+Object.defineProperty(exports, "FileDownload", { enumerable: true, get: function () { return __importDefault(FileDownload_1).default; } });
 exports.Errors = __importStar(require("./errors"));
+var request_1 = require("./request");
+Object.defineProperty(exports, "request", { enumerable: true, get: function () { return __importDefault(request_1).default; } });
+exports.Utils = __importStar(require("./utils"));

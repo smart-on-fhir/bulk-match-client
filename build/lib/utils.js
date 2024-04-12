@@ -7,11 +7,11 @@ exports.filterResponseHeaders = exports.generateProgress = exports.fhirInstant =
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 require("colors");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
-const url_1 = require("url");
 const moment_1 = __importDefault(require("moment"));
+const url_1 = require("url");
 const util_1 = __importDefault(require("util"));
-const request_1 = __importDefault(require("./request"));
 const types_1 = require("util/types");
+const request_1 = __importDefault(require("./request"));
 const debug = util_1.default.debuglog("bulk-match-utils");
 /**
  * Given a `baseUrl` fetches a `/.well-known/smart-configuration` statement

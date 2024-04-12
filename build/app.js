@@ -1,18 +1,41 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 require("colors");
 const commander_1 = require("commander");
-const path_1 = require("path");
-const util_1 = __importDefault(require("util"));
 const node_jose_1 = __importDefault(require("node-jose"));
+const path_1 = require("path");
 const prompt_sync_1 = __importDefault(require("prompt-sync"));
-const utils_1 = require("./lib/utils");
+const util_1 = __importDefault(require("util"));
 const BulkMatchClient_1 = __importDefault(require("./client/BulkMatchClient"));
-const reporters_1 = require("./reporters");
+const lib_1 = require("./lib");
 const logger_1 = require("./logger");
+const reporters_1 = require("./reporters");
 const Reporters = {
     cli: reporters_1.CLIReporter,
     text: reporters_1.TextReporter,
@@ -23,8 +46,7 @@ APP.name("node .");
 APP.version("2.0.0");
 // Bulk Data Server base URL
 APP.option("-f, --fhir-url [url]", "FHIR server base URL. Must be set either as parameter or in the configuration file.");
-APP.option("-r, --resource [resource/filepath]", "The resources to match; can be either an inline FHIR resource or a path to a FHIR JSON file");
-// APP.option("-r, --resource [resource/filepath]", "The resources to find matches for; can be either an inline FHIR resource, a path to a FHIR JSON file, or a path to an NDJSON resource file")
+APP.option("-r, --resource [resource/filepath]", "The resources to find matches for; can be either an inline FHIR resource, a path to a FHIR JSON file, or a path to an NDJSON resource file");
 APP.option("-s, --onlySingleMatch", "If there are multiple potential matches, the server should identify the single most appropriate match that should be used with future interactions with the server; defaults to false");
 APP.option("-C, --onlyCertainMatches", "If there are multiple potential matches, the server should be certain that each of the records are for the same patient. This could happen if the records are duplicates, are the same person for the purpose of data segregation, or other reasons; defaults to false");
 APP.option("-c, --count [number]", "The maximum number of records to return per resource. If no value is provided, the server may decide how many matches to return. Note that clients should be careful when using this, as it may prevent probable - and valid - matches from being returned.");
@@ -37,11 +59,14 @@ APP.option("--status [url]", "Status endpoint of already started export.");
 APP.action(async (args) => {
     const { config, ...params } = args;
     const defaultsPath = (0, path_1.resolve)(__dirname, "../config/defaults.js");
-    const base = require(defaultsPath);
-    const options = { ...base };
+    const base = await Promise.resolve(`${defaultsPath}`).then(s => __importStar(require(s)));
+    // Options will be a combination of Normalized Options and CLI Options
+    const options = {
+        ...base,
+    };
     if (config) {
         const configPath = (0, path_1.resolve)(__dirname, "..", config);
-        const cfg = require(configPath);
+        const cfg = await Promise.resolve(`${configPath}`).then(s => __importStar(require(s)));
         Object.assign(options, cfg);
     }
     Object.assign(options, params);
@@ -55,7 +80,7 @@ APP.action(async (args) => {
     // Verify tokenUrl ---------------------------------------------------------
     if (!options.tokenUrl) {
         try {
-            options.tokenUrl = await (0, utils_1.detectTokenUrl)(options.fhirUrl);
+            options.tokenUrl = await lib_1.Utils.detectTokenUrl(options.fhirUrl);
         }
         catch {
             console.log("Failed to auto-detect 'tokenUrl'! " +
@@ -81,7 +106,6 @@ APP.action(async (args) => {
         enabled: true,
         ...(options.log || {}),
     };
-    debug(options);
     const client = new BulkMatchClient_1.default(options);
     const reporter = new Reporters[options.reporter](client);
     if (options.log.enabled) {

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-declaration-merging */
 import jwt from "jsonwebtoken";
 import jose from "node-jose";
 import { EventEmitter } from "stream";
@@ -15,13 +16,11 @@ interface SmartOnFhirClient {
     event: U,
     listener: SmartOnFhirClientEvents[U],
   ): this;
-  // on(event: string, listener: Function): this;
 
   emit<U extends keyof SmartOnFhirClientEvents>(
     event: U,
     ...args: Parameters<SmartOnFhirClientEvents[U]>
   ): boolean;
-  // emit(event: string, ...args: any[]): boolean;
 }
 
 /**

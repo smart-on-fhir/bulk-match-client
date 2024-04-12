@@ -1,22 +1,15 @@
+/* eslint-disable @typescript-eslint/no-unsafe-declaration-merging */
 import { FhirResource } from "fhir/r4";
-import { existsSync, mkdirSync, statSync } from "fs";
+import { existsSync, mkdirSync, readFileSync, statSync } from "fs";
 import { default as fsPromises } from "fs/promises";
-import { basename, join, resolve, sep } from "path";
+import path, { basename, join, resolve, sep } from "path";
 import { EventEmitter } from "stream";
 import { URL, fileURLToPath } from "url";
 import { debuglog } from "util";
 import { Logger } from "winston";
 import { BulkMatchClient as Types } from "../..";
 import { BulkMatchClientEvents } from "../events";
-import { FileDownloadError } from "../lib/errors";
-import {
-  assert,
-  filterResponseHeaders,
-  formatDuration,
-  getCapabilityStatement,
-  wait,
-} from "../lib/utils";
-import FileDownload from "./FileDownload";
+import { Errors, FileDownload, Utils } from "../lib";
 import SmartOnFhirClient from "./SmartOnFhirClient";
 
 const debug = debuglog("bulk-match-client");
@@ -82,10 +75,15 @@ class BulkMatchClient extends EventEmitter {
       return Object.fromEntries(headers);
     // If not an array it must be a string or a RegExp
     if (!Array.isArray(this.options.logResponseHeaders)) {
-      return filterResponseHeaders(headers, [this.options.logResponseHeaders]);
+      return Utils.filterResponseHeaders(headers, [
+        this.options.logResponseHeaders,
+      ]);
     }
     // Else it must be an array
-    return filterResponseHeaders(headers, this.options.logResponseHeaders);
+    return Utils.filterResponseHeaders(
+      headers,
+      this.options.logResponseHeaders,
+    );
   }
 
   /**
@@ -98,7 +96,7 @@ class BulkMatchClient extends EventEmitter {
 
     let capabilityStatement = {};
     try {
-      capabilityStatement = await getCapabilityStatement(fhirUrl);
+      capabilityStatement = await Utils.getCapabilityStatement(fhirUrl);
     } catch {
       capabilityStatement = {};
     }
@@ -140,11 +138,71 @@ class BulkMatchClient extends EventEmitter {
   }
 
   /**
+   * Parses all possible string representations of resources into JSON
+   * @param resource A resource parameter either as a filePath or stringified JSON
+   * @returns JSON representation of FHIR resource(s) to match
+   */
+  protected _parseResourceStringOption(resource: string): JSON {
+    let localResource;
+    // String resources can be inline JSON as string or paths to files
+    try {
+      localResource = JSON.parse(resource) as JSON;
+    } catch {
+      try {
+        // let resourcePath = resource;
+        // Should resolve both relative and absolute paths, assuming they are valid relative to CWD
+        // if (!path.isAbsolute(resource)) {
+        const resourcePath = path.resolve(resource);
+        // }
+        localResource = JSON.parse(readFileSync(resourcePath, "utf8")) as JSON;
+      } catch (e) {
+        // Isn't stringified JSON or a valid path, must be incorrectly specified
+        throw new Error(
+          `Unknown string value provided as resource; must be valid, stringified JSON or valid filePath. Instead received: ${resource}`,
+        );
+      }
+    }
+    return localResource;
+  }
+
+  /**
+   * Parses all possible resource parameter representations into a standard format – an array of resources to match
+   * @param resource A resource parameter to match against
+   * @returns FHIR resources to match, represented as an array
+   */
+  protected _parseResourceOption(
+    resource: Types.MatchResource,
+  ): FhirResource[] {
+    let localResource = resource as unknown;
+    // Turn strings into JSON representation
+    if (typeof resource === "string") {
+      localResource = this._parseResourceStringOption(resource);
+    }
+    // Then turn all JSON into JsonArray
+    if (Array.isArray(resource)) {
+      // noop – already an array
+    } else {
+      // Else, must be an object – needs to be turned into an array
+      localResource = [resource];
+    }
+    return localResource as FhirResource[];
+  }
+
+  /**
    * Build a POST-request JSON payload for a bulk match request
    * @returns
    */
   protected buildKickoffPayload(): fhir4.Parameters {
     const parameters: fhir4.ParametersParameter[] = [];
+
+    // resource --------------------------------------------------------------
+    const resource = this._parseResourceOption(this.options.resource);
+    resource.forEach((res: FhirResource) => {
+      parameters.push({
+        name: "resource",
+        resource: res,
+      });
+    });
 
     // _outputFormat ----------------------------------------------------------
     if (this.options._outputFormat) {
@@ -153,19 +211,6 @@ class BulkMatchClient extends EventEmitter {
         valueString: this.options._outputFormat,
       });
     }
-
-    // resource --------------------------------------------------------------
-    let resource = JSON.parse(this.options.resource);
-    if (!Array.isArray(resource)) {
-      resource = [resource];
-    }
-    resource.forEach((res: FhirResource) => {
-      parameters.push({
-        name: "resource",
-        // TODO - handle more than inlined JSON
-        resource: res,
-      });
-    });
 
     // onlySingleMatch ---------------------------------------------------------------
     if (this.options.onlySingleMatch) {
@@ -212,7 +257,7 @@ class BulkMatchClient extends EventEmitter {
     status.completedAt = now;
     status.percentComplete = 100;
     status.nextCheckAfter = -1;
-    status.message = `Patient Match completed in ${formatDuration(
+    status.message = `Patient Match completed in ${Utils.formatDuration(
       elapsedTime,
     )}`;
 
@@ -224,7 +269,7 @@ class BulkMatchClient extends EventEmitter {
       body = await res.text();
       debug("statusCompleted no problem!");
       debug(body);
-      assert(body !== null, "No match manifest returned");
+      Utils.assert(body !== null, "No match manifest returned");
       // expect(body.output, "The match manifest output is not an array").to.be.an.array();
       // expect(body.output, "The match manifest output contains no files").to.not.be.empty()
       this.emit("matchComplete", JSON.parse(body));
@@ -278,10 +323,10 @@ class BulkMatchClient extends EventEmitter {
       percentComplete: isNaN(progressPct) ? -1 : progressPct,
       nextCheckAfter: poolDelay,
       message: isNaN(progressPct)
-        ? `Patient Match: in progress for ${formatDuration(elapsedTime)}${
+        ? `Patient Match: in progress for ${Utils.formatDuration(elapsedTime)}${
             progress ? ". Server message: " + progress : ""
           }`
-        : `Patient Match: ${progressPct}% complete in ${formatDuration(
+        : `Patient Match: ${progressPct}% complete in ${Utils.formatDuration(
             elapsedTime,
           )}`,
     });
@@ -293,7 +338,7 @@ class BulkMatchClient extends EventEmitter {
       body: res.body,
     });
 
-    return wait(poolDelay, this.client.abortController.signal).then(() =>
+    return Utils.wait(poolDelay, this.client.abortController.signal).then(() =>
       this.checkStatus(status, statusEndpoint),
     );
   }
@@ -431,7 +476,6 @@ class BulkMatchClient extends EventEmitter {
         });
 
         if (this.options.addDestinationToManifest) {
-          // @ts-ignore
           f.destination = join(
             this.options.destination,
             downloadMetadata.exportType === "output"
@@ -520,7 +564,7 @@ class BulkMatchClient extends EventEmitter {
         await this.saveFile(response, fileName, subFolder);
       })
       .catch((e) => {
-        if (e instanceof FileDownloadError) {
+        if (e instanceof Errors.FileDownloadError) {
           this.emit("downloadError", {
             body: null,
             code: e.code || null,
@@ -561,8 +605,8 @@ class BulkMatchClient extends EventEmitter {
         ? destination
         : resolve(__dirname, "../..", destination);
 
-    assert(existsSync(path), `Destination "${path}" does not exist`);
-    assert(
+    Utils.assert(existsSync(path), `Destination "${path}" does not exist`);
+    Utils.assert(
       statSync(path).isDirectory,
       `Destination "${path}" is not a directory`,
     );

@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const utils_1 = require("../lib/utils");
+const lib_1 = require("../lib");
 const reporter_1 = __importDefault(require("./reporter"));
 class TextReporter extends reporter_1.default {
     constructor() {
@@ -32,7 +32,7 @@ class TextReporter extends reporter_1.default {
     onMatchProgress(status) {
         console.log(status.message);
     }
-    onMatchComplete(manifest) {
+    onMatchComplete() {
         console.log("Received manifest manifest");
     }
     onMatchError(details) {
@@ -46,7 +46,7 @@ class TextReporter extends reporter_1.default {
         }
     }
     onDownloadComplete() {
-        console.log(`Download completed in ${(0, utils_1.formatDuration)(Date.now() - this.downloadStart)}`);
+        console.log(`Download completed in ${lib_1.Utils.formatDuration(Date.now() - this.downloadStart)}`);
         this.downloadStart = 0;
     }
     onError(error) {

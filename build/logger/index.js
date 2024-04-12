@@ -4,9 +4,9 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.createLogger = void 0;
-const winston_1 = require("winston");
-const path_1 = require("path");
 const crypto_1 = __importDefault(require("crypto"));
+const path_1 = require("path");
+const winston_1 = require("winston");
 const { combine, timestamp, uncolorize, printf } = winston_1.format;
 function createLogger(options = {}) {
     const matchId = crypto_1.default.randomBytes(10).toString("hex");

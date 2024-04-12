@@ -1,4 +1,2 @@
-import CLIReporter from "./cli";
-import TextReporter from "./text";
-
-export { CLIReporter, TextReporter };
+export { default as CLIReporter } from "./cli";
+export { default as TextReporter } from "./text";

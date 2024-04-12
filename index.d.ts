@@ -16,7 +16,7 @@ export declare namespace BulkMatchClient {
      * Key/value pairs to be added to every log entry. Can be used to add
      * useful information, for example which site imported this data.
      */
-    metadata?: Record<string, any>;
+    metadata?: Record<string, unknown>;
 
     /**
      * Path to log file. Absolute, or relative to process CWD. If not
@@ -25,6 +25,20 @@ export declare namespace BulkMatchClient {
      */
     file?: string;
   }
+
+  /**
+   * The FHIR resource(s) to match
+   * Can take the following forms
+   *    - "/User/absolute/path/to/fhir.json"
+   *    - "/User/absolute/path/to/fhir.ndjson"
+   *    - "./relative/absolute/path/to/fhir.ndjson"
+   *    - "./relative/absolute/path/to/fhir.json"
+   *    - "{"resourceType": "Patient"}" A string representation of the resource
+   *    - {"resourceType": "Patient"} An inline object resresenting the resource
+   *    - [{"resourceType": "Patient", "id": 1}, {"resourceType": "Patient", "id": 2}] An inline array
+   *      of resources to match
+   */
+  type MatchResource = string | JsonObject | JsonArray;
 
   /**
    * All match-client configuration options specifiable from the CLI
@@ -36,11 +50,13 @@ export declare namespace BulkMatchClient {
      */
     fhirUrl?: string;
 
+    // Patient Match Kick-off parameters -----------------------------------------------------------
+
     /**
-     * Patient Match Kick-off parameters
-     * TODO: Support inline resource list based on file path?
+     * The resource to match against
+     * Can take the following forms
      */
-    resource?: string;
+    resource?: MatchResource;
     _outputFormat?: string;
     onlySingleMatch?: boolean;
     onlyCertainMatches?: boolean;
@@ -67,14 +83,15 @@ export declare namespace BulkMatchClient {
      * FHIR server base URL. Should be set either here, or as CLI parameter
      */
     fhirUrl?: string;
-    // Patient Match Kick-off parameters -------------------------------------------------
-    resource?: string;
+
+    // Patient Match Kick-off parameters -----------------------------------------------------------
+    resource?: MatchResource;
     _outputFormat?: string;
     onlySingleMatch?: boolean;
     onlyCertainMatches?: boolean;
     count?: number;
 
-    // Authorization -------------------------------------------------------
+    // Authorization -------------------------------------------------------------------------------
     /**
      * Ideally, this can be auto-detected from fhirUrl using metadata in the
      * CapabilityStatement or from /.well-known/smart-configuration.
@@ -125,7 +142,7 @@ export declare namespace BulkMatchClient {
      */
     retryAfterMSec?: number;
 
-    // Download ------------------------------------------------------------
+    // Download ------------------------------------------------------------------------------------
 
     /**
      * In some cases it might be useful to also save the export manifest
@@ -146,7 +163,7 @@ export declare namespace BulkMatchClient {
      */
     addDestinationToManifest?: boolean;
 
-    // Logging and output ------------------------------------------------
+    // Logging and output --------------------------------------------------------------------------
 
     /**
      * Logging information,
@@ -203,7 +220,7 @@ export declare namespace BulkMatchClient {
     /**
      * Patient Matching kick off parameters
      */
-    resource: string;
+    resource: MatchResource;
     onlySingleMatch?: boolean;
     _outputFormat?: string;
     onlyCertainMatches?: boolean;
@@ -211,7 +228,7 @@ export declare namespace BulkMatchClient {
 
     requests: RequestInit;
 
-    // Destination options -------------------------------------------------
+    // Destination options -------------------------------------------------------------------------
 
     /**
      * Examples:
@@ -237,7 +254,7 @@ export declare namespace BulkMatchClient {
      */
     retryAfterMSec: number;
 
-    // Download ------------------------------------------------------------
+    // Download ------------------------------------------------------------------------------------
     /**
      * In some cases it might be useful to also save the export manifest
      * file along with the downloaded NDJSON files.
@@ -331,7 +348,7 @@ export declare namespace BulkMatchClient {
      * The value of an extension element SHALL be a pre-coordinated JSON
      * object.
      */
-    extension?: Record<string, any>;
+    extension?: Record<string, unknown>;
   }
 
   interface MatchManifestFile<Type = string> {
@@ -359,10 +376,15 @@ export declare namespace BulkMatchClient {
      * the number of resources in the file, represented as a JSON number.
      */
     count?: number;
+
+    /**
+     * Destination can be added if `addDestinationToManifest is set
+     */
+    destination?: string;
   }
 
   interface KickOffParams {
-    resources?: string;
+    MatchResource?: string;
     onlySingleMatch?: boolean;
     onlyCertainMatches?: boolean;
     count?: number;
@@ -409,7 +431,7 @@ export declare namespace BulkMatchClient {
     message: string;
     xProgressHeader?: string;
     retryAfterHeader?: string;
-    body?: any;
+    body?: unknown;
     virtual?: boolean;
     statusEndpoint: string;
   }

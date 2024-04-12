@@ -1,11 +1,11 @@
 import Crypto from "crypto";
 import { resolve } from "path";
 import { createLogger as _createLogger, format, transports } from "winston";
-import { BulkMatchClient } from "../../index";
+import { BulkMatchClient as Types } from "../..";
 
 const { combine, timestamp, uncolorize, printf } = format;
 
-export function createLogger(options: BulkMatchClient.LoggingOptions = {}) {
+export function createLogger(options: Types.LoggingOptions = {}) {
   const matchId = Crypto.randomBytes(10).toString("hex");
   return _createLogger({
     silent: options.enabled === false,

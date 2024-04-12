@@ -1,39 +1,39 @@
 import "colors";
 import { BulkMatchClient as Types } from "../..";
-import { formatDuration, print } from "../lib/utils";
+import { Utils } from "../lib";
 import Reporter from "./reporter";
 
 export default class CLIReporter extends Reporter {
   private downloadStart: number = 0;
 
   onKickOffStart(requestOptions: RequestInit, url: string) {
-    print("Kick-off started with URL: " + url).commit();
-    print("Options: " + JSON.stringify(requestOptions)).commit();
+    Utils.print("Kick-off started with URL: " + url).commit();
+    Utils.print("Options: " + JSON.stringify(requestOptions)).commit();
   }
 
   onKickOffEnd() {
-    print("Kick-off completed").commit();
+    Utils.print("Kick-off completed").commit();
   }
 
   onKickOffError(error: Error) {
-    print("Kick-off failed with error: " + error.message).commit();
+    Utils.print("Kick-off failed with error: " + error.message).commit();
   }
 
   onAuthorize() {
-    print("Got new access token").commit();
+    Utils.print("Got new access token").commit();
   }
 
   onMatchStart(status: Types.MatchStatus) {
-    print(status.message).commit();
-    print(`Status endpoint: ${status.statusEndpoint}`).commit();
+    Utils.print(status.message).commit();
+    Utils.print(`Status endpoint: ${status.statusEndpoint}`).commit();
   }
 
   onMatchProgress(status: Types.MatchStatus) {
-    print(status.message).commit();
+    Utils.print(status.message).commit();
   }
 
-  onMatchComplete(manifest: Types.MatchManifest) {
-    print.commit();
+  onMatchComplete() {
+    Utils.print.commit();
   }
 
   onMatchError(details: {
@@ -42,8 +42,8 @@ export default class CLIReporter extends Reporter {
     message?: string;
     responseHeaders?: object;
   }) {
-    print("MATCH ERROR");
-    print(JSON.stringify(details));
+    Utils.print("MATCH ERROR");
+    Utils.print(JSON.stringify(details));
   }
 
   onDownloadStart() {
@@ -52,7 +52,7 @@ export default class CLIReporter extends Reporter {
 
   onDownloadComplete() {
     console.log(
-      `Download completed in ${formatDuration(Date.now() - this.downloadStart)}`,
+      `Download completed in ${Utils.formatDuration(Date.now() - this.downloadStart)}`,
     );
     // Reset to 0
     this.downloadStart = 0;

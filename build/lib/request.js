@@ -4,12 +4,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-const util_1 = __importDefault(require("util"));
-const utils_1 = require("./utils");
-const prompt_sync_1 = __importDefault(require("prompt-sync"));
-// @ts-ignore
-const package_json_1 = __importDefault(require("../../package.json"));
 require("colors");
+const prompt_sync_1 = __importDefault(require("prompt-sync"));
+const util_1 = __importDefault(require("util"));
+const package_json_1 = __importDefault(require("../../package.json"));
+const utils_1 = require("./utils");
 const debug = util_1.default.debuglog("bulk-match-request");
 async function augmentedFetch(input, options = {}) {
     debug("in bulk-match-request");

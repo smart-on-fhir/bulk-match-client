@@ -4,9 +4,9 @@ import jose from "node-jose";
 import { resolve } from "path";
 import prompt from "prompt-sync";
 import util from "util";
-import { BulkMatchClient } from "..";
+import { BulkMatchClient as Types } from "..";
 import Client from "./client/BulkMatchClient";
-import { detectTokenUrl } from "./lib/utils";
+import { Utils } from "./lib";
 import { createLogger } from "./logger";
 import { CLIReporter, TextReporter } from "./reporters";
 
@@ -30,9 +30,8 @@ APP.option(
 );
 APP.option(
   "-r, --resource [resource/filepath]",
-  "The resources to match; can be either an inline FHIR resource or a path to a FHIR JSON file",
+  "The resources to find matches for; can be either an inline FHIR resource, a path to a FHIR JSON file, or a path to an NDJSON resource file",
 );
-// APP.option("-r, --resource [resource/filepath]", "The resources to find matches for; can be either an inline FHIR resource, a path to a FHIR JSON file, or a path to an NDJSON resource file")
 APP.option(
   "-s, --onlySingleMatch",
   "If there are multiple potential matches, the server should identify the single most appropriate match that should be used with future interactions with the server; defaults to false",
@@ -58,15 +57,18 @@ APP.option(
 // APP.option("-c, --custom [opt=val...]"         , "Custom parameters to be passed to the kick-off endpoint.");
 APP.option("--status [url]", "Status endpoint of already started export.");
 
-APP.action(async (args: BulkMatchClient.CLIOptions) => {
+APP.action(async (args: Types.CLIOptions) => {
   const { config, ...params } = args;
   const defaultsPath = resolve(__dirname, "../config/defaults.js");
-  const base: BulkMatchClient.NormalizedOptions = require(defaultsPath);
-  const options: any = { ...base };
+  const base: Types.NormalizedOptions = await import(defaultsPath);
+  // Options will be a combination of Normalized Options and CLI Options
+  const options: Partial<Types.NormalizedOptions & Types.CLIOptions> = {
+    ...base,
+  };
 
   if (config) {
     const configPath = resolve(__dirname, "..", config);
-    const cfg: BulkMatchClient.ConfigFileOptions = require(configPath);
+    const cfg: Types.ConfigFileOptions = await import(configPath);
     Object.assign(options, cfg);
   }
   Object.assign(options, params);
@@ -84,7 +86,7 @@ APP.action(async (args: BulkMatchClient.CLIOptions) => {
   // Verify tokenUrl ---------------------------------------------------------
   if (!options.tokenUrl) {
     try {
-      options.tokenUrl = await detectTokenUrl(options.fhirUrl);
+      options.tokenUrl = await Utils.detectTokenUrl(options.fhirUrl);
     } catch {
       console.log(
         "Failed to auto-detect 'tokenUrl'! " +
@@ -113,12 +115,11 @@ APP.action(async (args: BulkMatchClient.CLIOptions) => {
     enabled: true,
     ...(options.log || {}),
   };
-  debug(options);
 
-  const client = new Client(options);
-  const reporter = new Reporters[
-    (options as BulkMatchClient.NormalizedOptions).reporter
-  ](client);
+  const client = new Client(options as Types.NormalizedOptions);
+  const reporter = new Reporters[(options as Types.NormalizedOptions).reporter](
+    client,
+  );
 
   if (options.log.enabled) {
     const logger = createLogger(options.log);
@@ -143,7 +144,8 @@ APP.action(async (args: BulkMatchClient.CLIOptions) => {
     process.exit(1);
   });
 
-  const statusEndpoint = options.status || (await client.kickOff());
+  const statusEndpoint =
+    (options as Types.CLIOptions).status || (await client.kickOff());
   debug(statusEndpoint);
   const manifest = await client.waitForMatch(statusEndpoint);
   debug(JSON.stringify(manifest));
