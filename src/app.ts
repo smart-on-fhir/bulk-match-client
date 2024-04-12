@@ -1,14 +1,14 @@
 import "colors";
 import { Command } from "commander";
-import { resolve } from "path";
-import util from "util";
 import jose from "node-jose";
+import { resolve } from "path";
 import prompt from "prompt-sync";
+import util from "util";
 import { BulkMatchClient } from "..";
-import { detectTokenUrl } from "./lib/utils";
 import Client from "./client/BulkMatchClient";
-import { CLIReporter, TextReporter } from "./reporters";
+import { detectTokenUrl } from "./lib/utils";
 import { createLogger } from "./logger";
+import { CLIReporter, TextReporter } from "./reporters";
 
 const Reporters = {
   cli: CLIReporter,

@@ -1,5 +1,5 @@
-import BulkMatchClient from "../client/BulkMatchClient";
 import { BulkMatchClient as Types } from "../..";
+import BulkMatchClient from "../client/BulkMatchClient";
 
 export default abstract class Reporter {
   private client: BulkMatchClient;

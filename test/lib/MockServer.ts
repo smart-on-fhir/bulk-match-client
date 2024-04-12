@@ -1,12 +1,12 @@
+import cors from "cors";
 import express, {
+  Express,
   NextFunction,
   Request,
   RequestHandler,
   Response,
-  Express,
   Router,
 } from "express";
-import cors from "cors";
 import { AddressInfo, Server } from "net";
 
 export type requestMethod =

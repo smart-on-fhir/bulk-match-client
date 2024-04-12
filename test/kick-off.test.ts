@@ -1,5 +1,5 @@
-import { BulkMatchClient } from "../src/client";
 import baseSettings from "../config/defaults.js";
+import { BulkMatchClient } from "../src/client";
 import { mockServer } from "./lib";
 
 describe("kick-off", () => {

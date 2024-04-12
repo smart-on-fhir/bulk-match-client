@@ -1,16 +1,16 @@
 import { spawn, StdioOptions } from "child_process";
-import { join } from "path";
-import { BulkMatchClient as types } from "../../index";
-import baseSettings from "../../config/defaults.js";
-import MockServer from "./MockServer";
 import {
   existsSync,
   readdirSync,
   readFileSync,
   rmSync,
-  writeFileSync,
   statSync,
+  writeFileSync,
 } from "fs";
+import { join } from "path";
+import baseSettings from "../../config/defaults.js";
+import { BulkMatchClient as types } from "../../index";
+import MockServer from "./MockServer";
 
 export const mockServer = new MockServer("Mock Server", true);
 

@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import "colors";
 import jwt from "jsonwebtoken";
-import { URL } from "url";
 import moment from "moment";
+import { URL } from "url";
 import util from "util";
-import request from "./request";
-import { JsonObject, BulkMatchClient as Types } from "../..";
 import { isRegExp } from "util/types";
+import { JsonObject, BulkMatchClient as Types } from "../..";
+import request from "./request";
 
 const debug = util.debuglog("bulk-match-utils");
 

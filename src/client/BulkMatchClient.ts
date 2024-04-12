@@ -1,12 +1,14 @@
-import { debuglog } from "util";
-import { URL, fileURLToPath } from "url";
-import { basename, join, resolve, sep } from "path";
+import { FhirResource } from "fhir/r4";
+import { existsSync, mkdirSync, statSync } from "fs";
 import { default as fsPromises } from "fs/promises";
-import { existsSync, statSync, mkdirSync } from "fs";
-import FileDownload from "./FileDownload";
-import { FileDownloadError } from "../lib/errors";
-import { BulkMatchClient as Types } from "../..";
+import { basename, join, resolve, sep } from "path";
+import { EventEmitter } from "stream";
+import { URL, fileURLToPath } from "url";
+import { debuglog } from "util";
 import { Logger } from "winston";
+import { BulkMatchClient as Types } from "../..";
+import { BulkMatchClientEvents } from "../events";
+import { FileDownloadError } from "../lib/errors";
 import {
   assert,
   filterResponseHeaders,
@@ -14,10 +16,8 @@ import {
   getCapabilityStatement,
   wait,
 } from "../lib/utils";
-import { FhirResource } from "fhir/r4";
+import FileDownload from "./FileDownload";
 import SmartOnFhirClient from "./SmartOnFhirClient";
-import { BulkMatchClientEvents } from "../events";
-import { EventEmitter } from "stream";
 
 const debug = debuglog("bulk-match-client");
 

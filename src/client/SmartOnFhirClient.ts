@@ -1,12 +1,12 @@
-import { debuglog } from "util";
 import jwt from "jsonwebtoken";
 import jose from "node-jose";
-import { URL } from "url";
-import request from "../lib/request";
-import { BulkMatchClient as Types } from "../..";
-import { assert, getAccessTokenExpiration } from "../lib/utils";
-import { SmartOnFhirClientEvents } from "../events";
 import { EventEmitter } from "stream";
+import { URL } from "url";
+import { debuglog } from "util";
+import { BulkMatchClient as Types } from "../..";
+import { SmartOnFhirClientEvents } from "../events";
+import request from "../lib/request";
+import { assert, getAccessTokenExpiration } from "../lib/utils";
 
 const debug = debuglog("bulk-match-SOF-client");
 

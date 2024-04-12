@@ -1,9 +1,9 @@
 import { expect } from "@hapi/code";
-import BulkMatchClient from "../src/client/BulkMatchClient";
-import baseSettings from "../config/defaults.js";
-import { emptyFolder, invoke, mockServer } from "./lib";
 import { existsSync, readFileSync, rmSync } from "fs";
 import { join } from "path";
+import baseSettings from "../config/defaults.js";
+import BulkMatchClient from "../src/client/BulkMatchClient";
+import { emptyFolder, invoke, mockServer } from "./lib";
 
 describe("download", function () {
   this.timeout(60000);

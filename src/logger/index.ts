@@ -1,6 +1,6 @@
-import { transports, format, createLogger as _createLogger } from "winston";
-import { resolve } from "path";
 import Crypto from "crypto";
+import { resolve } from "path";
+import { createLogger as _createLogger, format, transports } from "winston";
 import { BulkMatchClient } from "../../index";
 
 const { combine, timestamp, uncolorize, printf } = format;

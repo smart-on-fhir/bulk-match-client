@@ -1,6 +1,6 @@
-import { existsSync, rmSync } from "fs";
 import { expect } from "@hapi/code";
-import { emptyFolder, mockServer, invoke } from "./lib";
+import { existsSync, rmSync } from "fs";
+import { emptyFolder, invoke, mockServer } from "./lib";
 
 describe("Logging", function () {
   this.timeout(10000);

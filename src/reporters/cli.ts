@@ -1,11 +1,6 @@
-import { BulkMatchClient as Types } from "../..";
-import {
-  formatDuration,
-  generateProgress,
-  humanFileSize,
-  print,
-} from "../lib/utils";
 import "colors";
+import { BulkMatchClient as Types } from "../..";
+import { formatDuration, print } from "../lib/utils";
 import Reporter from "./reporter";
 
 export default class CLIReporter extends Reporter {

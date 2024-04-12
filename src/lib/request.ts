@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-import util from "util";
-import { print } from "./utils";
 import prompt from "prompt-sync";
+import util from "util";
 import { BulkMatchClient as Types } from "../..";
+import { print } from "./utils";
 // @ts-ignore
-import pkg from "../../package.json";
 import "colors";
+import pkg from "../../package.json";
 
 const debug = util.debuglog("bulk-match-request");
 
