@@ -163,12 +163,12 @@ class BulkMatchClient extends stream_1.EventEmitter {
             localResource = this._parseResourceStringOption(resource);
         }
         // Then turn all JSON into JsonArray
-        if (Array.isArray(resource)) {
+        if (Array.isArray(localResource)) {
             // noop – already an array
         }
         else {
             // Else, must be an object – needs to be turned into an array
-            localResource = [resource];
+            localResource = [localResource];
         }
         return localResource;
     }
@@ -238,8 +238,7 @@ class BulkMatchClient extends stream_1.EventEmitter {
             // This should throw a TypeError if the response is not parsable as JSON
             // TODO: Add more checks here based on return type of match operation
             body = await res.text();
-            debug("statusCompleted no problem!");
-            debug(body);
+            debug("statusCompleted successfully");
             lib_1.Utils.assert(body !== null, "No match manifest returned");
             // expect(body.output, "The match manifest output is not an array").to.be.an.array();
             // expect(body.output, "The match manifest output contains no files").to.not.be.empty()
@@ -247,7 +246,6 @@ class BulkMatchClient extends stream_1.EventEmitter {
         }
         catch (ex) {
             debug("StatusCompleted In ERROR ");
-            debug(body);
             this.emit("matchError", {
                 body: body || null,
                 code: res.status || null,
