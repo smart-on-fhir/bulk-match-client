@@ -1,5 +1,5 @@
+import { BulkMatchClient } from ".";
 import { BulkMatchClient as Types } from "../..";
-import { BulkMatchClient } from "../client";
 import { SmartOnFhirClientEvents } from "./SmartOnFhirClientEvents";
 
 /**>>

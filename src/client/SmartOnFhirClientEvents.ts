@@ -1,4 +1,4 @@
-import { SmartOnFhirClient } from "../client";
+import { SmartOnFhirClient } from ".";
 
 /**>>
  * The SmartOnFhirClient instances emit the following events:

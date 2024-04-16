@@ -8,8 +8,8 @@ import { URL, fileURLToPath } from "url";
 import { debuglog } from "util";
 import { Logger } from "winston";
 import { BulkMatchClient as Types } from "../..";
-import { BulkMatchClientEvents } from "../events";
 import { Errors, FileDownload, Utils } from "../lib";
+import { BulkMatchClientEvents } from "./BulkMatchClientEvents";
 import SmartOnFhirClient from "./SmartOnFhirClient";
 
 const debug = debuglog("bulk-match-client");
@@ -19,13 +19,11 @@ interface BulkMatchClient {
     event: U,
     listener: BulkMatchClientEvents[U],
   ): this;
-  // on(event: string, listener: Function): this;
 
   emit<U extends keyof BulkMatchClientEvents>(
     event: U,
     ...args: Parameters<BulkMatchClientEvents[U]>
   ): boolean;
-  // emit(event: string, ...args: any[]): boolean;
 }
 
 /**
