@@ -24,6 +24,7 @@ class FileDownload {
             localOptions.headers.authorization =
                 `Bearer ${accessToken}`;
         }
+        //  HANDLE ACCESS TOKEN EXPIRE
         debug(`Making download request to ${this.url} with options:\n ${JSON.stringify(localOptions)}`);
         return (0, request_1.default)(this.url, localOptions);
     }

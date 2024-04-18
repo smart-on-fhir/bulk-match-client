@@ -2,6 +2,8 @@ import { Algorithm } from "jsonwebtoken";
 import jose from "node-jose";
 
 export declare namespace BulkMatchClient {
+  type CustomBodyResponse<T> = Omit<Response, "body"> & { body: T };
+
   /**
    * An object controlling logging behavior; provided by config file
    */
@@ -29,9 +31,10 @@ export declare namespace BulkMatchClient {
   /**
    * The FHIR resource(s) to match
    * Can take the following forms
+   *    - DIR? TODO
    *    - "/User/absolute/path/to/fhir.json"
-   *    - "/User/absolute/path/to/fhir.ndjson"
-   *    - "./relative/absolute/path/to/fhir.ndjson"
+  //  *    - "/User/absolute/path/to/fhir.ndjson"
+  //  *    - "./relative/absolute/path/to/fhir.ndjson"
    *    - "./relative/absolute/path/to/fhir.json"
    *    - "{"resourceType": "Patient"}" A string representation of the resource
    *    - {"resourceType": "Patient"} An inline object resresenting the resource

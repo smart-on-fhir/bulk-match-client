@@ -24,6 +24,7 @@ APP.name("node .");
 APP.version("2.0.0");
 
 // Bulk Data Server base URL
+APP.option("--config <path>", "Relative path to config file.");
 APP.option(
   "-f, --fhir-url [url]",
   "FHIR server base URL. Must be set either as parameter or in the configuration file.",
@@ -49,7 +50,6 @@ APP.option(
   "-d, --destination [destination]",
   "Download destination. See config/defaults.js for examples",
 );
-APP.option("--config <path>", "Relative path to config file.");
 APP.option(
   "--reporter [cli|text]",
   'Reporter to use to render the output. "cli" renders fancy progress bars and tables. "text" is better for log files. Defaults to "cli".',

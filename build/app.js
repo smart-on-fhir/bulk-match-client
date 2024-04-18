@@ -45,6 +45,7 @@ const APP = new commander_1.Command();
 APP.name("node .");
 APP.version("2.0.0");
 // Bulk Data Server base URL
+APP.option("--config <path>", "Relative path to config file.");
 APP.option("-f, --fhir-url [url]", "FHIR server base URL. Must be set either as parameter or in the configuration file.");
 APP.option("-r, --resource [resource/filepath]", "The resources to find matches for; can be either an inline FHIR resource, a path to a FHIR JSON file, or a path to an NDJSON resource file");
 APP.option("-s, --onlySingleMatch", "If there are multiple potential matches, the server should identify the single most appropriate match that should be used with future interactions with the server; defaults to false");
@@ -52,7 +53,6 @@ APP.option("-C, --onlyCertainMatches", "If there are multiple potential matches,
 APP.option("-c, --count [number]", "The maximum number of records to return per resource. If no value is provided, the server may decide how many matches to return. Note that clients should be careful when using this, as it may prevent probable - and valid - matches from being returned.");
 APP.option("-F, --_outputFormat [string]", `The output format you expect.`);
 APP.option("-d, --destination [destination]", "Download destination. See config/defaults.js for examples");
-APP.option("--config <path>", "Relative path to config file.");
 APP.option("--reporter [cli|text]", 'Reporter to use to render the output. "cli" renders fancy progress bars and tables. "text" is better for log files. Defaults to "cli".');
 // APP.option("-c, --custom [opt=val...]"         , "Custom parameters to be passed to the kick-off endpoint.");
 APP.option("--status [url]", "Status endpoint of already started export.");

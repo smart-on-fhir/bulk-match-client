@@ -34,9 +34,9 @@ module.exports = {
 
   /**
    * The scope to use in the authorization request. If not set, defaults to
-   * "system/*.read"
+   * "system/Patient.rs"
    */
-  scope: "system/*.read",
+  scope: "system/Patient.rs",
 
   /**
    * The access token lifetime in seconds. Note that the authentication server
@@ -44,11 +44,20 @@ module.exports = {
    */
   accessTokenLifetime: 300,
 
+  // TODO: ADD DESCRIPTIONS FROM TYPE FILE
   resource: "{}",
   // _outputFormat: "application/fhir+ndjson",
   // onlySingleMatch: true,
   // onlyCertainMatches: true,
   // count: 3,
+
+  /**
+   * The value of the `_outputFormat` parameter for Bulk Data kick-off
+   * requests. Will be ignored if empty or falsy.
+   *
+   * Can be overridden from terminal parameter `-F` or `--_outputFormat`
+   */
+  _outputFormat: "",
 
   /**
    * The default reporter is "cli". That works well in terminal and
@@ -62,22 +71,6 @@ module.exports = {
   reporter: "cli",
 
   /**
-   * The value of the `_outputFormat` parameter for Bulk Data kick-off
-   * requests. Will be ignored if empty or falsy.
-   *
-   * Can be overridden from terminal parameter `-F` or `--_outputFormat`
-   */
-  _outputFormat: "",
-
-  /**
-   * The value of the `includeAssociatedData` parameter for Bulk Data kick-off
-   * requests. Will be ignored if empty or falsy.
-   *
-   * Can be overridden from terminal parameter `-i` or `--includeAssociatedData`
-   */
-  includeAssociatedData: "",
-
-  /**
    * Custom options for every request, EXCLUDING the authorization request and
    * any upload requests (in case we use remote destination).
    * @type {RequestInit}
@@ -88,26 +81,13 @@ module.exports = {
    * In some cases it might be useful to also save the export manifest
    * file along with the downloaded NDJSON files.
    */
-  saveManifest: false,
-
-  /**
-   * The original export manifest will have an `url` property for each
-   * file, containing the source location. It his is set to `true`, add
-   * a `destination` property to each file containing the path (relative
-   * to the manifest file) to the saved file.
-   *
-   * This is ONLY used if `saveManifest` is set to `true`.
-   */
-  addDestinationToManifest: false,
+  saveManifest: true,
 
   /**
    * Examples:
    * - `./downloads` - Save to local folder (relative to the config file)
    * - `downloads` - Save to local folder (relative to the config file)
    * - `/path/to/downloads` - Save to local folder (absolute path)
-   * - `file:///path/to/downloads` - Save to local folder (file url)
-   * - `http://destination.dev` - POST to http
-   * - `http://username:password@destination.dev` - POST to http with basic auth
    * - `""` - do nothing
    * - `"none"` - do nothing
    *
@@ -115,6 +95,7 @@ module.exports = {
    */
   destination: "./downloads",
 
+  // TODO: descriptions
   log: {
     enabled: true,
 

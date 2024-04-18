@@ -23,7 +23,7 @@ export interface BulkMatchClientEvents extends SmartOnFhirClientEvents {
   kickOffEnd: (
     this: BulkMatchClient,
     data: {
-      response: Response;
+      response: Types.CustomBodyResponse<object>;
       capabilityStatement: fhir4.CapabilityStatement;
       requestOptions: object;
       responseHeaders?: object;

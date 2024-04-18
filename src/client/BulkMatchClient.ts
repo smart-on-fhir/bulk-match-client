@@ -1,14 +1,14 @@
 /* eslint-disable @typescript-eslint/no-unsafe-declaration-merging */
+import { expect } from "@hapi/code";
 import { FhirResource } from "fhir/r4";
 import { existsSync, mkdirSync, readFileSync, statSync } from "fs";
 import { default as fsPromises } from "fs/promises";
 import path, { basename, join, resolve, sep } from "path";
-import { EventEmitter } from "stream";
 import { URL, fileURLToPath } from "url";
 import { debuglog } from "util";
 import { Logger } from "winston";
 import { BulkMatchClient as Types } from "../..";
-import { Errors, FileDownload, Utils } from "../lib";
+import { Errors, Utils } from "../lib";
 import { BulkMatchClientEvents } from "./BulkMatchClientEvents";
 import SmartOnFhirClient from "./SmartOnFhirClient";
 
@@ -44,14 +44,9 @@ interface BulkMatchClient {
  * const downloads = await client.downloadAllFiles(manifest)
  * ```
  */
-class BulkMatchClient extends EventEmitter {
-  options: Types.NormalizedOptions;
-  client: SmartOnFhirClient;
-  // Encapsulation used to access SmartOnFhirClient
+class BulkMatchClient extends SmartOnFhirClient {
   constructor(options: Types.NormalizedOptions) {
-    super();
-    this.options = options;
-    this.client = new SmartOnFhirClient(options);
+    super(options);
   }
 
   /**
@@ -112,8 +107,11 @@ class BulkMatchClient extends EventEmitter {
     requestOptions.body = JSON.stringify(this.buildKickoffPayload());
     this.emit("kickOffStart", requestOptions, String(url));
 
-    return this.client
-      ._request(url, requestOptions, "kick-off patient match request")
+    return this._request<object>(
+      url,
+      requestOptions,
+      "kick-off patient match request",
+    )
       .then(async (res) => {
         const location = res.headers.get("content-location");
         if (!location) {
@@ -147,11 +145,8 @@ class BulkMatchClient extends EventEmitter {
       localResource = JSON.parse(resource) as JSON;
     } catch {
       try {
-        // let resourcePath = resource;
         // Should resolve both relative and absolute paths, assuming they are valid relative to CWD
-        // if (!path.isAbsolute(resource)) {
         const resourcePath = path.resolve(resource);
-        // }
         localResource = JSON.parse(readFileSync(resourcePath, "utf8")) as JSON;
       } catch (e) {
         // Isn't stringified JSON or a valid path, must be incorrectly specified
@@ -248,7 +243,7 @@ class BulkMatchClient extends EventEmitter {
    */
   private async _statusCompleted(
     status: Types.MatchStatus,
-    res: Response,
+    res: Types.CustomBodyResponse<object>,
   ): Promise<Types.MatchManifest> {
     const now = Date.now();
     const elapsedTime = now - status.startedAt;
@@ -260,41 +255,44 @@ class BulkMatchClient extends EventEmitter {
     )}`;
 
     this.emit("matchProgress", { ...status, virtual: true });
-    let body = "";
+    const { body } = res;
     try {
-      // This should throw a TypeError if the response is not parsable as JSON
-      // TODO: Add more checks here based on return type of match operation
-      body = await res.text();
+      expect(body, "No match manifest returned").to.be.null;
+      expect(
+        (body as Types.MatchManifest).output,
+        "The match manifest output is not an array",
+      ).to.be.an.array();
+      expect(
+        (body as Types.MatchManifest).output,
+        "The match manifest output contains no files",
+      ).to.not.be.empty();
       debug("statusCompleted successfully");
-      Utils.assert(body !== null, "No match manifest returned");
-      // expect(body.output, "The match manifest output is not an array").to.be.an.array();
-      // expect(body.output, "The match manifest output contains no files").to.not.be.empty()
-      this.emit("matchComplete", JSON.parse(body));
+      this.emit("matchComplete", body as Types.MatchManifest);
+      return body as Types.MatchManifest;
     } catch (ex) {
       debug("StatusCompleted In ERROR ");
       this.emit("matchError", {
-        body: body || null,
+        body: JSON.stringify(body) || null,
         code: res.status || null,
         message: (ex as Error).message,
         responseHeaders: this.formatResponseHeaders(res.headers),
       });
       throw ex;
     }
-    return JSON.parse(body) as Types.MatchManifest;
   }
 
   /**
    * Handle the pending workflow of MatchStatus requests, tracking metadata, calculating wait-time delays
-   * and recursively calling checkStatus again
+   * and recursively calling _checkStatus again
    * @param status The MatchStatus
-   * @param statusEndpoint The endpoint against which statusRequests are made; needed to recursively call checkStatus
+   * @param statusEndpoint The endpoint against which statusRequests are made; needed to recursively call _checkStatus
    * @param res The pending response from statusEndpoint
-   * @returns A promise that waits, then invokes checkStatus again, ultimately resolving to a MatchManifest (or throwing an error)
+   * @returns A promise that waits, then invokes _checkStatus again, ultimately resolving to a MatchManifest (or throwing an error)
    */
   private async _statusPending(
     status: Types.MatchStatus,
     statusEndpoint: string,
-    res: Response,
+    res: Types.CustomBodyResponse<object>,
   ): Promise<Types.MatchManifest> {
     const now = Date.now();
     const elapsedTime = now - status.startedAt;
@@ -314,7 +312,6 @@ class BulkMatchClient extends EventEmitter {
     }
 
     const poolDelay = Math.min(Math.max(retryAfterMSec, 100), 1000 * 60);
-
     Object.assign(status, {
       percentComplete: isNaN(progressPct) ? -1 : progressPct,
       nextCheckAfter: poolDelay,
@@ -334,8 +331,8 @@ class BulkMatchClient extends EventEmitter {
       body: res.body,
     });
 
-    return Utils.wait(poolDelay, this.client.abortController.signal).then(() =>
-      this.checkStatus(status, statusEndpoint),
+    return Utils.wait(poolDelay, this.abortController.signal).then(() =>
+      this._checkStatus(status, statusEndpoint),
     );
   }
 
@@ -347,12 +344,11 @@ class BulkMatchClient extends EventEmitter {
    */
   private async _statusError(
     status: Types.MatchStatus,
-    res: Response,
+    res: Types.CustomBodyResponse<object>,
   ): Promise<Error> {
     const msg = `Unexpected status response ${res.status} ${res.statusText}`;
-    const body = await res.text();
     this.emit("matchError", {
-      body: body || null,
+      body: JSON.stringify(res.body) || null,
       code: res.status || null,
       message: msg,
       responseHeaders: this.formatResponseHeaders(res.headers),
@@ -368,42 +364,40 @@ class BulkMatchClient extends EventEmitter {
    * @param statusEndpoint The statusEndpoint where we check on the status of the match request
    * @returns A Promise resolving to a MatchManifest (or throws an error)
    */
-  public async checkStatus(
+  private async _checkStatus(
     status: Types.MatchStatus,
     statusEndpoint: string,
   ): Promise<Types.MatchManifest> {
     debug("Making a status call");
-    return this.client
-      ._request(
-        statusEndpoint,
-        {
-          headers: {
-            accept: "application/json, application/fhir+ndjson",
-          },
+    return this._request<object>(
+      statusEndpoint,
+      {
+        headers: {
+          accept: "application/json, application/fhir+ndjson",
         },
-        "status request",
-      )
-      .then(async (res: Response) => {
-        const now = Date.now();
-        const elapsedTime = now - status.startedAt;
+      },
+      "status request",
+    ).then(async (res: Types.CustomBodyResponse<object>) => {
+      const now = Date.now();
+      const elapsedTime = now - status.startedAt;
+      status.elapsedTime = elapsedTime;
 
-        status.elapsedTime = elapsedTime;
+      // match is complete
+      if (res.status === 200) {
+        return this._statusCompleted(status, res);
+      }
 
-        // match is complete
-        if (res.status === 200) {
-          debug("COMPLETED STATUS REQUEST, RETURNING AFTER PARSING RESPONSE");
-          return this._statusCompleted(status, res);
-        }
+      // match is in progress or server needs us to slow down requests.
+      // recalculate delay and try again
+      if (res.status === 202 || res.status === 429) {
+        return this._statusPending(status, statusEndpoint, res);
+      }
 
-        // match is in progress
-        if (res.status === 202) {
-          return this._statusPending(status, statusEndpoint, res);
-        }
-        // Match Error - await the error then throw it
-        else {
-          throw await this._statusError(status, res);
-        }
-      });
+      // Match Error - await the error then throw it
+      else {
+        throw await this._statusError(status, res);
+      }
+    });
   }
 
   /**
@@ -434,7 +428,7 @@ class BulkMatchClient extends EventEmitter {
 
     this.emit("matchStart", status);
 
-    return this.checkStatus(status, statusEndpoint);
+    return this._checkStatus(status, statusEndpoint);
   }
 
   /**
@@ -463,7 +457,6 @@ class BulkMatchClient extends EventEmitter {
         await this.downloadFile({
           file: f,
           fileName,
-          authorize: manifest.requiresAccessToken,
           subFolder:
             downloadMetadata.exportType === "output"
               ? ""
@@ -471,6 +464,7 @@ class BulkMatchClient extends EventEmitter {
           exportType: downloadMetadata.exportType,
         });
 
+        // After saving files, optinoally add destination to manifest
         if (this.options.addDestinationToManifest) {
           f.destination = join(
             this.options.destination,
@@ -496,7 +490,7 @@ class BulkMatchClient extends EventEmitter {
         debug("All downloads settled, processing them and saving manifest");
         // Save manifest if requested
         if (this.options.saveManifest) {
-          this.saveFile(JSON.stringify(manifest, null, 4), "manifest.json");
+          this.saveFile(manifest, "manifest.json");
         }
         // Get outcome of downloads if they succeeded; else get failure instances
         const downloads = downloadOutcomes.map((outcome) => {
@@ -519,43 +513,29 @@ class BulkMatchClient extends EventEmitter {
   protected async downloadFile({
     file,
     fileName,
-    authorize = false,
     subFolder = "",
     exportType = "output",
   }: {
     file: Types.MatchManifestFile;
     fileName: string;
-    authorize?: boolean;
     subFolder?: string;
     exportType?: string;
   }): Promise<void> {
     debug("Download starting for ", file);
-    let accessToken = "";
-
-    if (authorize) {
-      accessToken = await this.client.getAccessToken();
-    }
 
     this.emit("downloadStart", {
       fileUrl: file.url,
       itemType: exportType,
     });
 
-    const download = new FileDownload(file.url);
-
     // Start the download, then parse as json
-    return download
-      .run({
-        accessToken,
-        signal: this.client.abortController.signal,
-        requestOptions: this.options.requests,
-      })
+    return this._request<object>(file.url)
       .then(async (resp) => {
         // Download is finished – emit event and save file off
         this.emit("downloadComplete", {
           fileUrl: file.url,
         });
-        const response = await resp.text();
+        const response = resp.body;
         debug(`Response for ${fileName}: ${response}`);
         await this.saveFile(response, fileName, subFolder);
       })
@@ -581,7 +561,7 @@ class BulkMatchClient extends EventEmitter {
    * @returns A promise corresponding to that save operation
    */
   protected async saveFile(
-    data: string,
+    data: object,
     fileName: string,
     subFolder = "",
   ): Promise<void> {
@@ -616,7 +596,7 @@ class BulkMatchClient extends EventEmitter {
     }
 
     // Finally write the file to disc
-    return fsPromises.writeFile(join(path, fileName), data);
+    return fsPromises.writeFile(join(path, fileName), JSON.stringify(data));
   }
 
   /**
@@ -626,8 +606,8 @@ class BulkMatchClient extends EventEmitter {
    */
   public cancelMatch(statusEndpoint: string) {
     debug("Cancelling match request at statusEndpoint: ", statusEndpoint);
-    this.client.abort();
-    return this.client._request(statusEndpoint, {
+    this.abort();
+    return this._request<void>(statusEndpoint, {
       method: "DELETE",
     });
   }
@@ -729,7 +709,7 @@ class BulkMatchClient extends EventEmitter {
     });
   }
   public abort() {
-    this.client.abort();
+    this.abort();
   }
 }
 

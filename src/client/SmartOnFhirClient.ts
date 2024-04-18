@@ -81,11 +81,11 @@ class SmartOnFhirClient extends EventEmitter {
    * @param options Any request options
    * @param label Used to render an error message if the request is aborted
    */
-  public async _request(
+  public async _request<T>(
     url: RequestInfo | URL,
-    options: RequestInit,
+    options: RequestInit = {},
     label = "request",
-  ): Promise<Response> {
+  ): Promise<Types.CustomBodyResponse<T>> {
     const _options: Types.AugmentedRequestInit = {
       ...this.options.requests,
       ...options,
@@ -108,7 +108,7 @@ class SmartOnFhirClient extends EventEmitter {
         authorization: `Bearer ${accessToken}`,
       };
     }
-    const req = request(url, _options);
+    const req = request<T>(url, _options);
 
     const abort = () => {
       debug(`Aborting ${label}`);
