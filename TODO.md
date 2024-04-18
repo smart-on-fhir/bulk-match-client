@@ -16,10 +16,10 @@
   - kickOffStart
   - kickOffEnd
   - kickOffError
-  - matchStart
-  - matchProgress
-  - matchError
-  - matchComplete
+  - jobStart
+  - jobProgress
+  - jobError
+  - jobComplete
   - downloadStart
   - downloadError
   - downloadComplete

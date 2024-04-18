@@ -28,6 +28,9 @@ async function augmentedFetch<T>(
       // After requests – handle logging and retrying
       .then(async (response) => {
         let body = await response.text();
+        debug(response.type);
+        debug(response.type);
+        debug(response.type);
         if (body.length && response.type.match(/\bjson\b/i)) {
           body = JSON.parse(body);
         }
@@ -95,7 +98,7 @@ async function augmentedFetch<T>(
 
         debug("about to return response");
         return {
-          ...response,
+          response,
           body: body as T,
         };
       })

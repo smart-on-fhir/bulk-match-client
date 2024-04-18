@@ -166,7 +166,7 @@ class SmartOnFhirClient extends EventEmitter {
     );
     authRequestFormData.append("client_assertion", token);
 
-    const authRequest = request(tokenUrl, {
+    const authRequest = request<Types.TokenResponse>(tokenUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
@@ -184,7 +184,7 @@ class SmartOnFhirClient extends EventEmitter {
 
     return authRequest
       .then(async (res) => {
-        const json = await res.json();
+        const json = res.body;
         assert(json, "Authorization request got empty body");
         assert(
           json.access_token,

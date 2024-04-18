@@ -24,17 +24,17 @@ class CLIReporter extends reporter_1.default {
     onAuthorize() {
         lib_1.Utils.print("Got new access token").commit();
     }
-    onMatchStart(status) {
+    onJobStart(status) {
         lib_1.Utils.print(status.message).commit();
         lib_1.Utils.print(`Status endpoint: ${status.statusEndpoint}`).commit();
     }
-    onMatchProgress(status) {
+    onJobProgress(status) {
         lib_1.Utils.print(status.message).commit();
     }
-    onMatchComplete() {
+    onJobComplete() {
         lib_1.Utils.print.commit();
     }
-    onMatchError(details) {
+    onJobError(details) {
         lib_1.Utils.print("MATCH ERROR");
         lib_1.Utils.print(JSON.stringify(details));
     }

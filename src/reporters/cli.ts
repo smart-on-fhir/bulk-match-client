@@ -23,20 +23,20 @@ export default class CLIReporter extends Reporter {
     Utils.print("Got new access token").commit();
   }
 
-  onMatchStart(status: Types.MatchStatus) {
+  onJobStart(status: Types.MatchStatus) {
     Utils.print(status.message).commit();
     Utils.print(`Status endpoint: ${status.statusEndpoint}`).commit();
   }
 
-  onMatchProgress(status: Types.MatchStatus) {
+  onJobProgress(status: Types.MatchStatus) {
     Utils.print(status.message).commit();
   }
 
-  onMatchComplete() {
+  onJobComplete() {
     Utils.print.commit();
   }
 
-  onMatchError(details: {
+  onJobError(details: {
     body: string | fhir4.OperationOutcome | null;
     code: number | null;
     message?: string;

@@ -54,7 +54,7 @@ class SmartOnFhirClient extends stream_1.EventEmitter {
      * @param options Any request options
      * @param label Used to render an error message if the request is aborted
      */
-    async _request(url, options, label = "request") {
+    async _request(url, options = {}, label = "request") {
         const _options = {
             ...this.options.requests,
             ...options,
@@ -133,7 +133,7 @@ class SmartOnFhirClient extends stream_1.EventEmitter {
         });
         return authRequest
             .then(async (res) => {
-            const json = await res.json();
+            const json = res.body;
             (0, utils_1.assert)(json, "Authorization request got empty body");
             (0, utils_1.assert)(json.access_token, "Authorization response does not include access_token");
             (0, utils_1.assert)(json.expires_in, "Authorization response does not include expires_in");

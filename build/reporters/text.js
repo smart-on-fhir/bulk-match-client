@@ -24,18 +24,18 @@ class TextReporter extends reporter_1.default {
     onAuthorize() {
         console.log("Got new access token");
     }
-    onMatchStart(status) {
+    onJobStart(status) {
         this.downloadedPct = 0;
         console.log(status.message);
         console.log(`Status endpoint: ${status.statusEndpoint}`);
     }
-    onMatchProgress(status) {
+    onJobProgress(status) {
         console.log(status.message);
     }
-    onMatchComplete() {
+    onJobComplete() {
         console.log("Received manifest manifest");
     }
-    onMatchError(details) {
+    onJobError(details) {
         console.error("MATCH ERROR");
         console.error(JSON.stringify(details));
     }

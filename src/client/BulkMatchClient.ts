@@ -113,7 +113,9 @@ class BulkMatchClient extends SmartOnFhirClient {
       "kick-off patient match request",
     )
       .then(async (res) => {
-        const location = res.headers.get("content-location");
+        console.log(res);
+        debug(JSON.stringify(res));
+        const location = res.response.headers.get("content-location");
         if (!location) {
           throw new Error(
             "The kick-off patient match response did not include content-location header",
@@ -123,7 +125,7 @@ class BulkMatchClient extends SmartOnFhirClient {
           response: res,
           requestOptions: requestOptions,
           capabilityStatement: capabilityStatement as fhir4.CapabilityStatement,
-          responseHeaders: this.formatResponseHeaders(res.headers),
+          responseHeaders: this.formatResponseHeaders(res.response.headers),
         });
         return location;
       })
@@ -254,7 +256,7 @@ class BulkMatchClient extends SmartOnFhirClient {
       elapsedTime,
     )}`;
 
-    this.emit("matchProgress", { ...status, virtual: true });
+    this.emit("jobProgress", { ...status, virtual: true });
     const { body } = res;
     try {
       expect(body, "No match manifest returned").to.be.null;
@@ -267,15 +269,15 @@ class BulkMatchClient extends SmartOnFhirClient {
         "The match manifest output contains no files",
       ).to.not.be.empty();
       debug("statusCompleted successfully");
-      this.emit("matchComplete", body as Types.MatchManifest);
+      this.emit("jobComplete", body as Types.MatchManifest);
       return body as Types.MatchManifest;
     } catch (ex) {
       debug("StatusCompleted In ERROR ");
-      this.emit("matchError", {
+      this.emit("jobError", {
         body: JSON.stringify(body) || null,
-        code: res.status || null,
+        code: res.response.status || null,
         message: (ex as Error).message,
-        responseHeaders: this.formatResponseHeaders(res.headers),
+        responseHeaders: this.formatResponseHeaders(res.response.headers),
       });
       throw ex;
     }
@@ -297,8 +299,12 @@ class BulkMatchClient extends SmartOnFhirClient {
     const now = Date.now();
     const elapsedTime = now - status.startedAt;
 
-    const progress = String(res.headers.get("x-progress") || "").trim();
-    const retryAfter = String(res.headers.get("retry-after") || "").trim();
+    const progress = String(
+      res.response.headers.get("x-progress") || "",
+    ).trim();
+    const retryAfter = String(
+      res.response.headers.get("retry-after") || "",
+    ).trim();
     const progressPct = parseInt(progress, 10);
 
     let retryAfterMSec = this.options.retryAfterMSec;
@@ -324,7 +330,7 @@ class BulkMatchClient extends SmartOnFhirClient {
           )}`,
     });
 
-    this.emit("matchProgress", {
+    this.emit("jobProgress", {
       ...status,
       retryAfterHeader: retryAfter,
       xProgressHeader: progress,
@@ -346,12 +352,12 @@ class BulkMatchClient extends SmartOnFhirClient {
     status: Types.MatchStatus,
     res: Types.CustomBodyResponse<object>,
   ): Promise<Error> {
-    const msg = `Unexpected status response ${res.status} ${res.statusText}`;
-    this.emit("matchError", {
+    const msg = `Unexpected status response ${res.response.status} ${res.response.statusText}`;
+    this.emit("jobError", {
       body: JSON.stringify(res.body) || null,
-      code: res.status || null,
+      code: res.response.status || null,
       message: msg,
-      responseHeaders: this.formatResponseHeaders(res.headers),
+      responseHeaders: this.formatResponseHeaders(res.response.headers),
     });
 
     const error = new Error(msg);
@@ -383,13 +389,13 @@ class BulkMatchClient extends SmartOnFhirClient {
       status.elapsedTime = elapsedTime;
 
       // match is complete
-      if (res.status === 200) {
+      if (res.response.status === 200) {
         return this._statusCompleted(status, res);
       }
 
       // match is in progress or server needs us to slow down requests.
       // recalculate delay and try again
-      if (res.status === 202 || res.status === 429) {
+      if (res.response.status === 202 || res.response.status === 429) {
         return this._statusPending(status, statusEndpoint, res);
       }
 
@@ -402,8 +408,8 @@ class BulkMatchClient extends SmartOnFhirClient {
 
   /**
    * Waits for the patient match to be completed and resolves with the export
-   * manifest when done. Emits one "matchStart", multiple "matchProgress"
-   * and one "matchComplete" events.
+   * manifest when done. Emits one "jobStart", multiple "jobProgress"
+   * and one "jobComplete" events.
    *
    * If the server replies with "retry-after" header we will use that to
    * compute our pooling frequency, but the next pool will be scheduled for
@@ -426,7 +432,7 @@ class BulkMatchClient extends SmartOnFhirClient {
       statusEndpoint,
     };
 
-    this.emit("matchStart", status);
+    this.emit("jobStart", status);
 
     return this._checkStatus(status, statusEndpoint);
   }
@@ -622,13 +628,18 @@ class BulkMatchClient extends SmartOnFhirClient {
     // kickoff -----------------------------------------------------------------
     this.on(
       "kickOffEnd",
-      ({ capabilityStatement, response, responseHeaders, requestOptions }) => {
+      ({
+        capabilityStatement,
+        response: res,
+        responseHeaders,
+        requestOptions,
+      }) => {
         logger.log("info", {
           eventId: "kickoff",
           eventDetail: {
-            exportUrl: response.url,
-            errorCode: response.status >= 400 ? response.status : null,
-            errorBody: response.status >= 400 ? response.body : null,
+            exportUrl: res.response.url,
+            errorCode: res.response.status >= 400 ? res.response.status : null,
+            errorBody: res.response.status >= 400 ? res.body : null,
             softwareName: capabilityStatement.software?.name || null,
             softwareVersion: capabilityStatement.software?.version || null,
             softwareReleaseDate:
@@ -642,7 +653,7 @@ class BulkMatchClient extends SmartOnFhirClient {
     );
 
     // status_progress ---------------------------------------------------------
-    this.on("matchProgress", (e) => {
+    this.on("jobProgress", (e) => {
       if (!e.virtual) {
         // skip the artificially triggered 100% event
         logger.log("info", {
@@ -657,7 +668,7 @@ class BulkMatchClient extends SmartOnFhirClient {
     });
 
     // status_error ------------------------------------------------------------
-    this.on("matchError", (eventDetail) => {
+    this.on("jobError", (eventDetail) => {
       logger.log("error", {
         eventId: "status_error",
         eventDetail,
@@ -665,7 +676,7 @@ class BulkMatchClient extends SmartOnFhirClient {
     });
 
     // status_complete ---------------------------------------------------------
-    this.on("matchComplete", (manifest) => {
+    this.on("jobComplete", (manifest) => {
       logger.log("info", {
         eventId: "status_complete",
         eventDetail: {

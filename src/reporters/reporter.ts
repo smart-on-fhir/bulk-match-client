@@ -10,10 +10,10 @@ export default abstract class Reporter {
   protected abstract onKickOffEnd(): void;
   protected abstract onKickOffError(error: Error): void;
   protected abstract onAuthorize(): void;
-  protected abstract onMatchStart(status: Types.MatchStatus): void;
-  protected abstract onMatchProgress(status: Types.MatchStatus): void;
-  protected abstract onMatchComplete(manifest: Types.MatchManifest): void;
-  protected abstract onMatchError(details: {
+  protected abstract onJobStart(status: Types.MatchStatus): void;
+  protected abstract onJobProgress(status: Types.MatchStatus): void;
+  protected abstract onJobComplete(manifest: Types.MatchManifest): void;
+  protected abstract onJobError(details: {
     body: string | fhir4.OperationOutcome | null;
     code: number | null;
     message?: string;
@@ -28,10 +28,10 @@ export default abstract class Reporter {
     this.client.on("kickOffStart", this.onKickOffStart);
     this.client.on("kickOffEnd", this.onKickOffEnd);
     this.client.on("kickOffError", this.onKickOffError);
-    this.client.on("matchStart", this.onMatchStart);
-    this.client.on("matchProgress", this.onMatchProgress);
-    this.client.on("matchComplete", this.onMatchComplete);
-    this.client.on("matchError", this.onMatchError);
+    this.client.on("jobStart", this.onJobStart);
+    this.client.on("jobProgress", this.onJobProgress);
+    this.client.on("jobComplete", this.onJobComplete);
+    this.client.on("jobError", this.onJobError);
     this.client.on("downloadStart", this.onDownloadStart);
     this.client.on("allDownloadsComplete", this.onDownloadComplete);
     this.client.on("error", this.onError);
@@ -42,10 +42,10 @@ export default abstract class Reporter {
     this.client.off("kickOffStart", this.onKickOffStart);
     this.client.off("kickOffEnd", this.onKickOffEnd);
     this.client.off("kickOffError", this.onKickOffError);
-    this.client.off("matchStart", this.onMatchStart);
-    this.client.off("matchProgress", this.onMatchProgress);
-    this.client.off("matchComplete", this.onMatchComplete);
-    this.client.off("matchError", this.onMatchError);
+    this.client.off("jobStart", this.onJobStart);
+    this.client.off("jobProgress", this.onJobProgress);
+    this.client.off("jobComplete", this.onJobComplete);
+    this.client.off("jobError", this.onJobError);
     this.client.off("downloadStart", this.onDownloadStart);
     this.client.off("allDownloadsComplete", this.onDownloadComplete);
     this.client.off("error", this.onError);

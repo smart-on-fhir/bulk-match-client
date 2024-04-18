@@ -20,62 +20,70 @@ async function augmentedFetch(input, options = {}) {
     options.headers["user-agent"] =
         `SMART-On-FHIR Bulk Match Client / ${package_json_1.default.version}`;
     debug("options: ", JSON.stringify(options));
+    //@ts-ignore
     return (fetch(input, options)
         // After requests – handle logging and retrying
         .then(async (response) => {
-        debug("in response");
-        response
-            .clone()
-            .text()
-            .then((payload) => {
-            debug("payload", payload);
-            debug("\n=======================================================" +
-                "\n--------------------- Request -------------------------" +
-                "\n%s %s\n%o\n\n%o" +
-                "\n--------------------- Response ------------------------" +
-                "\n%s %s\n%o\n\n%o" +
-                "\n=======================================================", 
-            // REQUEST
-            options.method, input, options.headers, options.body ?? "", 
-            // RESPONSE
-            response.status, response.statusText, JSON.stringify(response.headers.entries()), payload ?? "");
-            // Handle transient errors by asking the user if (s)he wants to
-            // retry. Note that this only happens if the "reporter" option
-            // is "cli", which implies interactive capabilities. If the
-            // reporter is "text", then there may be no way to render a
-            // question prompt so transient errors should be handled
-            // downstream by the postprocessing components
-            if (options?.context?.interactive &&
-                payload &&
-                response.headers.get("Content-Type") === "application/json") {
-                // @ts-ignore OperationOutcome errors
-                // Parse the payload from above into JSON
-                const oo = JSON.parse(payload);
-                if (oo.resourceType === "OperationOutcome") {
-                    if (oo.issue.every((i) => i.code === "transient")) {
-                        const msg = oo.issue
-                            .map((i) => i.details?.text || i.diagnostics)
-                            .filter(Boolean);
-                        utils_1.print.commit();
-                        console.log("The server replied with transient error(s)".red.bold);
-                        if (msg) {
-                            console.log("- " + msg.join("\n- "));
-                        }
-                        const answer = process.env.AUTO_RETRY_TRANSIENT_ERRORS ||
-                            (0, prompt_sync_1.default)()("Would you like to retry? [Y/n]".cyan);
-                        if (!answer || answer.toLowerCase() === "y") {
-                            return augmentedFetch(input, options);
-                        }
-                        else {
-                            (0, utils_1.print)("Cancelled by user");
-                            process.exit(0);
-                        }
+        let body = await response.text();
+        debug(response.type);
+        debug(response.type);
+        debug(response.type);
+        if (body.length && response.type.match(/\bjson\b/i)) {
+            body = JSON.parse(body);
+        }
+        if (!response.ok) {
+            // @ts-ignore
+            throw new Error(body?.message || body || response.statusText);
+        }
+        debug("\n=======================================================" +
+            "\n--------------------- Request -------------------------" +
+            "\n%s %s\n%o\n\n%o" +
+            "\n--------------------- Response ------------------------" +
+            "\n%s %s\n%o\n\n%o" +
+            "\n=======================================================", 
+        // REQUEST
+        options.method, input, options.headers, options.body ?? "", 
+        // RESPONSE
+        response.status, response.statusText, JSON.stringify(response.headers.entries()), body ?? "");
+        // Handle transient errors by asking the user if (s)he wants to
+        // retry. Note that this only happens if the "reporter" option
+        // is "cli", which implies interactive capabilities. If the
+        // reporter is "text", then there may be no way to render a
+        // question prompt so transient errors should be handled
+        // downstream by the postprocessing components
+        if (options?.context?.interactive &&
+            body &&
+            response.headers.get("Content-Type") === "application/json") {
+            // @ts-ignore OperationOutcome errors
+            // Parse the body from above into JSON
+            const oo = JSON.parse(body);
+            if (oo.resourceType === "OperationOutcome") {
+                if (oo.issue.every((i) => i.code === "transient")) {
+                    const msg = oo.issue
+                        .map((i) => i.details?.text || i.diagnostics)
+                        .filter(Boolean);
+                    utils_1.print.commit();
+                    console.log("The server replied with transient error(s)".red.bold);
+                    if (msg) {
+                        console.log("- " + msg.join("\n- "));
+                    }
+                    const answer = process.env.AUTO_RETRY_TRANSIENT_ERRORS ||
+                        (0, prompt_sync_1.default)()("Would you like to retry? [Y/n]".cyan);
+                    if (!answer || answer.toLowerCase() === "y") {
+                        return augmentedFetch(input, options);
+                    }
+                    else {
+                        (0, utils_1.print)("Cancelled by user");
+                        process.exit(0);
                     }
                 }
             }
-            debug("about to return response");
-        });
-        return response;
+        }
+        debug("about to return response");
+        return {
+            response,
+            body: body,
+        };
     })
         .catch((e) => {
         debug("FAILED fetch: ", e.message);

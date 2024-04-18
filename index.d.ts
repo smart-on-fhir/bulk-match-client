@@ -2,7 +2,10 @@ import { Algorithm } from "jsonwebtoken";
 import jose from "node-jose";
 
 export declare namespace BulkMatchClient {
-  type CustomBodyResponse<T> = Omit<Response, "body"> & { body: T };
+  type CustomBodyResponse<T> = {
+    response: Response;
+    body: T;
+  };
 
   /**
    * An object controlling logging behavior; provided by config file
@@ -291,11 +294,6 @@ export declare namespace BulkMatchClient {
     alg: Algorithm;
     [key: string]: unknown;
   }
-
-  interface TokenResponse {
-    access_token: string;
-  }
-
   interface MatchManifest {
     /**
      * indicates the server's time when the query is run. The response

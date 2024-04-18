@@ -40,15 +40,15 @@ export interface BulkMatchClientEvents extends SmartOnFhirClientEvents {
    * Emitted when the patient match has began
    * @event
    */
-  matchStart: (this: BulkMatchClient, status: Types.MatchStatus) => void;
+  jobStart: (this: BulkMatchClient, status: Types.MatchStatus) => void;
 
   /**
    * Emitted for every status change while waiting for the patient match
    * @event
    */
-  matchProgress: (this: BulkMatchClient, status: Types.MatchStatus) => void;
+  jobProgress: (this: BulkMatchClient, status: Types.MatchStatus) => void;
 
-  matchError: (
+  jobError: (
     this: BulkMatchClient,
     details: {
       body: string | fhir4.OperationOutcome | null;
@@ -62,7 +62,7 @@ export interface BulkMatchClientEvents extends SmartOnFhirClientEvents {
    * Emitted when the export is completed
    * @event
    */
-  matchComplete: (this: BulkMatchClient, manifest: Types.MatchManifest) => void;
+  jobComplete: (this: BulkMatchClient, manifest: Types.MatchManifest) => void;
 
   /**
    * Emitted when the download starts

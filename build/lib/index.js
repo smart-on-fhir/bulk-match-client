@@ -26,9 +26,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Utils = exports.request = exports.Errors = exports.FileDownload = void 0;
-var FileDownload_1 = require("./FileDownload");
-Object.defineProperty(exports, "FileDownload", { enumerable: true, get: function () { return __importDefault(FileDownload_1).default; } });
+exports.Utils = exports.request = exports.Errors = void 0;
 exports.Errors = __importStar(require("./errors"));
 var request_1 = require("./request");
 Object.defineProperty(exports, "request", { enumerable: true, get: function () { return __importDefault(request_1).default; } });

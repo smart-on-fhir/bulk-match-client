@@ -22,21 +22,21 @@ export default class TextReporter extends Reporter {
     console.log("Got new access token");
   }
 
-  onMatchStart(status: Types.MatchStatus) {
+  onJobStart(status: Types.MatchStatus) {
     this.downloadedPct = 0;
     console.log(status.message);
     console.log(`Status endpoint: ${status.statusEndpoint}`);
   }
 
-  onMatchProgress(status: Types.MatchStatus) {
+  onJobProgress(status: Types.MatchStatus) {
     console.log(status.message);
   }
 
-  onMatchComplete() {
+  onJobComplete() {
     console.log("Received manifest manifest");
   }
 
-  onMatchError(details: {
+  onJobError(details: {
     body: string | fhir4.OperationOutcome | null;
     code: number | null;
     message?: string;

@@ -20,10 +20,10 @@ export async function getWellKnownSmartConfig(
 ): Promise<JsonObject> {
   // BUGFIX: Previously a leading slash here would ignore any slugs past the base path
   const url = new URL(".well-known/smart-configuration", baseUrl);
-  return request(url)
-    .then(async (x) => {
+  return request<JsonObject>(url)
+    .then(async (res) => {
       debug("Fetched .well-known/smart-configuration from %s", url);
-      return await x.json();
+      return res.body;
     })
     .catch((e) => {
       debug(
@@ -47,11 +47,11 @@ export async function getCapabilityStatement(
   const url = new URL("metadata", baseUrl.replace(/\/*$/, "/"));
   return request(url)
     .then(async (resp) => {
-      if (resp.status === 404) {
-        throw Error(resp.statusText);
+      if (resp.response.status === 404) {
+        throw Error(resp.response.statusText);
       }
       debug("Fetched CapabilityStatement from %s", url);
-      return (await resp.json()) as fhir4.CapabilityStatement;
+      return resp.body as fhir4.CapabilityStatement;
     })
     .catch((e) => {
       debug(
