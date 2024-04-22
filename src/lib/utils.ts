@@ -10,6 +10,77 @@ import request from "./request";
 
 const debug = util.debuglog("bulk-match-utils");
 
+////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////
+// Client-specific helpers
+
+/**
+ * Filter a Headers object down to a selected series of headers
+ * @param headers The object of headers to filter
+ * @param selectedHeaders The headers that should remain post-filter
+ * @returns object | undefined
+ */
+export function filterResponseHeaders(
+  headers: Types.ResponseHeaders,
+  selectedHeaders: (string | RegExp)[],
+): object | undefined {
+  // In the event the headers is undefined or null, just return undefined
+  if (!headers) return undefined;
+  // NOTE: If an empty array of headers is specified, return none of them
+  let matchedHeaders = {};
+  for (const headerPair of headers.entries()) {
+    const [key, value] = headerPair;
+    // These are usually normalized to lowercase by most libraries, but just to be sure
+    const lowercaseKey = key.toLocaleLowerCase();
+    // Each selectedHeader is either a RegExp, where we check for matches via RegExp.test
+    // or a string, where we check for matches with equality
+    if (
+      selectedHeaders.find((h) =>
+        isRegExp(h)
+          ? h.test(lowercaseKey)
+          : h.toLocaleLowerCase() === lowercaseKey,
+      )
+    )
+      matchedHeaders = { ...matchedHeaders, [key]: value };
+    // If we don't find a selectedHeader that matches this header, we move on
+  }
+  return matchedHeaders;
+}
+
+////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////
+// Auth utils
+
+/**
+ * Given a token response, computes and returns the expiresAt timestamp.
+ * Note that this should only be used immediately after an access token is
+ * received, otherwise the computed timestamp will be incorrect.
+ */
+export function getAccessTokenExpiration(
+  tokenResponse: Types.TokenResponse,
+): number {
+  const now = Math.floor(Date.now() / 1000);
+
+  // Option 1 - using the expires_in property of the token response
+  if (tokenResponse.expires_in) {
+    return now + tokenResponse.expires_in;
+  }
+
+  // Option 2 - using the exp property of JWT tokens (must not assume JWT!)
+  if (tokenResponse.access_token) {
+    const tokenBody = jwt.decode(tokenResponse.access_token);
+    if (tokenBody && typeof tokenBody == "object" && tokenBody.exp) {
+      return tokenBody.exp;
+    }
+  }
+
+  // Option 3 - if none of the above worked set this to 5 minutes after now
+  return now + 300;
+}
+
+////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////
+// FHIR utils
 /**
  * Given a `baseUrl` fetches a `/.well-known/smart-configuration` statement
  * from the root of the baseUrl. Note that this request is cached by default!
@@ -110,6 +181,62 @@ export async function detectTokenUrl(baseUrl: string): Promise<string> {
 }
 
 /**
+ * Display a FHIR codeable concept as a string
+ * @param cc fhir4.CodeableConcept
+ * @returns string representation of the CC
+ */
+export function displayCodeableConcept(cc: fhir4.CodeableConcept) {
+  let display = "";
+  // If there is a text display, start with that
+  if (cc.text) {
+    display += cc.text;
+  }
+  cc.coding?.map((coding, i) => {
+    // Store text for each coding in an array; to be joined and added to display at the end
+    const localText = [`Includes coding ${i}`];
+    if (coding.system) localText.push(`System: ${coding.system}`);
+    if (coding.version) localText.push(`Version: ${coding.version}`);
+    if (coding.code) localText.push(`Code: ${coding.code}`);
+    if (coding.display) localText.push(`Display: ${coding.display}`);
+    if (localText.length > 1) {
+      display += "\n" + localText.join(" ");
+    }
+  });
+  return display;
+}
+
+export function fhirInstant(input: unknown): string {
+  input = String(input || "");
+  if (input) {
+    const instant = moment(new Date(input as string));
+    if (instant.isValid()) {
+      return instant.format();
+    } else {
+      throw new Error(`Invalid fhirInstant: ${input}`);
+    }
+  }
+  return "";
+}
+
+////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////
+// For Data Validation
+/**
+ * A generic helper for normalizing values of unknown types and string representations
+ * to boolean equivalents
+ * @param val value of unknown type and potentially of string-coded boolean representations
+ * @returns true or false
+ */
+export function parseBoolean(val: unknown) {
+  const RE_FALSE = /^(0|no|false|off|null|undefined|NaN|none|)$/i;
+  return !RE_FALSE.test(String(val).trim());
+}
+
+////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////
+// Generic Helpers
+
+/**
  * Simple utility for waiting. Returns a promise that will resolve after the
  * given number of milliseconds. The timer can be aborted if an `AbortSignal`
  * is passed as second argument.
@@ -139,91 +266,6 @@ export function wait(ms: number, signal?: AbortSignal): Promise<void> {
   });
 }
 
-export function formatDuration(ms: number) {
-  const out = [];
-  const meta = [
-    { n: 1000 * 60 * 60 * 24 * 7, label: "week" },
-    { n: 1000 * 60 * 60 * 24, label: "day" },
-    { n: 1000 * 60 * 60, label: "hour" },
-    { n: 1000 * 60, label: "minute" },
-    { n: 1000, label: "second" },
-  ];
-
-  meta.reduce((prev, cur) => {
-    const chunk = Math.floor(prev / cur.n); // console.log(chunk)
-    if (chunk) {
-      out.push(`${chunk} ${cur.label}${chunk > 1 ? "s" : ""}`);
-      return prev - chunk * cur.n;
-    }
-    return prev;
-  }, ms);
-
-  if (!out.length) {
-    // @ts-ignore
-    out.push(`0 ${meta.pop().label}s`);
-  }
-
-  if (out.length > 1) {
-    const last = out.pop();
-    out[out.length - 1] += " and " + last;
-  }
-
-  return out.join(", ");
-}
-
-export const print = (() => {
-  let lastLinesLength = 0;
-
-  const _print = (lines: string | string[] = "") => {
-    _print.clear();
-    lines = Array.isArray(lines) ? lines : [lines];
-    process.stdout.write(lines.join("\n") + "\n");
-    lastLinesLength = lines.length;
-    return _print;
-  };
-
-  _print.clear = () => {
-    if (lastLinesLength) {
-      process.stdout.write("\x1B[" + lastLinesLength + "A\x1B[0G\x1B[0J");
-    }
-    return _print;
-  };
-
-  _print.commit = () => {
-    lastLinesLength = 0;
-    return _print;
-  };
-
-  return _print;
-})();
-
-/**
- * Given a token response, computes and returns the expiresAt timestamp.
- * Note that this should only be used immediately after an access token is
- * received, otherwise the computed timestamp will be incorrect.
- */
-export function getAccessTokenExpiration(
-  tokenResponse: Types.TokenResponse,
-): number {
-  const now = Math.floor(Date.now() / 1000);
-
-  // Option 1 - using the expires_in property of the token response
-  if (tokenResponse.expires_in) {
-    return now + tokenResponse.expires_in;
-  }
-
-  // Option 2 - using the exp property of JWT tokens (must not assume JWT!)
-  if (tokenResponse.access_token) {
-    const tokenBody = jwt.decode(tokenResponse.access_token);
-    if (tokenBody && typeof tokenBody == "object" && tokenBody.exp) {
-      return tokenBody.exp;
-    }
-  }
-
-  // Option 3 - if none of the above worked set this to 5 minutes after now
-  return now + 300;
-}
-
 /**
  * Returns the byte size with units
  * @param fileSizeInBytes The size to format
@@ -242,33 +284,6 @@ export function humanFileSize(fileSizeInBytes = 0, useBits = false): string {
   }
 
   return Math.max(fileSizeInBytes, 0).toFixed(1) + units[i];
-}
-
-export function assert(
-  condition: unknown,
-  error?: string | ErrorConstructor,
-  ctor = Error,
-): asserts condition {
-  if (!condition) {
-    if (typeof error === "function") {
-      throw new error();
-    } else {
-      throw new ctor(error || "Assertion failed");
-    }
-  }
-}
-
-export function fhirInstant(input: unknown): string {
-  input = String(input || "");
-  if (input) {
-    const instant = moment(new Date(input as string));
-    if (instant.isValid()) {
-      return instant.format();
-    } else {
-      throw new Error(`Invalid fhirInstant: ${input}`);
-    }
-  }
-  return "";
 }
 
 /**
@@ -304,45 +319,87 @@ export function generateProgress(pct = 0, length = 40) {
 }
 
 /**
- * Filter a Headers object down to a selected series of headers
- * @param headers The object of headers to filter
- * @param selectedHeaders The headers that should remain post-filter
- * @returns object | undefined
+ * A helper for generic ms times as human-readable durations
+ * @param ms
+ * @returns
  */
-export function filterResponseHeaders(
-  headers: Types.ResponseHeaders,
-  selectedHeaders: (string | RegExp)[],
-): object | undefined {
-  // In the event the headers is undefined or null, just return undefined
-  if (!headers) return undefined;
-  // NOTE: If an empty array of headers is specified, return none of them
-  let matchedHeaders = {};
-  for (const headerPair of headers.entries()) {
-    const [key, value] = headerPair;
-    // These are usually normalized to lowercase by most libraries, but just to be sure
-    const lowercaseKey = key.toLocaleLowerCase();
-    // Each selectedHeader is either a RegExp, where we check for matches via RegExp.test
-    // or a string, where we check for matches with equality
-    if (
-      selectedHeaders.find((h) =>
-        isRegExp(h)
-          ? h.test(lowercaseKey)
-          : h.toLocaleLowerCase() === lowercaseKey,
-      )
-    )
-      matchedHeaders = { ...matchedHeaders, [key]: value };
-    // If we don't find a selectedHeader that matches this header, we move on
+export function formatDuration(ms: number) {
+  const out = [];
+  const meta = [
+    { n: 1000 * 60 * 60 * 24 * 7, label: "week" },
+    { n: 1000 * 60 * 60 * 24, label: "day" },
+    { n: 1000 * 60 * 60, label: "hour" },
+    { n: 1000 * 60, label: "minute" },
+    { n: 1000, label: "second" },
+  ];
+
+  meta.reduce((prev, cur) => {
+    const chunk = Math.floor(prev / cur.n); // console.log(chunk)
+    if (chunk) {
+      out.push(`${chunk} ${cur.label}${chunk > 1 ? "s" : ""}`);
+      return prev - chunk * cur.n;
+    }
+    return prev;
+  }, ms);
+
+  if (!out.length) {
+    // @ts-ignore
+    out.push(`0 ${meta.pop().label}s`);
   }
-  return matchedHeaders;
+
+  if (out.length > 1) {
+    const last = out.pop();
+    out[out.length - 1] += " and " + last;
+  }
+
+  return out.join(", ");
 }
 
 /**
- * A generic helper for normalizing values of unknown types and string representations
- * to boolean equivalents
- * @param val value of unknown type and potentially of string-coded boolean representations
- * @returns true or false
+ * An old-school not-class style helper for maintaining clean terminal output
  */
-export function parseBoolean(val: unknown) {
-  const RE_FALSE = /^(0|no|false|off|null|undefined|NaN|none|)$/i;
-  return !RE_FALSE.test(String(val).trim());
+export const print = (() => {
+  let lastLinesLength = 0;
+
+  const _print = (lines: string | string[] = "") => {
+    _print.clear();
+    lines = Array.isArray(lines) ? lines : [lines];
+    process.stdout.write(lines.join("\n") + "\n");
+    lastLinesLength = lines.length;
+    return _print;
+  };
+
+  _print.clear = () => {
+    if (lastLinesLength) {
+      process.stdout.write("\x1B[" + lastLinesLength + "A\x1B[0G\x1B[0J");
+    }
+    return _print;
+  };
+
+  _print.commit = () => {
+    lastLinesLength = 0;
+    return _print;
+  };
+
+  return _print;
+})();
+
+/**
+ * Custom assertion checker
+ * @param condition the condition to assert
+ * @param error The error to throw/a method for building an error to throw
+ * @param ctor A constructor to build something using the error
+ */
+export function assert(
+  condition: unknown,
+  error?: string | ErrorConstructor,
+  ctor = Error,
+): asserts condition {
+  if (!condition) {
+    if (typeof error === "function") {
+      throw new error();
+    } else {
+      throw new ctor(error || "Assertion failed");
+    }
+  }
 }

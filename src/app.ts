@@ -60,12 +60,14 @@ APP.option("--status [url]", "Status endpoint of already started export.");
 APP.action(async (args: Types.CLIOptions) => {
   const { config, ...params } = args;
   const defaultsPath = resolve(__dirname, "../config/defaults.js");
+
   const base: Types.NormalizedOptions = await import(defaultsPath);
-  // Options will be a combination of Normalized Options and CLI Options
+  // Options will be a combination of Normalized Options and CLI Options, building up from the default config
   const options: Partial<Types.NormalizedOptions & Types.CLIOptions> = {
     ...base,
   };
 
+  //
   if (config) {
     const configPath = resolve(__dirname, "..", config);
     const cfg: Types.ConfigFileOptions = await import(configPath);
@@ -146,10 +148,13 @@ APP.action(async (args: Types.CLIOptions) => {
 
   const statusEndpoint =
     (options as Types.CLIOptions).status || (await client.kickOff());
+  debug("Match request started, checking in at the following endpoint");
   debug(statusEndpoint);
   const manifest = await client.waitForMatch(statusEndpoint);
+  debug("Match completed - resulting in the following manifest");
   debug(JSON.stringify(manifest));
   const matches = await client.downloadAllFiles(manifest);
+  debug("Matches downloaded for the following:");
   debug(JSON.stringify(matches));
 
   if (options.reporter === "cli") {

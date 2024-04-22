@@ -55,9 +55,6 @@ const debug = (0, util_1.debuglog)("bulk-match-client");
  * ```
  */
 class BulkMatchClient extends SmartOnFhirClient_1.default {
-    constructor(options) {
-        super(options);
-    }
     /**
      * Internal method for formatting response headers for some emitted events
      * based on `options.logResponseHeaders`
@@ -105,7 +102,6 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
         return this._request(url, requestOptions, "kick-off patient match request")
             .then(async (res) => {
             console.log(res);
-            debug(JSON.stringify(res));
             const location = res.response.headers.get("content-location");
             if (!location) {
                 throw new Error("The kick-off patient match response did not include content-location header");
@@ -234,12 +230,10 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
             (0, code_1.expect)(body, "No match manifest returned").to.be.null;
             (0, code_1.expect)(body.output, "The match manifest output is not an array").to.be.an.array();
             (0, code_1.expect)(body.output, "The match manifest output contains no files").to.not.be.empty();
-            debug("statusCompleted successfully");
             this.emit("jobComplete", body);
             return body;
         }
         catch (ex) {
-            debug("StatusCompleted In ERROR ");
             this.emit("jobError", {
                 body: JSON.stringify(body) || null,
                 code: res.response.status || null,
@@ -307,7 +301,9 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
                 message: msg,
                 responseHeaders: this.formatResponseHeaders(res.response.headers),
             });
-            throw new Error(msg);
+            throw new lib_1.Errors.OperationOutcomeError({
+                res: res,
+            });
         }
         return this._statusPending(status, statusEndpoint, res);
     }
@@ -334,7 +330,6 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
      * @returns A Promise resolving to a MatchManifest (or throws an error)
      */
     async _checkStatus(status, statusEndpoint) {
-        debug("Making a status call");
         return this._request(statusEndpoint, {
             headers: {
                 accept: "application/json, application/fhir+ndjson",
@@ -450,7 +445,6 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
      * @returns
      */
     async downloadFile({ file, fileName, subFolder = "", exportType = "output", }) {
-        debug("Download starting for ", file);
         this.emit("downloadStart", {
             fileUrl: file.url,
             itemType: exportType,
@@ -463,7 +457,6 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
                 fileUrl: file.url,
             });
             const response = resp.body;
-            debug(`Response for ${fileName}: ${response}`);
             await this.saveFile(response, fileName, subFolder);
         })
             .catch((e) => {
@@ -604,9 +597,6 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
             });
             logger.log("info", { eventId: "export_complete", eventDetail });
         });
-    }
-    abort() {
-        this.abort();
     }
 }
 exports.default = BulkMatchClient;

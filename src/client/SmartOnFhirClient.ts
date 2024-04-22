@@ -157,15 +157,19 @@ class SmartOnFhirClient extends EventEmitter {
       keyid: privateKey.kid,
     });
 
-    const authRequestFormData = new FormData();
-    authRequestFormData.append("scope", this.options.scope || "system/*.read");
+    const authRequestFormData = new URLSearchParams();
+    // Default scope should be "system/Patient.rs",
+    authRequestFormData.append(
+      "scope",
+      this.options.scope || "system/Patient.rs",
+    );
     authRequestFormData.append("grant_type", "client_credentials");
     authRequestFormData.append(
       "client_assertion_type",
       "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
     );
     authRequestFormData.append("client_assertion", token);
-
+    console.log(authRequestFormData);
     const authRequest = request<Types.TokenResponse>(tokenUrl, {
       method: "POST",
       headers: {

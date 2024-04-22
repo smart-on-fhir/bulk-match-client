@@ -12,7 +12,6 @@ async function augmentedFetch<T>(
   input: RequestInfo | URL,
   options: Types.AugmentedRequestInit = {},
 ): Promise<Types.CustomBodyResponse<T>> {
-  debug("in bulk-match-request");
   // Before requests: augment options to include a custom header
   if (!options.headers) {
     options.headers = {};
@@ -21,7 +20,6 @@ async function augmentedFetch<T>(
   options.headers["user-agent"] =
     `SMART-On-FHIR Bulk Match Client / ${pkg.version}`;
 
-  debug("options: ", JSON.stringify(options));
   //@ts-ignore
   return (
     fetch(input, options)
@@ -29,10 +27,10 @@ async function augmentedFetch<T>(
       .then(async (response) => {
         let body = await response.text();
         const contentType = response.headers.get("content-type") || "";
-        debug(contentType);
         if (body.length && contentType.match(/\bjson\b/i)) {
           body = JSON.parse(body);
         }
+
         if (!response.ok) {
           // @ts-ignore
           throw new Error(body?.message || body || response.statusText);
@@ -95,7 +93,6 @@ async function augmentedFetch<T>(
           }
         }
 
-        debug("about to return response");
         return {
           response,
           body: body as T,

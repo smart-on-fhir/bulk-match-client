@@ -45,10 +45,6 @@ interface BulkMatchClient {
  * ```
  */
 class BulkMatchClient extends SmartOnFhirClient {
-  constructor(options: Types.NormalizedOptions) {
-    super(options);
-  }
-
   /**
    * Internal method for formatting response headers for some emitted events
    * based on `options.logResponseHeaders`
@@ -114,7 +110,6 @@ class BulkMatchClient extends SmartOnFhirClient {
     )
       .then(async (res) => {
         console.log(res);
-        debug(JSON.stringify(res));
         const location = res.response.headers.get("content-location");
         if (!location) {
           throw new Error(
@@ -268,11 +263,9 @@ class BulkMatchClient extends SmartOnFhirClient {
         (body as Types.MatchManifest).output,
         "The match manifest output contains no files",
       ).to.not.be.empty();
-      debug("statusCompleted successfully");
       this.emit("jobComplete", body as Types.MatchManifest);
       return body as Types.MatchManifest;
     } catch (ex) {
-      debug("StatusCompleted In ERROR ");
       this.emit("jobError", {
         body: JSON.stringify(body) || null,
         code: res.response.status || null,
@@ -365,7 +358,9 @@ class BulkMatchClient extends SmartOnFhirClient {
         responseHeaders: this.formatResponseHeaders(res.response.headers),
       });
 
-      throw new Error(msg);
+      throw new Errors.OperationOutcomeError({
+        res: res as Types.CustomBodyResponse<fhir4.OperationOutcome>,
+      });
     }
     return this._statusPending(status, statusEndpoint, res);
   }
@@ -398,7 +393,6 @@ class BulkMatchClient extends SmartOnFhirClient {
     status: Types.MatchStatus,
     statusEndpoint: string,
   ): Promise<Types.MatchManifest> {
-    debug("Making a status call");
     return this._request<object>(
       statusEndpoint,
       {
@@ -556,8 +550,6 @@ class BulkMatchClient extends SmartOnFhirClient {
     subFolder?: string;
     exportType?: string;
   }): Promise<void> {
-    debug("Download starting for ", file);
-
     this.emit("downloadStart", {
       fileUrl: file.url,
       itemType: exportType,
@@ -571,7 +563,6 @@ class BulkMatchClient extends SmartOnFhirClient {
           fileUrl: file.url,
         });
         const response = resp.body;
-        debug(`Response for ${fileName}: ${response}`);
         await this.saveFile(response, fileName, subFolder);
       })
       .catch((e) => {
@@ -747,9 +738,6 @@ class BulkMatchClient extends SmartOnFhirClient {
 
       logger.log("info", { eventId: "export_complete", eventDetail });
     });
-  }
-  public abort() {
-    this.abort();
   }
 }
 

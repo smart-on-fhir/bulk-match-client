@@ -60,10 +60,11 @@ APP.action(async (args) => {
     const { config, ...params } = args;
     const defaultsPath = (0, path_1.resolve)(__dirname, "../config/defaults.js");
     const base = await Promise.resolve(`${defaultsPath}`).then(s => __importStar(require(s)));
-    // Options will be a combination of Normalized Options and CLI Options
+    // Options will be a combination of Normalized Options and CLI Options, building up from the default config
     const options = {
         ...base,
     };
+    //
     if (config) {
         const configPath = (0, path_1.resolve)(__dirname, "..", config);
         const cfg = await Promise.resolve(`${configPath}`).then(s => __importStar(require(s)));
@@ -128,10 +129,13 @@ APP.action(async (args) => {
         process.exit(1);
     });
     const statusEndpoint = options.status || (await client.kickOff());
+    debug("Match request started, checking in at the following endpoint");
     debug(statusEndpoint);
     const manifest = await client.waitForMatch(statusEndpoint);
+    debug("Match completed - resulting in the following manifest");
     debug(JSON.stringify(manifest));
     const matches = await client.downloadAllFiles(manifest);
+    debug("Matches downloaded for the following:");
     debug(JSON.stringify(matches));
     if (options.reporter === "cli") {
         const answer = (0, prompt_sync_1.default)()("Do you want to signal the server that this export can be removed? [Y/n]"

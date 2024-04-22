@@ -11,7 +11,6 @@ const package_json_1 = __importDefault(require("../../package.json"));
 const utils_1 = require("./utils");
 const debug = util_1.default.debuglog("bulk-match-request");
 async function augmentedFetch(input, options = {}) {
-    debug("in bulk-match-request");
     // Before requests: augment options to include a custom header
     if (!options.headers) {
         options.headers = {};
@@ -19,14 +18,12 @@ async function augmentedFetch(input, options = {}) {
     // @ts-ignore
     options.headers["user-agent"] =
         `SMART-On-FHIR Bulk Match Client / ${package_json_1.default.version}`;
-    debug("options: ", JSON.stringify(options));
     //@ts-ignore
     return (fetch(input, options)
         // After requests – handle logging and retrying
         .then(async (response) => {
         let body = await response.text();
         const contentType = response.headers.get("content-type") || "";
-        debug(contentType);
         if (body.length && contentType.match(/\bjson\b/i)) {
             body = JSON.parse(body);
         }
@@ -78,7 +75,6 @@ async function augmentedFetch(input, options = {}) {
                 }
             }
         }
-        debug("about to return response");
         return {
             response,
             body: body,
