@@ -193,14 +193,14 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
         if (this.options.onlySingleMatch) {
             parameters.push({
                 name: "onlySingleMatch",
-                valueBoolean: Boolean(this.options.onlySingleMatch),
+                valueBoolean: lib_1.Utils.parseBoolean(this.options.onlySingleMatch),
             });
         }
         // onlyCertainMatches -----------------------------------------------------------
         if (this.options.onlyCertainMatches) {
             parameters.push({
                 name: "onlyCertainMatches",
-                valueBoolean: Boolean(this.options.onlyCertainMatches),
+                valueBoolean: lib_1.Utils.parseBoolean(this.options.onlyCertainMatches),
             });
         }
         // count -------------------------------------------------------------

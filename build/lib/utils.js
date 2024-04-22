@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.filterResponseHeaders = exports.generateProgress = exports.fhirInstant = exports.assert = exports.humanFileSize = exports.getAccessTokenExpiration = exports.print = exports.formatDuration = exports.wait = exports.detectTokenUrl = exports.getTokenEndpointFromCapabilityStatement = exports.getTokenEndpointFromWellKnownSmartConfig = exports.getCapabilityStatement = exports.getWellKnownSmartConfig = void 0;
+exports.parseBoolean = exports.filterResponseHeaders = exports.generateProgress = exports.fhirInstant = exports.assert = exports.humanFileSize = exports.getAccessTokenExpiration = exports.print = exports.formatDuration = exports.wait = exports.detectTokenUrl = exports.getTokenEndpointFromCapabilityStatement = exports.getTokenEndpointFromWellKnownSmartConfig = exports.getCapabilityStatement = exports.getWellKnownSmartConfig = void 0;
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 require("colors");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
@@ -294,3 +294,14 @@ function filterResponseHeaders(headers, selectedHeaders) {
     return matchedHeaders;
 }
 exports.filterResponseHeaders = filterResponseHeaders;
+/**
+ * A generic helper for normalizing values of unknown types and string representations
+ * to boolean equivalents
+ * @param val value of unknown type and potentially of string-coded boolean representations
+ * @returns true or false
+ */
+function parseBoolean(val) {
+    const RE_FALSE = /^(0|no|false|off|null|undefined|NaN|none|)$/i;
+    return !RE_FALSE.test(String(val).trim());
+}
+exports.parseBoolean = parseBoolean;

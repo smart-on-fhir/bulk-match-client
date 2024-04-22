@@ -211,7 +211,7 @@ class BulkMatchClient extends SmartOnFhirClient {
     if (this.options.onlySingleMatch) {
       parameters.push({
         name: "onlySingleMatch",
-        valueBoolean: Boolean(this.options.onlySingleMatch),
+        valueBoolean: Utils.parseBoolean(this.options.onlySingleMatch),
       });
     }
 
@@ -219,7 +219,7 @@ class BulkMatchClient extends SmartOnFhirClient {
     if (this.options.onlyCertainMatches) {
       parameters.push({
         name: "onlyCertainMatches",
-        valueBoolean: Boolean(this.options.onlyCertainMatches),
+        valueBoolean: Utils.parseBoolean(this.options.onlyCertainMatches),
       });
     }
 

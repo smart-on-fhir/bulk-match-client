@@ -335,3 +335,14 @@ export function filterResponseHeaders(
   }
   return matchedHeaders;
 }
+
+/**
+ * A generic helper for normalizing values of unknown types and string representations
+ * to boolean equivalents
+ * @param val value of unknown type and potentially of string-coded boolean representations
+ * @returns true or false
+ */
+export function parseBoolean(val: unknown) {
+  const RE_FALSE = /^(0|no|false|off|null|undefined|NaN|none|)$/i;
+  return !RE_FALSE.test(String(val).trim());
+}
