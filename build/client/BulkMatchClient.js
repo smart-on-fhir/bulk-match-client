@@ -290,12 +290,34 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
         return lib_1.Utils.wait(poolDelay, this.abortController.signal).then(() => this._checkStatus(status, statusEndpoint));
     }
     /**
+     * For 429 responses – check if the server response indicates a fatal/failing error, otherwise try again
+     * @param status The MatchStatus
+     * @param statusEndpoint The endpoint against which statusRequests are made; needed to recursively call _checkStatus
+     * @param res The pending response from statusEndpoint
+     * @returns If the operationOutcome is fatal, resolve to that operationOutcome; else call _statusPending
+     */
+    async _statusTooManyRequests(status, statusEndpoint, res) {
+        // Make sure we stop if the
+        const operationOutcome = res.body;
+        if (operationOutcome.issue[0].severity === "fatal") {
+            const msg = `Unexpected status response ${res.response.status} ${res.response.statusText}`;
+            this.emit("jobError", {
+                body: JSON.stringify(res.body) || null,
+                code: res.response.status || null,
+                message: msg,
+                responseHeaders: this.formatResponseHeaders(res.response.headers),
+            });
+            throw new Error(msg);
+        }
+        return this._statusPending(status, statusEndpoint, res);
+    }
+    /**
      * Produce the error to throw when MatchStatus requests produce an unexpected response status
      * @param status The MatchStatus
      * @param res The statusEndpoint response
      * @returns An error to be thrown
      */
-    async _statusError(status, res) {
+    _statusError(res) {
         const msg = `Unexpected status response ${res.response.status} ${res.response.statusText}`;
         this.emit("jobError", {
             body: JSON.stringify(res.body) || null,
@@ -303,8 +325,7 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
             message: msg,
             responseHeaders: this.formatResponseHeaders(res.response.headers),
         });
-        const error = new Error(msg);
-        return error;
+        return new Error(msg);
     }
     /**
      * A indirectly recursive method for making status requests and handling completion, pending and error cases
@@ -326,14 +347,18 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
             if (res.response.status === 200) {
                 return this._statusCompleted(status, res);
             }
-            // match is in progress or server needs us to slow down requests.
-            // recalculate delay and try again
+            // match is in progress
             if (res.response.status === 202 || res.response.status === 429) {
                 return this._statusPending(status, statusEndpoint, res);
             }
-            // Match Error - await the error then throw it
+            // server needs us to slow down requests; recalculate delay and try again
+            if (res.response.status === 429) {
+                return this._statusTooManyRequests(status, statusEndpoint, res);
+            }
+            // Match Error - helper throws that error
             else {
-                throw await this._statusError(status, res);
+                const error = this._statusError(res);
+                throw error;
             }
         });
     }

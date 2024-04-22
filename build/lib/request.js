@@ -25,10 +25,9 @@ async function augmentedFetch(input, options = {}) {
         // After requests – handle logging and retrying
         .then(async (response) => {
         let body = await response.text();
-        debug(response.type);
-        debug(response.type);
-        debug(response.type);
-        if (body.length && response.type.match(/\bjson\b/i)) {
+        const contentType = response.headers.get("content-type") || "";
+        debug(contentType);
+        if (body.length && contentType.match(/\bjson\b/i)) {
             body = JSON.parse(body);
         }
         if (!response.ok) {
