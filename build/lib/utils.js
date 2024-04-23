@@ -141,19 +141,15 @@ exports.getTokenEndpointFromCapabilityStatement = getTokenEndpointFromCapability
  * @param baseUrl The base URL of the FHIR server
  */
 async function detectTokenUrl(baseUrl) {
-    // STASH DON'T COMMIT - TO BE ADDED WHEN THE APPROPRIATE FILES ARE ADDED ON THE PROVIDER END
     try {
-        const tokenUrl = await getTokenEndpointFromWellKnownSmartConfig(baseUrl);
+        const tokenUrl = await Promise.any([
+            getTokenEndpointFromWellKnownSmartConfig(baseUrl),
+            getTokenEndpointFromCapabilityStatement(baseUrl),
+        ]);
         return tokenUrl;
     }
     catch {
-        try {
-            const tokenUrl = await getTokenEndpointFromCapabilityStatement(baseUrl);
-            return tokenUrl;
-        }
-        catch {
-            return "none";
-        }
+        return "none";
     }
 }
 exports.detectTokenUrl = detectTokenUrl;
@@ -308,7 +304,7 @@ function formatDuration(ms) {
         { n: 1000, label: "second" },
     ];
     meta.reduce((prev, cur) => {
-        const chunk = Math.floor(prev / cur.n);
+        const chunk = Math.floor(prev / cur.n); // console.log(chunk)
         if (chunk) {
             out.push(`${chunk} ${cur.label}${chunk > 1 ? "s" : ""}`);
             return prev - chunk * cur.n;
