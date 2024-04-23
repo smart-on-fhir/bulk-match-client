@@ -137,6 +137,11 @@ APP.action(async (args) => {
     const matches = await client.downloadAllFiles(manifest);
     debug("Matches downloaded for the following:");
     debug(JSON.stringify(matches));
+    // Things you could do with the matches:
+    // - Create a group and make a BDE request against the group
+    // - Make a BDE request with a collection of patients via patient-level POST BDE
+    // - Create some sort of UI that makes it easier to define which responses in the
+    //   match should move onto a final step where we do something like the steps above
     if (options.reporter === "cli") {
         const answer = (0, prompt_sync_1.default)()("Do you want to signal the server that this export can be removed? [Y/n]"
             .cyan);

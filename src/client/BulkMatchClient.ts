@@ -83,6 +83,8 @@ class BulkMatchClient extends SmartOnFhirClient {
 
     const url = new URL("Patient/$bulk-match", fhirUrl);
 
+    // TODO: Check with vlad whether we want this or not
+    // Always tries to get capability statement as part of kickoff process-used in logging below
     let capabilityStatement = {};
     try {
       capabilityStatement = await Utils.getCapabilityStatement(fhirUrl);
@@ -109,7 +111,6 @@ class BulkMatchClient extends SmartOnFhirClient {
       "kick-off patient match request",
     )
       .then(async (res) => {
-        console.log(res);
         const location = res.response.headers.get("content-location");
         if (!location) {
           throw new Error(
@@ -535,6 +536,7 @@ class BulkMatchClient extends SmartOnFhirClient {
   }
 
   /**
+   * TODO FIX
    * Download a file from a provided URL
    * @param param0
    * @returns
@@ -555,8 +557,8 @@ class BulkMatchClient extends SmartOnFhirClient {
       itemType: exportType,
     });
 
-    // Start the download, then parse as json
-    return this._request<object>(file.url)
+    // Start the download for the ndjson file – ndjson means the response is a string
+    return this._request<string>(file.url)
       .then(async (resp) => {
         // Download is finished – emit event and save file off
         this.emit("downloadComplete", {
@@ -584,10 +586,10 @@ class BulkMatchClient extends SmartOnFhirClient {
    * @param data The information to save
    * @param fileName The name of the file to use
    * @param subFolder Where that file should live
-   * @returns A promise corresponding to that save operation
+   * @returns A promise associated with this save operation
    */
   protected async saveFile(
-    data: object,
+    data: string | object,
     fileName: string,
     subFolder = "",
   ): Promise<void> {
@@ -622,7 +624,12 @@ class BulkMatchClient extends SmartOnFhirClient {
     }
 
     // Finally write the file to disc
-    return fsPromises.writeFile(join(path, fileName), JSON.stringify(data));
+    if (typeof data === "string") {
+      return fsPromises.writeFile(join(path, fileName), data);
+    } else {
+      // IF not a string, it must be a JSON object
+      return fsPromises.writeFile(join(path, fileName), JSON.stringify(data));
+    }
   }
 
   /**

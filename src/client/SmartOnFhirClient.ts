@@ -169,7 +169,6 @@ class SmartOnFhirClient extends EventEmitter {
       "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
     );
     authRequestFormData.append("client_assertion", token);
-    console.log(authRequestFormData);
     const authRequest = request<Types.TokenResponse>(tokenUrl, {
       method: "POST",
       headers: {

@@ -17,7 +17,7 @@ module.exports = {
   fhirUrl: "",
 
   /**
-   * The Bulk Data server token URL ("none" for open servers)
+   * The Bulk Data server token URL ("none" for open servers; "" to autodetect)
    */
   tokenUrl: "none",
 
@@ -45,8 +45,7 @@ module.exports = {
   accessTokenLifetime: 300,
 
   // TODO: ADD DESCRIPTIONS FROM TYPE FILE
-  resource: "{}",
-  // _outputFormat: "application/fhir+ndjson",
+  resource: [],
   // onlySingleMatch: true,
   // onlyCertainMatches: true,
   // count: 3,

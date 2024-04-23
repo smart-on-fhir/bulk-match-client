@@ -119,7 +119,6 @@ class SmartOnFhirClient extends stream_1.EventEmitter {
         authRequestFormData.append("grant_type", "client_credentials");
         authRequestFormData.append("client_assertion_type", "urn:ietf:params:oauth:client-assertion-type:jwt-bearer");
         authRequestFormData.append("client_assertion", token);
-        console.log(authRequestFormData);
         const authRequest = (0, request_1.default)(tokenUrl, {
             method: "POST",
             headers: {

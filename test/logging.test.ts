@@ -425,12 +425,10 @@ describe.skip("Logging", function () {
       mockServer.mock("/status", { status: 200, body: {} });
 
       const { log } = await invoke();
-      console.log(log);
       const logs = log
         .split("\n")
         .filter(Boolean)
         .map((line) => JSON.parse(line));
-      console.log(logs);
       const entry = logs.find((l) => l.eventId === "status_error");
       expect(entry).to.exist();
       expect(entry.eventDetail.code).to.equal(200);
@@ -720,7 +718,6 @@ describe.skip("Logging", function () {
         .split("\n")
         .filter(Boolean)
         .map((line) => JSON.parse(line));
-      // console.log(logs)
       const entry = logs.find((l) => l.eventId === "download_error");
       expect(entry).to.exist();
       expect(entry.eventDetail.fileUrl).to.equal(

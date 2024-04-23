@@ -81,6 +81,8 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
     async kickOff() {
         const { fhirUrl } = this.options;
         const url = new url_1.URL("Patient/$bulk-match", fhirUrl);
+        // TODO: Check with vlad whether we want this or not
+        // Always tries to get capability statement as part of kickoff process-used in logging below
         let capabilityStatement = {};
         try {
             capabilityStatement = await lib_1.Utils.getCapabilityStatement(fhirUrl);
@@ -101,7 +103,6 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
         this.emit("kickOffStart", requestOptions, String(url));
         return this._request(url, requestOptions, "kick-off patient match request")
             .then(async (res) => {
-            console.log(res);
             const location = res.response.headers.get("content-location");
             if (!location) {
                 throw new Error("The kick-off patient match response did not include content-location header");
@@ -440,6 +441,7 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
         });
     }
     /**
+     * TODO FIX
      * Download a file from a provided URL
      * @param param0
      * @returns
@@ -449,7 +451,7 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
             fileUrl: file.url,
             itemType: exportType,
         });
-        // Start the download, then parse as json
+        // Start the download for the ndjson file – ndjson means the response is a string
         return this._request(file.url)
             .then(async (resp) => {
             // Download is finished – emit event and save file off
@@ -477,7 +479,7 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
      * @param data The information to save
      * @param fileName The name of the file to use
      * @param subFolder Where that file should live
-     * @returns A promise corresponding to that save operation
+     * @returns A promise associated with this save operation
      */
     async saveFile(data, fileName, subFolder = "") {
         debug(`Saving ${fileName} ${subFolder ? `with subfolder ${subFolder}` : ""}`);
@@ -502,7 +504,13 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
             }
         }
         // Finally write the file to disc
-        return promises_1.default.writeFile((0, path_1.join)(path, fileName), JSON.stringify(data));
+        if (typeof data === "string") {
+            return promises_1.default.writeFile((0, path_1.join)(path, fileName), data);
+        }
+        else {
+            // IF not a string, it must be a JSON object
+            return promises_1.default.writeFile((0, path_1.join)(path, fileName), JSON.stringify(data));
+        }
     }
     /**
      * Cancels an active matching request

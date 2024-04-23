@@ -150,12 +150,20 @@ APP.action(async (args: Types.CLIOptions) => {
     (options as Types.CLIOptions).status || (await client.kickOff());
   debug("Match request started, checking in at the following endpoint");
   debug(statusEndpoint);
+
   const manifest = await client.waitForMatch(statusEndpoint);
   debug("Match completed - resulting in the following manifest");
   debug(JSON.stringify(manifest));
+
   const matches = await client.downloadAllFiles(manifest);
   debug("Matches downloaded for the following:");
   debug(JSON.stringify(matches));
+
+  // Things you could do with the matches:
+  // - Create a group and make a BDE request against the group
+  // - Make a BDE request with a collection of patients via patient-level POST BDE
+  // - Create some sort of UI that makes it easier to define which responses in the
+  //   match should move onto a final step where we do something like the steps above
 
   if (options.reporter === "cli") {
     const answer = prompt()(

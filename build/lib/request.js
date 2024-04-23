@@ -33,14 +33,18 @@ async function augmentedFetch(input, options = {}) {
         }
         debug("\n=======================================================" +
             "\n--------------------- Request -------------------------" +
-            "\n%s %s\n%o\n\n%o" +
+            "\n%s %s" +
+            "\nHeaders: %o" +
+            "\n\nBody: %o" +
             "\n--------------------- Response ------------------------" +
-            "\n%s %s\n%o\n\n%o" +
+            "\n%s %s" +
+            "\nHeaders: %o" +
+            "\n\nBody: %o" +
             "\n=======================================================", 
         // REQUEST
-        options.method, input, options.headers, options.body ?? "", 
+        options.method || "GET", input, options.headers, options.body ?? "", 
         // RESPONSE
-        response.status, response.statusText, JSON.stringify(response.headers.entries()), body ?? "");
+        response.status, response.statusText, Object.fromEntries(response.headers), body ?? "");
         // Handle transient errors by asking the user if (s)he wants to
         // retry. Note that this only happens if the "reporter" option
         // is "cli", which implies interactive capabilities. If the

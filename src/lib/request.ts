@@ -38,19 +38,23 @@ async function augmentedFetch<T>(
         debug(
           "\n=======================================================" +
             "\n--------------------- Request -------------------------" +
-            "\n%s %s\n%o\n\n%o" +
+            "\n%s %s" +
+            "\nHeaders: %o" +
+            "\n\nBody: %o" +
             "\n--------------------- Response ------------------------" +
-            "\n%s %s\n%o\n\n%o" +
+            "\n%s %s" +
+            "\nHeaders: %o" +
+            "\n\nBody: %o" +
             "\n=======================================================",
           // REQUEST
-          options.method,
+          options.method || "GET",
           input,
           options.headers,
           options.body ?? "",
           // RESPONSE
           response.status,
           response.statusText,
-          JSON.stringify(response.headers.entries()),
+          Object.fromEntries(response.headers),
           body ?? "",
         );
 

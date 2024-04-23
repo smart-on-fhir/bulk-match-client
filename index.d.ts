@@ -34,10 +34,10 @@ export declare namespace BulkMatchClient {
   /**
    * The FHIR resource(s) to match
    * Can take the following forms
-   *    - DIR? TODO
+   //  * TODO - "/User/absolute/path/to/fhir.ndjson"
+   //  * TODO - "./relative/absolute/path/to/fhir.ndjson"
+   *    - TODO DIR level support
    *    - "/User/absolute/path/to/fhir.json"
-  //  *    - "/User/absolute/path/to/fhir.ndjson"
-  //  *    - "./relative/absolute/path/to/fhir.ndjson"
    *    - "./relative/absolute/path/to/fhir.json"
    *    - "{"resourceType": "Patient"}" A string representation of the resource
    *    - {"resourceType": "Patient"} An inline object resresenting the resource
