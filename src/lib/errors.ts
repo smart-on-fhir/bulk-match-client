@@ -1,6 +1,9 @@
 import { BulkMatchClient as Types } from "../..";
 import { displayCodeableConcept } from "./utils";
 
+/**
+ * For issues downloading files in the BulkClient
+ */
 type FileDownloadErrorArgs = {
   code: number;
   body: string | fhir4.OperationOutcome | null; // Buffer
@@ -29,6 +32,9 @@ export class FileDownloadError extends Error {
   }
 }
 
+/**
+ * For throwing operationOutcome-related information as an error
+ */
 type OperationOutcomeErrorArgs = {
   res: Types.CustomBodyResponse<fhir4.OperationOutcome>;
 };
@@ -59,6 +65,56 @@ export class OperationOutcomeError extends Error {
     this.operationOutcomeSeverity = operationOutcomeSeverity;
     this.operationOutcomeCode = operationOutcomeCode;
     this.operationOutcomeDetails = operationOutcomeDetails;
+
+    Error.captureStackTrace(this, this.constructor);
+  }
+}
+
+/////////////////////////////////////////////
+// Resource Option Parsing Errors
+/////////////////////////////////////////////
+
+/**
+ * When an unknown string resource type is provided to resource parsing
+ */
+type UnknownResourceStringErrorArgs = {
+  resource: string;
+  errorMessage: string;
+};
+
+export class UnknownResourceStringError extends Error {
+  readonly resource: string;
+  readonly errorMessage: string;
+
+  constructor({ resource, errorMessage }: UnknownResourceStringErrorArgs) {
+    super(
+      `Attempted parsing of ${resource} as a resource led to the following error: ${errorMessage}. Without a valid resource, we cannot proceed`,
+    );
+    this.resource = resource;
+    this.errorMessage = errorMessage;
+
+    Error.captureStackTrace(this, this.constructor);
+  }
+}
+
+/**
+ * When an invalid NDJSON string is provided to parse
+ */
+type InvalidNdjsonErrorArgs = {
+  resource: string;
+  errorMessage: string;
+};
+
+export class InvalidNdjsonError extends Error {
+  readonly resource: string;
+  readonly errorMessage: string;
+
+  constructor({ resource, errorMessage }: InvalidNdjsonErrorArgs) {
+    super(
+      `Attempted parsing of ${resource} as ndjson led to the following error: ${errorMessage}. Without a valid resource, we cannot proceed`,
+    );
+    this.resource = resource;
+    this.errorMessage = errorMessage;
 
     Error.captureStackTrace(this, this.constructor);
   }

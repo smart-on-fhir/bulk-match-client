@@ -54,7 +54,6 @@ APP.option("-c, --count [number]", "The maximum number of records to return per 
 APP.option("-F, --_outputFormat [string]", `The output format you expect.`);
 APP.option("-d, --destination [destination]", "Download destination. See config/defaults.js for examples");
 APP.option("--reporter [cli|text]", 'Reporter to use to render the output. "cli" renders fancy progress bars and tables. "text" is better for log files. Defaults to "cli".');
-// APP.option("-c, --custom [opt=val...]"         , "Custom parameters to be passed to the kick-off endpoint.");
 APP.option("--status [url]", "Status endpoint of already started export.");
 APP.action(async (args) => {
     const { config, ...params } = args;

@@ -135,6 +135,7 @@ class SmartOnFhirClient extends stream_1.EventEmitter {
         return authRequest
             .then(async (res) => {
             const json = res.body;
+            console.log(json);
             (0, utils_1.assert)(json, "Authorization request got empty body");
             (0, utils_1.assert)(json.access_token, "Authorization response does not include access_token");
             (0, utils_1.assert)(json.expires_in, "Authorization response does not include expires_in");

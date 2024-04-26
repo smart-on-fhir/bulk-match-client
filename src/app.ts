@@ -54,7 +54,6 @@ APP.option(
   "--reporter [cli|text]",
   'Reporter to use to render the output. "cli" renders fancy progress bars and tables. "text" is better for log files. Defaults to "cli".',
 );
-// APP.option("-c, --custom [opt=val...]"         , "Custom parameters to be passed to the kick-off endpoint.");
 APP.option("--status [url]", "Status endpoint of already started export.");
 
 APP.action(async (args: Types.CLIOptions) => {

@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.OperationOutcomeError = exports.FileDownloadError = void 0;
+exports.InvalidNdjsonError = exports.UnknownResourceStringError = exports.OperationOutcomeError = exports.FileDownloadError = void 0;
 const utils_1 = require("./utils");
 class FileDownloadError extends Error {
     constructor({ body, code, responseHeaders, fileUrl }) {
@@ -33,3 +33,21 @@ class OperationOutcomeError extends Error {
     }
 }
 exports.OperationOutcomeError = OperationOutcomeError;
+class UnknownResourceStringError extends Error {
+    constructor({ resource, errorMessage }) {
+        super(`Attempted parsing of ${resource} as a resource led to the following error: ${errorMessage}. Without a valid resource, we cannot proceed`);
+        this.resource = resource;
+        this.errorMessage = errorMessage;
+        Error.captureStackTrace(this, this.constructor);
+    }
+}
+exports.UnknownResourceStringError = UnknownResourceStringError;
+class InvalidNdjsonError extends Error {
+    constructor({ resource, errorMessage }) {
+        super(`Attempted parsing of ${resource} as ndjson led to the following error: ${errorMessage}. Without a valid resource, we cannot proceed`);
+        this.resource = resource;
+        this.errorMessage = errorMessage;
+        Error.captureStackTrace(this, this.constructor);
+    }
+}
+exports.InvalidNdjsonError = InvalidNdjsonError;

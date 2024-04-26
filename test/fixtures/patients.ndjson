@@ -1,0 +1,3 @@
+{"resourceType":"Patient","id":"123-ndjson","birthDate":"1967-10-27","name":[{"use":"official","family":"Doyle","given":["Minh","Eli"],"prefix":["Mr."]}]}
+{"resourceType":"Patient","id":"1234-ndjson","birthDate":"1967-10-27","name":[{"use":"official","family":"Doyle","given":["Minh","Eli"],"prefix":["Mr."]}]}
+{"resourceType":"Patient","id":"12345-ndjson","birthDate":"1967-10-27","name":[{"use":"official","family":"Doyle","given":["Minh","Eli"],"prefix":["Mr."]}]}

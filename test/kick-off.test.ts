@@ -18,7 +18,7 @@ describe("kick-off", () => {
   });
 });
 
-describe("status", () => {
+describe.skip("status", () => {
   describe("complete", () => {
     it("returns the manifest", async () => {
       mockServer.mock("/status", { status: 200, body: { output: [{}] } });

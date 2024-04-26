@@ -34,11 +34,12 @@ export declare namespace BulkMatchClient {
   /**
    * The FHIR resource(s) to match
    * Can take the following forms
-   //  * TODO - "/User/absolute/path/to/fhir.ndjson"
-   //  * TODO - "./relative/absolute/path/to/fhir.ndjson"
-   *    - TODO DIR level support
+   *    - "/User/absolute/path/to/dir/containing/json"
+   *    - "./relative/absolute/path/to/dir/containing/json"
    *    - "/User/absolute/path/to/fhir.json"
    *    - "./relative/absolute/path/to/fhir.json"
+   *    - "/User/absolute/path/to/fhir.ndjson"
+   *    - "./relative/absolute/path/to/fhir.ndjson"
    *    - "{"resourceType": "Patient"}" A string representation of the resource
    *    - {"resourceType": "Patient"} An inline object resresenting the resource
    *    - [{"resourceType": "Patient", "id": 1}, {"resourceType": "Patient", "id": 2}] An inline array
@@ -57,18 +58,16 @@ export declare namespace BulkMatchClient {
     fhirUrl?: string;
 
     // Patient Match Kick-off parameters -----------------------------------------------------------
-
-    /**
-     * The resource to match against
-     * Can take the following forms
-     */
+    // More detailed options seen in the below type definition
     resource?: MatchResource;
+    // Output formats you expect
     _outputFormat?: string;
+    // Should the server respond only with a single match?
     onlySingleMatch?: boolean;
+    // Should the server only respond with certain matches?
     onlyCertainMatches?: boolean;
+    // The maximum number of records to return per resource
     count?: number;
-
-    custom?: string[];
 
     /**
      * Relative path to config file. Defaults to "config.js".

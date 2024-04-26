@@ -34,6 +34,7 @@ const path_1 = __importStar(require("path"));
 const url_1 = require("url");
 const util_1 = require("util");
 const lib_1 = require("../lib");
+const errors_1 = require("../lib/errors");
 const SmartOnFhirClient_1 = __importDefault(require("./SmartOnFhirClient"));
 const debug = (0, util_1.debuglog)("bulk-match-client");
 /**
@@ -99,7 +100,7 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
         };
         requestOptions.method = "POST";
         // Body must be stringified
-        requestOptions.body = JSON.stringify(this.buildKickoffPayload());
+        requestOptions.body = JSON.stringify(await this.buildKickoffPayload());
         this.emit("kickOffStart", requestOptions, String(url));
         return this._request(url, requestOptions, "kick-off patient match request")
             .then(async (res) => {
@@ -121,46 +122,93 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
         });
     }
     /**
+     * Iterate over a well-formed NDJSON file
+     * @param resource
+     * @returns that
+     */
+    _parseResourceNdjson(resource) {
+        try {
+            const jsonArr = resource.split("\n");
+            return jsonArr.map((j) => JSON.parse(j));
+        }
+        catch (e) {
+            throw new errors_1.InvalidNdjsonError({
+                resource,
+                errorMessage: e.message,
+            });
+        }
+    }
+    /**
      * Parses all possible string representations of resources into JSON
      * @param resource A resource parameter either as a filePath or stringified JSON
      * @returns JSON representation of FHIR resource(s) to match
      */
-    _parseResourceStringOption(resource) {
-        let localResource;
-        // String resources can be inline JSON as string or paths to files
+    async _parseResourceStringOption(resource) {
+        // See if this is a file – will throw an error if statSync received non-file/non-dir
+        let resourcePath, resourceInfo;
         try {
-            localResource = JSON.parse(resource);
+            resourcePath = path_1.default.resolve(resource);
+            resourceInfo = (0, fs_1.statSync)(resourcePath);
         }
         catch {
+            // If its not a file, it should be inline JSON
             try {
-                // Should resolve both relative and absolute paths, assuming they are valid relative to CWD
-                const resourcePath = path_1.default.resolve(resource);
-                localResource = JSON.parse((0, fs_1.readFileSync)(resourcePath, "utf8"));
+                return JSON.parse(resource);
             }
             catch (e) {
-                // Isn't stringified JSON or a valid path, must be incorrectly specified
-                throw new Error(`Unknown string value provided as resource; must be valid, stringified JSON or valid filePath. Instead received: ${resource}`);
+                // Resource isn't stringified JSON or a valid path – must be incorrectly specified
+                throw new errors_1.UnknownResourceStringError({
+                    resource: resource,
+                    errorMessage: e.message,
+                });
             }
         }
-        return localResource;
+        // String resources can be inline JSON, a file, or a directory
+        if (resourceInfo.isDirectory()) {
+            // Directory - call this method recursively on all files, relative to the provided directory
+            const files = await promises_1.default.readdir(resourcePath);
+            return Promise.all(files.map(async (file) => this._parseResourceStringOption(
+            // Resolve this file relative to the directory specified
+            path_1.default.resolve(resourcePath, file))));
+        }
+        else if (resourceInfo.isFile()) {
+            // Files have two valid representations – json and ndjson
+            const resourceFile = (0, fs_1.readFileSync)(resourcePath, "utf-8");
+            const resourceExt = path_1.default.extname(resourcePath);
+            if (resourceExt === ".json") {
+                return JSON.parse(resourceFile);
+            }
+            else if (resourceExt === ".ndjson") {
+                return this._parseResourceNdjson(resourceFile);
+            }
+            else {
+                throw new errors_1.UnknownResourceStringError({
+                    resource: resource,
+                    errorMessage: "Unexpected extension type of " + resourceExt,
+                });
+            }
+        }
+        else {
+            // We should get here, but throw an error just in case
+            throw new errors_1.UnknownResourceStringError({
+                resource: resource,
+                errorMessage: "Unexpected resource type that parses via statSync, but isn't a file or a directory",
+            });
+        }
     }
     /**
      * Parses all possible resource parameter representations into a standard format – an array of resources to match
      * @param resource A resource parameter to match against
      * @returns FHIR resources to match, represented as an array
      */
-    _parseResourceOption(resource) {
+    async _parseResourceOption(resource) {
         let localResource = resource;
         // Turn strings into JSON representation
         if (typeof resource === "string") {
-            localResource = this._parseResourceStringOption(resource);
+            localResource = (await this._parseResourceStringOption(resource));
         }
         // Then turn all JSON into JsonArray
-        if (Array.isArray(localResource)) {
-            // noop – already an array
-        }
-        else {
-            // Else, must be an object – needs to be turned into an array
+        if (!Array.isArray(localResource)) {
             localResource = [localResource];
         }
         return localResource;
@@ -169,10 +217,10 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
      * Build a POST-request JSON payload for a bulk match request
      * @returns
      */
-    buildKickoffPayload() {
+    async buildKickoffPayload() {
         const parameters = [];
         // resource --------------------------------------------------------------
-        const resource = this._parseResourceOption(this.options.resource);
+        const resource = await this._parseResourceOption(this.options.resource);
         resource.forEach((res) => {
             parameters.push({
                 name: "resource",
@@ -344,7 +392,7 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
                 return this._statusCompleted(status, res);
             }
             // match is in progress
-            if (res.response.status === 202 || res.response.status === 429) {
+            if (res.response.status === 202) {
                 return this._statusPending(status, statusEndpoint, res);
             }
             // server needs us to slow down requests; recalculate delay and try again
@@ -441,7 +489,7 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
         });
     }
     /**
-     * TODO FIX
+     * TODO FIX THIS FUNCTION DESCRIPTION
      * Download a file from a provided URL
      * @param param0
      * @returns

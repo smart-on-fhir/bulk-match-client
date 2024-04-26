@@ -7,7 +7,7 @@ import {
   statSync,
   writeFileSync,
 } from "fs";
-import { join } from "path";
+import path, { join } from "path";
 import baseSettings from "../../config/defaults.js";
 import { BulkMatchClient as types } from "../../index";
 import MockServer from "./MockServer";
@@ -38,6 +38,13 @@ export function emptyFolder(path: string) {
       }
     });
   }
+}
+export function getFixturePath(file: string): string {
+  return path.join(process.cwd(), "test/fixtures", file);
+}
+
+export function getFixture(file: string): string {
+  return readFileSync(getFixturePath(file), "utf-8");
 }
 
 /**
