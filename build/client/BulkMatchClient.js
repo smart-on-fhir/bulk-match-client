@@ -69,9 +69,7 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
             return Object.fromEntries(headers);
         // If not an array it must be a string or a RegExp
         if (!Array.isArray(this.options.logResponseHeaders)) {
-            return lib_1.Utils.filterResponseHeaders(headers, [
-                this.options.logResponseHeaders,
-            ]);
+            return lib_1.Utils.filterResponseHeaders(headers, [this.options.logResponseHeaders]);
         }
         // Else it must be an array
         return lib_1.Utils.filterResponseHeaders(headers, this.options.logResponseHeaders);
@@ -452,16 +450,12 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
                 await this._downloadFile({
                     file: f,
                     fileName,
-                    subFolder: downloadMetadata.exportType === "output"
-                        ? ""
-                        : downloadMetadata.exportType,
+                    subFolder: downloadMetadata.exportType === "output" ? "" : downloadMetadata.exportType,
                     exportType: downloadMetadata.exportType,
                 });
                 // After saving files, optinoally add destination to manifest
                 if (this.options.addDestinationToManifest) {
-                    f.destination = (0, path_1.join)(this.options.destination, downloadMetadata.exportType === "output"
-                        ? ""
-                        : downloadMetadata.exportType, fileName);
+                    f.destination = (0, path_1.join)(this.options.destination, downloadMetadata.exportType === "output" ? "" : downloadMetadata.exportType, fileName);
                 }
                 return downloadMetadata;
             };
@@ -579,7 +573,7 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
     addLogger(logger) {
         const startTime = Date.now();
         // kickoff -----------------------------------------------------------------
-        this.on("kickOffEnd", ({ capabilityStatement, response: res, responseHeaders, requestOptions, }) => {
+        this.on("kickOffEnd", ({ capabilityStatement, response: res, responseHeaders, requestOptions }) => {
             logger.log("info", {
                 eventId: "kickoff",
                 eventDetail: {

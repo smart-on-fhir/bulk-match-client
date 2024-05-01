@@ -83,8 +83,7 @@ APP.action(async (args) => {
             options.tokenUrl = await lib_1.Utils.detectTokenUrl(options.fhirUrl);
         }
         catch {
-            console.log("Failed to auto-detect 'tokenUrl'! " +
-                "Please set it in the config file".red);
+            console.log("Failed to auto-detect 'tokenUrl'! " + "Please set it in the config file".red);
             return;
         }
     }
@@ -142,8 +141,7 @@ APP.action(async (args) => {
     // - Create some sort of UI that makes it easier to define which responses in the
     //   match should move onto a final step where we do something like the steps above
     if (options.reporter === "cli") {
-        const answer = (0, prompt_sync_1.default)()("Do you want to signal the server that this export can be removed? [Y/n]"
-            .cyan);
+        const answer = (0, prompt_sync_1.default)()("Do you want to signal the server that this export can be removed? [Y/n]".cyan);
         if (!answer || answer.toLowerCase() === "y") {
             client
                 .cancelMatch(statusEndpoint)

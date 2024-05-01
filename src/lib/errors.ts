@@ -5,69 +5,69 @@ import { displayCodeableConcept } from "./utils";
  * For issues downloading files in the BulkClient
  */
 type FileDownloadErrorArgs = {
-  code: number;
-  body: string | fhir4.OperationOutcome | null; // Buffer
-  responseHeaders: Types.ResponseHeaders;
-  fileUrl: string;
+    code: number;
+    body: string | fhir4.OperationOutcome | null; // Buffer
+    responseHeaders: Types.ResponseHeaders;
+    fileUrl: string;
 };
 export class FileDownloadError extends Error {
-  readonly code: number;
-  readonly body: string | object | null;
-  readonly responseHeaders: Types.ResponseHeaders;
-  readonly fileUrl: string;
+    readonly code: number;
+    readonly body: string | object | null;
+    readonly responseHeaders: Types.ResponseHeaders;
+    readonly fileUrl: string;
 
-  constructor({ body, code, responseHeaders, fileUrl }: FileDownloadErrorArgs) {
-    super(
-      `Downloading the file from ${fileUrl} returned HTTP status code ${code}.${
-        body ? " Body: " + JSON.stringify(body) : ""
-      }`,
-    );
+    constructor({ body, code, responseHeaders, fileUrl }: FileDownloadErrorArgs) {
+        super(
+            `Downloading the file from ${fileUrl} returned HTTP status code ${code}.${
+                body ? " Body: " + JSON.stringify(body) : ""
+            }`,
+        );
 
-    this.code = code;
-    this.body = body;
-    this.responseHeaders = responseHeaders;
-    this.fileUrl = fileUrl;
+        this.code = code;
+        this.body = body;
+        this.responseHeaders = responseHeaders;
+        this.fileUrl = fileUrl;
 
-    Error.captureStackTrace(this, this.constructor);
-  }
+        Error.captureStackTrace(this, this.constructor);
+    }
 }
 
 /**
  * For throwing operationOutcome-related information as an error
  */
 type OperationOutcomeErrorArgs = {
-  res: Types.CustomBodyResponse<fhir4.OperationOutcome>;
+    res: Types.CustomBodyResponse<fhir4.OperationOutcome>;
 };
 
 export class OperationOutcomeError extends Error {
-  readonly url: string;
-  readonly operationOutcomeSeverity: string;
-  readonly operationOutcomeCode: string;
-  readonly operationOutcomeDetails?: string;
+    readonly url: string;
+    readonly operationOutcomeSeverity: string;
+    readonly operationOutcomeCode: string;
+    readonly operationOutcomeDetails?: string;
 
-  constructor({ res }: OperationOutcomeErrorArgs) {
-    const url = res.response.url;
-    const operationOutcome = res.body as fhir4.OperationOutcome;
-    const operationOutcomeSeverity = operationOutcome.issue[0].severity;
-    const operationOutcomeCode = operationOutcome.issue[0].code;
-    const operationOutcomeDetails = operationOutcome.issue[0].details
-      ? displayCodeableConcept(operationOutcome.issue[0].details)
-      : "";
-    super(
-      `Request to ${url} led to OperationOutcome with severity ${operationOutcomeSeverity} and code ${operationOutcomeCode}.${
-        operationOutcomeDetails
-          ? " Details: " + JSON.stringify(operationOutcomeDetails)
-          : ""
-      }`,
-    );
+    constructor({ res }: OperationOutcomeErrorArgs) {
+        const url = res.response.url;
+        const operationOutcome = res.body as fhir4.OperationOutcome;
+        const operationOutcomeSeverity = operationOutcome.issue[0].severity;
+        const operationOutcomeCode = operationOutcome.issue[0].code;
+        const operationOutcomeDetails = operationOutcome.issue[0].details
+            ? displayCodeableConcept(operationOutcome.issue[0].details)
+            : "";
+        super(
+            `Request to ${url} led to OperationOutcome with severity ${operationOutcomeSeverity} and code ${operationOutcomeCode}.${
+                operationOutcomeDetails
+                    ? " Details: " + JSON.stringify(operationOutcomeDetails)
+                    : ""
+            }`,
+        );
 
-    this.url = url;
-    this.operationOutcomeSeverity = operationOutcomeSeverity;
-    this.operationOutcomeCode = operationOutcomeCode;
-    this.operationOutcomeDetails = operationOutcomeDetails;
+        this.url = url;
+        this.operationOutcomeSeverity = operationOutcomeSeverity;
+        this.operationOutcomeCode = operationOutcomeCode;
+        this.operationOutcomeDetails = operationOutcomeDetails;
 
-    Error.captureStackTrace(this, this.constructor);
-  }
+        Error.captureStackTrace(this, this.constructor);
+    }
 }
 
 /////////////////////////////////////////////
@@ -78,44 +78,44 @@ export class OperationOutcomeError extends Error {
  * When an unknown string resource type is provided to resource parsing
  */
 type UnknownResourceStringErrorArgs = {
-  resource: string;
-  errorMessage: string;
+    resource: string;
+    errorMessage: string;
 };
 
 export class UnknownResourceStringError extends Error {
-  readonly resource: string;
-  readonly errorMessage: string;
+    readonly resource: string;
+    readonly errorMessage: string;
 
-  constructor({ resource, errorMessage }: UnknownResourceStringErrorArgs) {
-    super(
-      `Attempted parsing of ${resource} as a resource led to the following error: ${errorMessage}. Without a valid resource, we cannot proceed`,
-    );
-    this.resource = resource;
-    this.errorMessage = errorMessage;
+    constructor({ resource, errorMessage }: UnknownResourceStringErrorArgs) {
+        super(
+            `Attempted parsing of ${resource} as a resource led to the following error: ${errorMessage}. Without a valid resource, we cannot proceed`,
+        );
+        this.resource = resource;
+        this.errorMessage = errorMessage;
 
-    Error.captureStackTrace(this, this.constructor);
-  }
+        Error.captureStackTrace(this, this.constructor);
+    }
 }
 
 /**
  * When an invalid NDJSON string is provided to parse
  */
 type InvalidNdjsonErrorArgs = {
-  resource: string;
-  errorMessage: string;
+    resource: string;
+    errorMessage: string;
 };
 
 export class InvalidNdjsonError extends Error {
-  readonly resource: string;
-  readonly errorMessage: string;
+    readonly resource: string;
+    readonly errorMessage: string;
 
-  constructor({ resource, errorMessage }: InvalidNdjsonErrorArgs) {
-    super(
-      `Attempted parsing of ${resource} as ndjson led to the following error: ${errorMessage}. Without a valid resource, we cannot proceed`,
-    );
-    this.resource = resource;
-    this.errorMessage = errorMessage;
+    constructor({ resource, errorMessage }: InvalidNdjsonErrorArgs) {
+        super(
+            `Attempted parsing of ${resource} as ndjson led to the following error: ${errorMessage}. Without a valid resource, we cannot proceed`,
+        );
+        this.resource = resource;
+        this.errorMessage = errorMessage;
 
-    Error.captureStackTrace(this, this.constructor);
-  }
+        Error.captureStackTrace(this, this.constructor);
+    }
 }

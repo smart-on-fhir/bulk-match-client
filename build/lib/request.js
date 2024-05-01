@@ -16,8 +16,7 @@ async function augmentedFetch(input, options = {}) {
         options.headers = {};
     }
     // @ts-ignore
-    options.headers["user-agent"] =
-        `SMART-On-FHIR Bulk Match Client / ${package_json_1.default.version}`;
+    options.headers["user-agent"] = `SMART-On-FHIR Bulk Match Client / ${package_json_1.default.version}`;
     //@ts-ignore
     return (fetch(input, options)
         // After requests – handle logging and retrying

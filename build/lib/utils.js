@@ -34,9 +34,7 @@ function filterResponseHeaders(headers, selectedHeaders) {
         const lowercaseKey = key.toLocaleLowerCase();
         // Each selectedHeader is either a RegExp, where we check for matches via RegExp.test
         // or a string, where we check for matches with equality
-        if (selectedHeaders.find((h) => (0, types_1.isRegExp)(h)
-            ? h.test(lowercaseKey)
-            : h.toLocaleLowerCase() === lowercaseKey))
+        if (selectedHeaders.find((h) => (0, types_1.isRegExp)(h) ? h.test(lowercaseKey) : h.toLocaleLowerCase() === lowercaseKey))
             matchedHeaders = { ...matchedHeaders, [key]: value };
         // If we don't find a selectedHeader that matches this header, we move on
     }

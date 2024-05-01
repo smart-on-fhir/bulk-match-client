@@ -94,8 +94,7 @@ class SmartOnFhirClient extends stream_1.EventEmitter {
      * one will be requested and cached.
      */
     async getAccessToken() {
-        if (this.accessToken &&
-            this.accessTokenExpiresAt - 10 > Date.now() / 1000) {
+        if (this.accessToken && this.accessTokenExpiresAt - 10 > Date.now() / 1000) {
             return this.accessToken;
         }
         const { tokenUrl, clientId, accessTokenLifetime, privateKey } = this.options;
