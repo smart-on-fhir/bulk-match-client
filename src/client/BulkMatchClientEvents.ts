@@ -2,7 +2,7 @@ import { BulkMatchClient } from ".";
 import { BulkMatchClient as Types } from "../..";
 import { SmartOnFhirClientEvents } from "./SmartOnFhirClientEvents";
 
-/**>>
+/**
  * The BulkMatchClient instances emit the following events:
  */
 export interface BulkMatchClientEvents extends SmartOnFhirClientEvents {

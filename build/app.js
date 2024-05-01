@@ -44,8 +44,8 @@ const debug = util_1.default.debuglog("bulk-match-app");
 const APP = new commander_1.Command();
 APP.name("node .");
 APP.version("2.0.0");
-// Bulk Data Server base URL
 APP.option("--config <path>", "Relative path to config file.");
+// Bulk Match Server base URL
 APP.option("-f, --fhir-url [url]", "FHIR server base URL. Must be set either as parameter or in the configuration file.");
 APP.option("-r, --resource [resource/filepath]", "The resources to find matches for; can be either an inline FHIR resource, a path to a FHIR JSON file, or a path to an NDJSON resource file");
 APP.option("-s, --onlySingleMatch", "If there are multiple potential matches, the server should identify the single most appropriate match that should be used with future interactions with the server; defaults to false");
@@ -63,7 +63,7 @@ APP.action(async (args) => {
     const options = {
         ...base,
     };
-    //
+    // Load config file if defined, combine with base config
     if (config) {
         const configPath = (0, path_1.resolve)(__dirname, "..", config);
         const cfg = await Promise.resolve(`${configPath}`).then(s => __importStar(require(s)));

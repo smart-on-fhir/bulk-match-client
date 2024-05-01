@@ -23,8 +23,8 @@ APP.name("node .");
 
 APP.version("2.0.0");
 
-// Bulk Data Server base URL
 APP.option("--config <path>", "Relative path to config file.");
+// Bulk Match Server base URL
 APP.option(
   "-f, --fhir-url [url]",
   "FHIR server base URL. Must be set either as parameter or in the configuration file.",
@@ -66,7 +66,7 @@ APP.action(async (args: Types.CLIOptions) => {
     ...base,
   };
 
-  //
+  // Load config file if defined, combine with base config
   if (config) {
     const configPath = resolve(__dirname, "..", config);
     const cfg: Types.ConfigFileOptions = await import(configPath);

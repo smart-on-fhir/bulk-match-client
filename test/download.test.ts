@@ -22,7 +22,7 @@ describe("download", function () {
     }
   });
 
-  it("downloadFile method works", async () => {
+  it("_downloadFile method works", async () => {
     mockServer.mock("/download", {
       status: 200,
       body: '{"resourceType":"Patient"}\n' + '{"resourceType":"Patient"}',
@@ -39,7 +39,7 @@ describe("download", function () {
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-expect-error
-    await client.downloadFile({
+    await client._downloadFile({
       file: {
         type: "Patient",
         url: mockServer.baseUrl + "/download",

@@ -17,7 +17,7 @@ module.exports = {
   fhirUrl: "",
 
   /**
-   * The Bulk Data server token URL ("none" for open servers; "" to autodetect)
+   * The Bulk Match server token URL ("none" for open servers; "" to autodetect)
    */
   tokenUrl: "none",
 
@@ -44,19 +44,52 @@ module.exports = {
    */
   accessTokenLifetime: 300,
 
-  // TODO: ADD DESCRIPTIONS FROM TYPE FILE
-  resource: [],
-  // onlySingleMatch: true,
-  // onlyCertainMatches: true,
-  // count: 3,
-
   /**
-   * The value of the `_outputFormat` parameter for Bulk Data kick-off
+   * The FHIR resource(s) to match, processed into the `resource` parameter(s) for Bulk Match kick-off
+   * Can take the following forms
+   *    - "/User/absolute/path/to/dir/containing/json"
+   *    - "./relative/absolute/path/to/dir/containing/json"
+   *    - "/User/absolute/path/to/fhir.json"
+   *    - "./relative/absolute/path/to/fhir.json"
+   *    - "/User/absolute/path/to/fhir.ndjson"
+   *    - "./relative/absolute/path/to/fhir.ndjson"
+   *    - "{"resourceType": "Patient"}" A string representation of the resource
+   *    - {"resourceType": "Patient"} An inline object resresenting the resource
+   *    - [{"resourceType": "Patient", "id": 1}, {"resourceType": "Patient", "id": 2}] An inline array
+   *      of resources to match
+   *
+   * Can be overridden from terminal parameter `-r` or `--resource`
+   */
+  resource: [],
+  /**
+   * The value of the `_outputFormat` parameter for Bulk Match kick-off
    * requests. Will be ignored if empty or falsy.
    *
    * Can be overridden from terminal parameter `-F` or `--_outputFormat`
    */
-  _outputFormat: "",
+  _outputFormat: undefined,
+  /**
+   * The value of the `onlySingleMatch` parameter for Bulk Match kick-off
+   * requests. Should the server respond only with a single match?
+   *
+   * Can be overridden from terminal parameter `-s` or `--onlySingleMatch`
+   */
+  onlySingleMatch: false,
+  /**
+   * The value of the `onlyCertainMatches` parameter for Bulk Match kick-off
+   * requests. Should the server only respond with certain matches?
+   *
+   * Can be overridden from terminal parameter `-C` or `--onlyCertainMatches`
+   */
+  onlyCertainMatches: false,
+  /**
+   * The value of the `count` parameter for Bulk Match kick-off
+   * requests. The maximum number of records to return per resource.
+   * Will be ignored if empty or falsy.
+   *
+   * Can be overridden from terminal parameter `-c` or `--count`
+   */
+  count: undefined,
 
   /**
    * The default reporter is "cli". That works well in terminal and
@@ -94,7 +127,9 @@ module.exports = {
    */
   destination: "./downloads",
 
-  // TODO: descriptions
+  /**
+   * Logging options for winston logging
+   */
   log: {
     enabled: true,
 

@@ -1,5 +1,4 @@
 import { Algorithm } from "jsonwebtoken";
-import jose from "node-jose";
 
 export declare namespace BulkMatchClient {
   // Request related types –------------------------------------------------------------------------
@@ -17,7 +16,7 @@ export declare namespace BulkMatchClient {
     context?: Record<string, unknown>;
   };
 
-  // Config SubTypes -------------------------------------------------------------------------------
+  // Config-related subtypes -----------------------------------------------------------------------
   /*
    * The default reporter is "cli". That works well in terminal and
    * renders some fancy stuff like progress bars. However, this does not
@@ -81,9 +80,11 @@ export declare namespace BulkMatchClient {
     [key: string]: unknown;
   }
 
-  // Config Options -------------------------------------------------------------------------------
+  // Config Options --------------------------------------------------------------------------------
+
   /**
-   * All match-client configuration options specifiable from the CLI
+   * All match-client configuration options specifiable from the CLI;
+   * all CLI options are optional since they can be defined elsewhere
    */
   interface CLIOptions {
     /**
@@ -94,7 +95,7 @@ export declare namespace BulkMatchClient {
 
     // Patient Match Kick-off parameters -----------------------------------------------------------
     /**
-     * More detailed options seen in the below type definition
+     * More detailed options seen in the above type definition
      */
     resource?: MatchResource;
     /**
@@ -142,23 +143,23 @@ export declare namespace BulkMatchClient {
 
     // Patient Match Kick-off parameters -----------------------------------------------------------
     /**
-     * More detailed options seen in the below type definition
+     * More detailed options seen in the above type definition
      */
     resource?: MatchResource;
     /**
-     * Output formats you expect from the server
+     * Optional: Output formats you expect from the server
      */
     _outputFormat?: string;
     /**
-     * Should the server respond only with a single match?
+     * Optional: Should the server respond only with a single match?
      */
     onlySingleMatch?: boolean;
     /**
-     * Should the server only respond with certain matches?
+     * Optional: Should the server only respond with certain matches?
      */
     onlyCertainMatches?: boolean;
     /**
-     * The maximum number of records to return per resource
+     * Optional: The maximum number of records to return per resource
      */
     count?: number;
 
@@ -166,7 +167,7 @@ export declare namespace BulkMatchClient {
     /**
      * Ideally, this can be auto-detected from fhirUrl using metadata in the
      * CapabilityStatement or from /.well-known/smart-configuration.
-     * However, if you are using this with a Bulk Data server that does not
+     * However, if you are using this with a Bulk Match server that does not
      * provide proper metadata, you can manually set the tokenEndpoint below.
      * Leave it empty to auto-detect.
      */
@@ -176,6 +177,8 @@ export declare namespace BulkMatchClient {
      * The private key used to sign authentication tokens. This must be set
      * in the config file, unless we are connecting to open server (one
      * that has no tokenUrl)
+     *
+     * Use a loose definition in the config-file options
      */
     privateKey?: JWK;
 
@@ -195,17 +198,14 @@ export declare namespace BulkMatchClient {
      */
     accessTokenLifetime?: number;
 
+    // Request Modifications -----------------------------------------------------------------------
+
     /**
      * Custom options for every request, EXCLUDING the authorization request and
      * any upload requests (in case we use remote destination).
-     * @type {RequestInit}
+     * @type {AugmentedRequestInit}
      */
-    requests: RequestInit;
-
-    /**
-     * The destination where patient match payloads should be
-     */
-    destination: string;
+    requests?: AugmentedRequestInit;
 
     /**
      * If the server does not provide `Retry-after` header use this number of
@@ -214,6 +214,11 @@ export declare namespace BulkMatchClient {
     retryAfterMSec?: number;
 
     // Download ------------------------------------------------------------------------------------
+
+    /**
+     * The destination where patient match payloads should be
+     */
+    destination: string;
 
     /**
      * In some cases it might be useful to also save the export manifest
@@ -246,26 +251,19 @@ export declare namespace BulkMatchClient {
     logResponseHeaders: "all" | "none" | string | RegExp | (string | RegExp)[];
 
     /**
-     * The default reporter is "cli". That works well in terminal and
-     * renders some fancy stuff like progress bars. However, this does not
-     * look good when your STDOUT ends up in log files. For example, if
-     * you are using this tool as part of some kind of pipeline and want to
-     * maintain clean logs, then consider changing this to "text".
-     *
-     * Can be overridden from terminal parameter `--reporter`.
-     *
-     * **Defaults to `cli`**
+     * Where information should be reported in real-time
      */
     reporter?: Reporter;
 
     /**
-     * Logging information,
+     * Logging options for winston logging
      */
     log?: LoggingOptions;
   }
 
   /**
    * All match-client configuration options, after combining the CLI options and the ConfigFile options
+   * Additionally, some auth metadata is stored here
    */
   interface NormalizedOptions {
     /**
@@ -273,47 +271,85 @@ export declare namespace BulkMatchClient {
      */
     fhirUrl: string;
 
+    // Patient Match Kick-off parameters -----------------------------------------------------------
     /**
-     * The Bulk Data server token URL ("none" for open servers)
+     * More detailed options seen in the above type definition
+     */
+    resource: MatchResource;
+    /**
+     * Optional: Output formats you expect from the server
+     */
+    _outputFormat?: string;
+    /**
+     * Optional: Should the server respond only with a single match?
+     */
+    onlySingleMatch?: boolean;
+    /**
+     * Optional: Should the server only respond with certain matches?
+     */
+    onlyCertainMatches?: boolean;
+    /**
+     * Optional: The maximum number of records to return per resource
+     */
+    count?: number;
+
+    // Authorization -------------------------------------------------------------------------------
+
+    /**
+     * The Bulk Match server token URL ("none" for open servers)
      */
     tokenUrl: string;
 
     /**
-     * The private key used to sign authentication tokens
+     * Ideally, this can be auto-detected from fhirUrl using metadata in the
+     * CapabilityStatement or from /.well-known/smart-configuration.
+     * However, if you are using this with a Bulk Match server that does not
+     * provide proper metadata, you can manually set the tokenEndpoint below.
+     * Leave it empty to auto-detect.
+     */
+    tokenUrl?: string;
+
+    /**
+     * The private key used to sign authentication tokens. This must be set
+     * in the config file, unless we are connecting to open server (one
+     * that has no tokenUrl); should be empty object in that case
      */
     privateKey: jose.JWK.Key;
 
+    /**
+     * The client id to include in authenticated requests
+     * Not needed if connecting to open servers, should be empty-string in that case
+     */
     clientId: string;
 
-    scope?: string;
-
+    /**
+     * When we request an access token, specify its lifetime in seconds.
+     * Note that if the token expires during status pooling or during
+     * download another authorization request will be made to get new token
+     * and then proceed from there.
+     *
+     * **Defaults to `300`** (5 min)
+     */
     accessTokenLifetime: number;
 
-    reporter: Reporter;
+    /**
+     * The scope to use in the authorization request. If not set, defaults to
+     * "system/Patient.rs"
+     */
+    scope: string;
 
-    // Patient Match Kick-off parameters -----------------------------------------------------------
-    /**
-     * More detailed options seen in the below type definition
-     */
-    resource?: MatchResource;
-    /**
-     * Output formats you expect from the server
-     */
-    _outputFormat?: string;
-    /**
-     * Should the server respond only with a single match?
-     */
-    onlySingleMatch?: boolean;
-    /**
-     * Should the server only respond with certain matches?
-     */
-    onlyCertainMatches?: boolean;
-    /**
-     * The maximum number of records to return per resource
-     */
-    count?: number;
+    // Request Modifications -----------------------------------------------------------------------
 
-    requests: RequestInit;
+    /**
+     * If the server does not provide `Retry-after` header use this number of
+     * milliseconds before checking the status again
+     */
+    retryAfterMSec: number;
+
+    /**
+     * Optional: Modifications to RequestInit to be applied on every request
+     */
+    requests?: AugmentedRequestInit;
 
     // Destination options -------------------------------------------------------------------------
 
@@ -332,12 +368,6 @@ export declare namespace BulkMatchClient {
      * **Defaults to `./downloads`**
      */
     destination: string;
-
-    /**
-     * If the server does not provide `Retry-after` header use this number of
-     * milliseconds before checking the status again
-     */
-    retryAfterMSec: number;
 
     // Download ------------------------------------------------------------------------------------
     /**
@@ -359,6 +389,20 @@ export declare namespace BulkMatchClient {
      */
     addDestinationToManifest: boolean;
 
+    // Logging -------------------------------------------------------------------------------------
+    /**
+     * The default reporter is "cli". That works well in terminal and
+     * renders some fancy stuff like progress bars. However, this does not
+     * look good when your STDOUT ends up in log files. For example, if
+     * you are using this tool as part of some kind of pipeline and want to
+     * maintain clean logs, then consider changing this to "text".
+     *
+     * Can be overridden from terminal parameter `--reporter`.
+     *
+     * **Defaults to `cli`**
+     */
+    reporter: Reporter;
+
     /**
      * ResponseHeaders to include in error logs for debugging purposes
      * When 'all' is specified, all responseHeaders are returned
@@ -369,7 +413,7 @@ export declare namespace BulkMatchClient {
     logResponseHeaders: "all" | "none" | string | RegExp | (string | RegExp)[];
 
     /**
-     * Logging information,
+     * Logging options for winston logging
      */
     log?: LoggingOptions;
   }
@@ -433,7 +477,7 @@ export declare namespace BulkMatchClient {
     transactionTime: string; // FHIR instant
 
     /**
-     * the full URL of the original bulk data kick-off request
+     * the full URL of the original Bulk Match kick-off request
      */
     request: string;
 
@@ -462,7 +506,7 @@ export declare namespace BulkMatchClient {
      * (not in output). If no errors occurred, the server SHOULD return an
      * empty array. Only the OperationOutcome resource type is currently
      * supported, so a server SHALL generate files in the same format as
-     * bulk data output files that contain OperationOutcome resources.
+     * Bulk Match output files that contain OperationOutcome resources.
      */
     error: MatchManifestFile<"OperationOutcome">[];
 

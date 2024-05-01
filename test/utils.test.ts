@@ -63,7 +63,9 @@ describe("Utils Library", function () {
       );
       // Expecting an additional character, only matches our second header
       expect(filterResponseHeaders(headers, [new RegExp("header.+")])).to.equal(
-        { header2: "value2" },
+        {
+          header2: "value2",
+        },
       );
       // Handles multiple regexp fine
       expect(

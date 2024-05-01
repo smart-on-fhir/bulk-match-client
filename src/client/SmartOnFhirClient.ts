@@ -29,7 +29,6 @@ interface SmartOnFhirClient {
  *
  */
 class SmartOnFhirClient extends EventEmitter {
-  // implements TypedEventEmitter<SmartOnFhirClientEvents>
   /**
    * The options of the instance
    */

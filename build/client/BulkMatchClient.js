@@ -449,7 +449,7 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
                     error: null,
                     ...initialState,
                 };
-                await this.downloadFile({
+                await this._downloadFile({
                     file: f,
                     fileName,
                     subFolder: downloadMetadata.exportType === "output"
@@ -494,7 +494,7 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
      * @param param0
      * @returns
      */
-    async downloadFile({ file, fileName, subFolder = "", exportType = "output", }) {
+    async _downloadFile({ file, fileName, subFolder = "", exportType = "output", }) {
         this.emit("downloadStart", {
             fileUrl: file.url,
             itemType: exportType,

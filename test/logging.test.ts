@@ -38,7 +38,9 @@ describe.skip("Logging", function () {
         { status: 404, body: "", headers: { "content-location": "x" } },
       );
 
-      const response = await invoke({ options: { logResponseHeaders: [] } });
+      const response = await invoke({
+        options: { logResponseHeaders: [] },
+      });
       const { log } = response;
       const logs = log
         .split("\n")
@@ -78,7 +80,9 @@ describe.skip("Logging", function () {
         { status: 200, body: "" },
       );
 
-      const { log } = await invoke({ options: { logResponseHeaders: [] } });
+      const { log } = await invoke({
+        options: { logResponseHeaders: [] },
+      });
       const logs = log
         .split("\n")
         .filter(Boolean)
@@ -107,7 +111,9 @@ describe.skip("Logging", function () {
         { status: 200, body: "" },
       );
 
-      const { log } = await invoke({ options: { logResponseHeaders: [] } });
+      const { log } = await invoke({
+        options: { logResponseHeaders: [] },
+      });
       const logs = log
         .split("\n")
         .filter(Boolean)
@@ -191,7 +197,9 @@ describe.skip("Logging", function () {
         },
       );
 
-      const { log } = await invoke({ options: { logResponseHeaders: "all" } });
+      const { log } = await invoke({
+        options: { logResponseHeaders: "all" },
+      });
       const logs = log
         .split("\n")
         .filter(Boolean)

@@ -302,9 +302,7 @@ class BulkMatchClient extends SmartOnFhirClient {
     status.completedAt = now;
     status.percentComplete = 100;
     status.nextCheckAfter = -1;
-    status.message = `Patient Match completed in ${Utils.formatDuration(
-      elapsedTime,
-    )}`;
+    status.message = `Patient Match completed in ${Utils.formatDuration(elapsedTime)}`;
 
     this.emit("jobProgress", { ...status, virtual: true });
     const { body } = res;
@@ -373,9 +371,7 @@ class BulkMatchClient extends SmartOnFhirClient {
         ? `Patient Match: in progress for ${Utils.formatDuration(elapsedTime)}${
             progress ? ". Server message: " + progress : ""
           }`
-        : `Patient Match: ${progressPct}% complete in ${Utils.formatDuration(
-            elapsedTime,
-          )}`,
+        : `Patient Match: ${progressPct}% complete in ${Utils.formatDuration(elapsedTime)}`,
     });
 
     this.emit("jobProgress", {
@@ -538,7 +534,7 @@ class BulkMatchClient extends SmartOnFhirClient {
           error: null,
           ...initialState,
         };
-        await this.downloadFile({
+        await this._downloadFile({
           file: f,
           fileName,
           subFolder:
@@ -595,7 +591,7 @@ class BulkMatchClient extends SmartOnFhirClient {
    * @param param0
    * @returns
    */
-  protected async downloadFile({
+  protected async _downloadFile({
     file,
     fileName,
     subFolder = "",
