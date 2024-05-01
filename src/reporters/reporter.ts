@@ -3,10 +3,15 @@ import BulkMatchClient from "../client/BulkMatchClient";
 
 export default abstract class Reporter {
     private client: BulkMatchClient;
+    protected abstract onAuthorize(accessToken: string): void;
     protected abstract onKickOffStart(requestOptions: RequestInit, url: string): void;
-    protected abstract onKickOffEnd(): void;
+    protected abstract onKickOffEnd(data: {
+        response: Types.CustomBodyResponse<object>;
+        capabilityStatement: fhir4.CapabilityStatement;
+        requestOptions: object;
+        responseHeaders?: object;
+    }): void;
     protected abstract onKickOffError(error: Error): void;
-    protected abstract onAuthorize(): void;
     protected abstract onJobStart(status: Types.MatchStatus): void;
     protected abstract onJobProgress(status: Types.MatchStatus): void;
     protected abstract onJobComplete(manifest: Types.MatchManifest): void;

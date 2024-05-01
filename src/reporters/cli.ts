@@ -29,11 +29,16 @@ export default class CLIReporter extends Reporter {
     }
 
     onJobProgress(status: Types.MatchStatus) {
-        Utils.print(status.message).commit();
+        const { startedAt, elapsedTime, percentComplete, nextCheckAfter, message } = status;
+        Utils.print(message).commit();
+        Utils.print(
+            `Job started at ${startedAt}, ${elapsedTime} time has elapsed and job is ${percentComplete !== -1 ? `${percentComplete}% complete` : "still in progress"}. Will try again after ${nextCheckAfter}`,
+        ).commit();
     }
 
-    onJobComplete() {
-        Utils.print.commit();
+    onJobComplete(manifest: Types.MatchManifest) {
+        Utils.print("Received manifest manifest").commit();
+        Utils.print(JSON.stringify(manifest)).commit();
     }
 
     onJobError(details: {
@@ -42,8 +47,8 @@ export default class CLIReporter extends Reporter {
         message?: string;
         responseHeaders?: object;
     }) {
-        Utils.print("MATCH ERROR");
-        Utils.print(JSON.stringify(details));
+        Utils.print("There was an error in the matching process").commit();
+        Utils.print(JSON.stringify(details)).commit();
     }
 
     onDownloadStart() {

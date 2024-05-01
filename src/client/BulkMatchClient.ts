@@ -4,7 +4,7 @@ import { FhirResource } from "fhir/r4";
 import { existsSync, mkdirSync, readFileSync, statSync } from "fs";
 import { default as fsPromises } from "fs/promises";
 import path, { basename, join, resolve, sep } from "path";
-import { URL, fileURLToPath } from "url";
+import { fileURLToPath } from "url";
 import { debuglog } from "util";
 import { Logger } from "winston";
 import { BulkMatchClient as Types } from "../..";
@@ -49,7 +49,7 @@ class BulkMatchClient extends SmartOnFhirClient {
      * @param headers Response Headers to format
      * @returns an object representation of only the relevant headers
      */
-    public formatResponseHeaders(headers: Types.ResponseHeaders): object | undefined {
+    private _formatResponseHeaders(headers: Types.ResponseHeaders): object | undefined {
         if (this.options.logResponseHeaders.toString().toLocaleLowerCase() === "none")
             return undefined;
         if (this.options.logResponseHeaders.toString().toLocaleLowerCase() === "all")
@@ -63,63 +63,11 @@ class BulkMatchClient extends SmartOnFhirClient {
     }
 
     /**
-     * Makes the kick-off request for Patient Match and resolves with the status endpoint URL
-     */
-    public async kickOff(): Promise<string> {
-        const { fhirUrl } = this.options;
-
-        const url = new URL("Patient/$bulk-match", fhirUrl);
-
-        // TODO: Check with vlad whether we want this or not
-        // Always tries to get capability statement as part of kickoff process-used in logging below
-        let capabilityStatement = {};
-        try {
-            capabilityStatement = await Utils.getCapabilityStatement(fhirUrl);
-        } catch {
-            capabilityStatement = {};
-        }
-
-        const requestOptions: RequestInit = {
-            headers: {
-                "Content-Type": "application/json",
-                accept: "application/fhir+ndjson",
-                prefer: `respond-async`,
-            },
-        };
-
-        requestOptions.method = "POST";
-        // Body must be stringified
-        requestOptions.body = JSON.stringify(await this.buildKickoffPayload());
-        this.emit("kickOffStart", requestOptions, String(url));
-
-        return this._request<object>(url, requestOptions, "kick-off patient match request")
-            .then(async (res) => {
-                const location = res.response.headers.get("content-location");
-                if (!location) {
-                    throw new Error(
-                        "The kick-off patient match response did not include content-location header",
-                    );
-                }
-                this.emit("kickOffEnd", {
-                    response: res,
-                    requestOptions: requestOptions,
-                    capabilityStatement: capabilityStatement as fhir4.CapabilityStatement,
-                    responseHeaders: this.formatResponseHeaders(res.response.headers),
-                });
-                return location;
-            })
-            .catch((error) => {
-                this.emit("kickOffError", error);
-                throw error;
-            });
-    }
-
-    /**
      * Iterate over a well-formed NDJSON file
      * @param resource
      * @returns that
      */
-    protected _parseResourceNdjson(resource: string): fhir4.FhirResource[] {
+    private _parseResourceNdjson(resource: string): fhir4.FhirResource[] {
         try {
             const jsonArr = resource.split("\n");
             return jsonArr.map((j) => JSON.parse(j));
@@ -136,7 +84,7 @@ class BulkMatchClient extends SmartOnFhirClient {
      * @param resource A resource parameter either as a filePath or stringified JSON
      * @returns JSON representation of FHIR resource(s) to match
      */
-    protected async _parseResourceStringOption(
+    private async _parseResourceStringOption(
         resource: string,
     ): Promise<FhirResource | FhirResource[]> {
         // See if this is a file – will throw an error if statSync received non-file/non-dir
@@ -198,7 +146,7 @@ class BulkMatchClient extends SmartOnFhirClient {
      * @param resource A resource parameter to match against
      * @returns FHIR resources to match, represented as an array
      */
-    protected async _parseResourceOption(resource: Types.MatchResource): Promise<FhirResource[]> {
+    private async _parseResourceOption(resource: Types.MatchResource): Promise<FhirResource[]> {
         let localResource = resource as unknown;
         // Turn strings into JSON representation
         if (typeof resource === "string") {
@@ -217,7 +165,7 @@ class BulkMatchClient extends SmartOnFhirClient {
      * Build a POST-request JSON payload for a bulk match request
      * @returns
      */
-    protected async buildKickoffPayload(): Promise<fhir4.Parameters> {
+    private async _buildKickoffPayload(): Promise<fhir4.Parameters> {
         const parameters: fhir4.ParametersParameter[] = [];
 
         // resource --------------------------------------------------------------
@@ -303,7 +251,7 @@ class BulkMatchClient extends SmartOnFhirClient {
                 body: JSON.stringify(body) || null,
                 code: res.response.status || null,
                 message: (ex as Error).message,
-                responseHeaders: this.formatResponseHeaders(res.response.headers),
+                responseHeaders: this._formatResponseHeaders(res.response.headers),
             });
             throw ex;
         }
@@ -382,7 +330,7 @@ class BulkMatchClient extends SmartOnFhirClient {
                 body: JSON.stringify(res.body) || null,
                 code: res.response.status || null,
                 message: msg,
-                responseHeaders: this.formatResponseHeaders(res.response.headers),
+                responseHeaders: this._formatResponseHeaders(res.response.headers),
             });
 
             throw new Errors.OperationOutcomeError({
@@ -404,7 +352,7 @@ class BulkMatchClient extends SmartOnFhirClient {
             body: JSON.stringify(res.body) || null,
             code: res.response.status || null,
             message: msg,
-            responseHeaders: this.formatResponseHeaders(res.response.headers),
+            responseHeaders: this._formatResponseHeaders(res.response.headers),
         });
 
         return new Error(msg);
@@ -457,6 +405,152 @@ class BulkMatchClient extends SmartOnFhirClient {
     }
 
     /**
+     * Makes the kick-off request for Patient Match and resolves with the status endpoint URL
+     */
+    public async kickOff(): Promise<string> {
+        const { fhirUrl } = this.options;
+
+        const url = new URL("Patient/$bulk-match", fhirUrl);
+
+        // TODO: Check with vlad whether we want this or not
+        // Always tries to get capability statement as part of kickoff process-used in logging below
+        let capabilityStatement = {};
+        try {
+            capabilityStatement = await Utils.getCapabilityStatement(fhirUrl);
+        } catch {
+            capabilityStatement = {};
+        }
+
+        const requestOptions: RequestInit = {
+            headers: {
+                "Content-Type": "application/json",
+                accept: "application/fhir+ndjson",
+                prefer: `respond-async`,
+            },
+        };
+
+        requestOptions.method = "POST";
+        // Body must be stringified
+        requestOptions.body = JSON.stringify(await this._buildKickoffPayload());
+        this.emit("kickOffStart", requestOptions, String(url));
+
+        return this._request<object>(url, requestOptions, "kick-off patient match request")
+            .then(async (res) => {
+                const location = res.response.headers.get("content-location");
+                if (!location) {
+                    throw new Error(
+                        "The kick-off patient match response did not include content-location header",
+                    );
+                }
+                this.emit("kickOffEnd", {
+                    response: res,
+                    requestOptions: requestOptions,
+                    capabilityStatement: capabilityStatement as fhir4.CapabilityStatement,
+                    responseHeaders: this._formatResponseHeaders(res.response.headers),
+                });
+                return location;
+            })
+            .catch((error) => {
+                this.emit("kickOffError", error);
+                throw error;
+            });
+    }
+
+    /**
+     * Download a single File from a MatchManifest
+     * @param file The file to download
+     * @param fileName The name that should be used to save the file
+     * @param subFolder What subfolder should the file be saved to; defaults to ""
+     * @param exportType What kind of ManifestFile is this; defaults to "output" but could also be "error"
+     * @returns
+     */
+    private async _downloadFile({
+        file,
+        fileName,
+        subFolder = "",
+        exportType = "output",
+    }: {
+        file: Types.MatchManifestFile;
+        fileName: string;
+        subFolder?: string;
+        exportType?: string;
+    }): Promise<void> {
+        this.emit("downloadStart", {
+            fileUrl: file.url,
+            itemType: exportType,
+        });
+
+        // Start the download for the ndjson file – ndjson means the response is a string
+        return this._request<string>(file.url)
+            .then(async (resp) => {
+                // Download is finished – emit event and save file off
+                this.emit("downloadComplete", {
+                    fileUrl: file.url,
+                });
+                const response = resp.body;
+                await this._saveFile(response, fileName, subFolder);
+            })
+            .catch((e) => {
+                if (e instanceof Errors.FileDownloadError) {
+                    this.emit("downloadError", {
+                        body: null,
+                        code: e.code || null,
+                        fileUrl: e.fileUrl,
+                        message: String(e.message || "File download failed"),
+                        responseHeaders: this._formatResponseHeaders(e.responseHeaders),
+                    });
+                }
+                throw e;
+            });
+    }
+
+    /**
+     * Internal method for saving downloaded files to memory
+     * @param data The information to save
+     * @param fileName The name of the file to use
+     * @param subFolder Where that file should live
+     * @returns A promise associated with this save operation
+     */
+    private async _saveFile(
+        data: string | object,
+        fileName: string,
+        subFolder = "",
+    ): Promise<void> {
+        debug(`Saving ${fileName} ${subFolder ? `with subfolder ${subFolder}` : ""}`);
+        const destination = String(this.options.destination || "none").trim();
+        // No destination, write nothing ---------------------------------------
+        if (!destination || destination.toLowerCase() === "none") {
+            return;
+        }
+
+        // local filesystem destinations ---------------------------------------
+        let path = destination.startsWith("file://")
+            ? fileURLToPath(destination)
+            : destination.startsWith(sep)
+              ? destination
+              : resolve(__dirname, "../..", destination);
+
+        Utils.assert(existsSync(path), `Destination "${path}" does not exist`);
+        Utils.assert(statSync(path).isDirectory, `Destination "${path}" is not a directory`);
+
+        // Create any necessary subfolders (for error responses)
+        if (subFolder) {
+            path = join(path, subFolder);
+            if (!existsSync(path)) {
+                mkdirSync(path);
+            }
+        }
+
+        // Finally write the file to disc
+        if (typeof data === "string") {
+            return fsPromises.writeFile(join(path, fileName), data);
+        } else {
+            // IF not a string, it must be a JSON object
+            return fsPromises.writeFile(join(path, fileName), JSON.stringify(data));
+        }
+    }
+
+    /**
      * Waits for the patient match to be completed and resolves with the export
      * manifest when done. Emits one "jobStart", multiple "jobProgress"
      * and one "jobComplete" events.
@@ -468,7 +562,7 @@ class BulkMatchClient extends SmartOnFhirClient {
      */
     public async waitForMatch(statusEndpoint: string): Promise<Types.MatchManifest> {
         debug("Waiting for match to complete, making status requests");
-        const status = {
+        const status: Types.MatchStatus = {
             startedAt: Date.now(),
             completedAt: -1,
             elapsedTime: 0,
@@ -492,6 +586,7 @@ class BulkMatchClient extends SmartOnFhirClient {
      */
     public async downloadAllFiles(manifest: Types.MatchManifest): Promise<Types.FileDownload[]> {
         debug("Downloading All Files");
+        const startTime = Date.now();
         return new Promise(() => {
             const createDownloadJob = async (
                 f: Types.MatchManifestFile,
@@ -536,7 +631,7 @@ class BulkMatchClient extends SmartOnFhirClient {
                 debug("All downloads settled, processing them and saving manifest");
                 // Save manifest if requested
                 if (this.options.saveManifest) {
-                    this.saveFile(manifest, "manifest.json");
+                    this._saveFile(manifest, "manifest.json");
                 }
                 // Get outcome of downloads if they succeeded; else get failure instances
                 const downloads = downloadOutcomes.map((outcome) => {
@@ -546,101 +641,9 @@ class BulkMatchClient extends SmartOnFhirClient {
                         return outcome;
                     }
                 });
-                this.emit("allDownloadsComplete", downloads);
+                this.emit("allDownloadsComplete", downloads, Date.now() - startTime);
             });
         });
-    }
-
-    /**
-     * TODO FIX THIS FUNCTION DESCRIPTION
-     * Download a file from a provided URL
-     * @param param0
-     * @returns
-     */
-    protected async _downloadFile({
-        file,
-        fileName,
-        subFolder = "",
-        exportType = "output",
-    }: {
-        file: Types.MatchManifestFile;
-        fileName: string;
-        subFolder?: string;
-        exportType?: string;
-    }): Promise<void> {
-        this.emit("downloadStart", {
-            fileUrl: file.url,
-            itemType: exportType,
-        });
-
-        // Start the download for the ndjson file – ndjson means the response is a string
-        return this._request<string>(file.url)
-            .then(async (resp) => {
-                // Download is finished – emit event and save file off
-                this.emit("downloadComplete", {
-                    fileUrl: file.url,
-                });
-                const response = resp.body;
-                await this.saveFile(response, fileName, subFolder);
-            })
-            .catch((e) => {
-                if (e instanceof Errors.FileDownloadError) {
-                    this.emit("downloadError", {
-                        body: null,
-                        code: e.code || null,
-                        fileUrl: e.fileUrl,
-                        message: String(e.message || "File download failed"),
-                        responseHeaders: this.formatResponseHeaders(e.responseHeaders),
-                    });
-                }
-                throw e;
-            });
-    }
-
-    /**
-     * Internal method for saving downloaded files to memory
-     * @param data The information to save
-     * @param fileName The name of the file to use
-     * @param subFolder Where that file should live
-     * @returns A promise associated with this save operation
-     */
-    protected async saveFile(
-        data: string | object,
-        fileName: string,
-        subFolder = "",
-    ): Promise<void> {
-        debug(`Saving ${fileName} ${subFolder ? `with subfolder ${subFolder}` : ""}`);
-        const destination = String(this.options.destination || "none").trim();
-        // No destination, write nothing ---------------------------------------
-        if (!destination || destination.toLowerCase() === "none") {
-            return;
-        }
-
-        // local filesystem destinations ---------------------------------------
-        let path = destination.startsWith("file://")
-            ? fileURLToPath(destination)
-            : destination.startsWith(sep)
-              ? destination
-              : resolve(__dirname, "../..", destination);
-
-        Utils.assert(existsSync(path), `Destination "${path}" does not exist`);
-        Utils.assert(statSync(path).isDirectory, `Destination "${path}" is not a directory`);
-
-        // Create any necessary subfolders (for error responses)
-        if (subFolder) {
-            path = join(path, subFolder);
-            if (!existsSync(path)) {
-                mkdirSync(path);
-            }
-        }
-
-        // Finally write the file to disc
-        if (typeof data === "string") {
-            return fsPromises.writeFile(join(path, fileName), data);
-        } else {
-            // IF not a string, it must be a JSON object
-            return fsPromises.writeFile(join(path, fileName), JSON.stringify(data));
-        }
     }
 
     /**
@@ -657,13 +660,22 @@ class BulkMatchClient extends SmartOnFhirClient {
     }
 
     /**
-     * Connects a logger
+     * Connects a logger, tapping into all emitted events
      * @param log
      */
     public addLogger(logger: Logger) {
-        const startTime = Date.now();
+        this.on("authorize", () => {
+            logger.log("info", "Successfully authorized against token endpoint");
+        });
 
         // kickoff -----------------------------------------------------------------
+        this.on("kickOffStart", (requestOptions: RequestInit, url: string) => {
+            logger.log("info", "Kick-off started with URL: " + url);
+            logger.log("info", "Options: " + JSON.stringify(requestOptions));
+        });
+        this.on("kickOffError", (error: Error) => {
+            console.log("Kick-off failed with error: ", error.message);
+        });
         this.on(
             "kickOffEnd",
             ({ capabilityStatement, response: res, responseHeaders, requestOptions }) => {
@@ -684,7 +696,7 @@ class BulkMatchClient extends SmartOnFhirClient {
             },
         );
 
-        // status_progress ---------------------------------------------------------
+        // Status request events -----------------------------------------------------------------
         this.on("jobProgress", (e) => {
             if (!e.virtual) {
                 // skip the artificially triggered 100% event
@@ -698,16 +710,12 @@ class BulkMatchClient extends SmartOnFhirClient {
                 });
             }
         });
-
-        // status_error ------------------------------------------------------------
         this.on("jobError", (eventDetail) => {
             logger.log("error", {
                 eventId: "status_error",
                 eventDetail,
             });
         });
-
-        // status_complete ---------------------------------------------------------
         this.on("jobComplete", (manifest) => {
             logger.log("info", {
                 eventId: "status_complete",
@@ -735,12 +743,12 @@ class BulkMatchClient extends SmartOnFhirClient {
         });
 
         // export_complete ---------------------------------------------------------
-        this.on("allDownloadsComplete", (downloads) => {
+        this.on("allDownloadsComplete", (downloads, duration) => {
             const eventDetail = {
                 files: 0,
                 resources: 0,
                 bytes: 0,
-                duration: Date.now() - startTime,
+                duration,
             };
 
             // TODO: Add download object back in?

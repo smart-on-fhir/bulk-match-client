@@ -8,7 +8,6 @@ const reporter_1 = __importDefault(require("./reporter"));
 class TextReporter extends reporter_1.default {
     constructor() {
         super(...arguments);
-        this.downloadedPct = 0;
         this.downloadStart = 0;
     }
     onKickOffStart(requestOptions, url) {
@@ -19,24 +18,26 @@ class TextReporter extends reporter_1.default {
         console.log("Kick-off completed");
     }
     onKickOffError(error) {
-        console.log("Kick-off failed with error: ", error);
+        console.log("Kick-off failed with error: ", error.message);
     }
     onAuthorize() {
         console.log("Got new access token");
     }
     onJobStart(status) {
-        this.downloadedPct = 0;
         console.log(status.message);
         console.log(`Status endpoint: ${status.statusEndpoint}`);
     }
     onJobProgress(status) {
-        console.log(status.message);
+        const { startedAt, elapsedTime, percentComplete, nextCheckAfter, message } = status;
+        console.log(message);
+        console.log(`Job started at ${startedAt}, ${elapsedTime} time has elapsed and job is ${percentComplete !== -1 ? `${percentComplete}% complete` : "still in progress"}. Will try again after ${nextCheckAfter}`);
     }
-    onJobComplete() {
+    onJobComplete(manifest) {
         console.log("Received manifest manifest");
+        console.log(JSON.stringify(manifest));
     }
     onJobError(details) {
-        console.error("MATCH ERROR");
+        console.error("There was an error in the matching process");
         console.error(JSON.stringify(details));
     }
     onDownloadStart() {

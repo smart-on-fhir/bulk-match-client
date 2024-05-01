@@ -105,6 +105,7 @@ export interface BulkMatchClientEvents extends SmartOnFhirClientEvents {
     allDownloadsComplete: (
         this: BulkMatchClient,
         downloads: (Types.FileDownload | PromiseRejectedResult)[],
+        duration: number,
     ) => void;
 
     // Extending types for SmartOnFhir Client Events

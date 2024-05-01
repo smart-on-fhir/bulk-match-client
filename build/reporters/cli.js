@@ -29,14 +29,17 @@ class CLIReporter extends reporter_1.default {
         lib_1.Utils.print(`Status endpoint: ${status.statusEndpoint}`).commit();
     }
     onJobProgress(status) {
-        lib_1.Utils.print(status.message).commit();
+        const { startedAt, elapsedTime, percentComplete, nextCheckAfter, message } = status;
+        lib_1.Utils.print(message).commit();
+        lib_1.Utils.print(`Job started at ${startedAt}, ${elapsedTime} time has elapsed and job is ${percentComplete !== -1 ? `${percentComplete}% complete` : "still in progress"}. Will try again after ${nextCheckAfter}`).commit();
     }
-    onJobComplete() {
-        lib_1.Utils.print.commit();
+    onJobComplete(manifest) {
+        lib_1.Utils.print("Received manifest manifest").commit();
+        lib_1.Utils.print(JSON.stringify(manifest)).commit();
     }
     onJobError(details) {
-        lib_1.Utils.print("MATCH ERROR");
-        lib_1.Utils.print(JSON.stringify(details));
+        lib_1.Utils.print("There was an error in the matching process").commit();
+        lib_1.Utils.print(JSON.stringify(details)).commit();
     }
     onDownloadStart() {
         if (!this.downloadStart)

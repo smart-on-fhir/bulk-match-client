@@ -2,7 +2,6 @@ import { BulkMatchClient as Types } from "../..";
 import { Utils } from "../lib";
 import Reporter from "./reporter";
 export default class TextReporter extends Reporter {
-    private downloadedPct = 0;
     private downloadStart = 0;
 
     onKickOffStart(requestOptions: RequestInit, url: string) {
@@ -15,7 +14,7 @@ export default class TextReporter extends Reporter {
     }
 
     onKickOffError(error: Error) {
-        console.log("Kick-off failed with error: ", error);
+        console.log("Kick-off failed with error: ", error.message);
     }
 
     onAuthorize() {
@@ -23,17 +22,21 @@ export default class TextReporter extends Reporter {
     }
 
     onJobStart(status: Types.MatchStatus) {
-        this.downloadedPct = 0;
         console.log(status.message);
         console.log(`Status endpoint: ${status.statusEndpoint}`);
     }
 
     onJobProgress(status: Types.MatchStatus) {
-        console.log(status.message);
+        const { startedAt, elapsedTime, percentComplete, nextCheckAfter, message } = status;
+        console.log(message);
+        console.log(
+            `Job started at ${startedAt}, ${elapsedTime} time has elapsed and job is ${percentComplete !== -1 ? `${percentComplete}% complete` : "still in progress"}. Will try again after ${nextCheckAfter}`,
+        );
     }
 
-    onJobComplete() {
+    onJobComplete(manifest: Types.MatchManifest) {
         console.log("Received manifest manifest");
+        console.log(JSON.stringify(manifest));
     }
 
     onJobError(details: {
@@ -42,7 +45,7 @@ export default class TextReporter extends Reporter {
         message?: string;
         responseHeaders?: object;
     }) {
-        console.error("MATCH ERROR");
+        console.error("There was an error in the matching process");
         console.error(JSON.stringify(details));
     }
 
