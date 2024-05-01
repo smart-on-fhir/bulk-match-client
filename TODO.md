@@ -5,14 +5,14 @@
 - Support for multiple forms of resources
   - inline object
     - Implement X
-    - Test
+    - Test X
   - path to file
     - Implement X
-    - Test
+    - Test X
   - path to dir of patients?
     - Implement X
-    - Test
-  - Consider NDJSON format for resource definitions
+    - Test X
+  - Consider NDJSON format for resource definitions X & TEST
 - Fix events (signatures, remove unnecessary)
   - kickOffStart
   - kickOffEnd

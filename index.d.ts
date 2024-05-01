@@ -2,10 +2,34 @@ import { Algorithm } from "jsonwebtoken";
 import jose from "node-jose";
 
 export declare namespace BulkMatchClient {
+  // Request related types –------------------------------------------------------------------------
+  /**
+   * The request-helper controlled response object, which
+   * contains the original Response and the response's parsed body,
+   */
   type CustomBodyResponse<T> = {
     response: Response;
     body: T;
   };
+  type ResponseHeaders = Headers;
+
+  type AugmentedRequestInit = RequestInit & {
+    context?: Record<string, unknown>;
+  };
+
+  // Config SubTypes -------------------------------------------------------------------------------
+  /*
+   * The default reporter is "cli". That works well in terminal and
+   * renders some fancy stuff like progress bars. However, this does not
+   * look good when your STDOUT ends up in log files. For example, if
+   * you are using this tool as part of some kind of pipeline and want to
+   * maintain clean logs, then consider changing this to "text".
+   *
+   * Can be overridden from terminal parameter `--reporter`.
+   *
+   * **Defaults to `cli`**
+   */
+  type Reporter = "cli" | "text";
 
   /**
    * An object controlling logging behavior; provided by config file
@@ -48,6 +72,17 @@ export declare namespace BulkMatchClient {
   type MatchResource = string | JsonObject | JsonArray;
 
   /**
+   * A very loose JSON Web Key interface
+   */
+  interface JWK {
+    // Must specify an algorithm
+    alg: Algorithm;
+    // It will also have other properties
+    [key: string]: unknown;
+  }
+
+  // Config Options -------------------------------------------------------------------------------
+  /**
    * All match-client configuration options specifiable from the CLI
    */
   interface CLIOptions {
@@ -58,15 +93,25 @@ export declare namespace BulkMatchClient {
     fhirUrl?: string;
 
     // Patient Match Kick-off parameters -----------------------------------------------------------
-    // More detailed options seen in the below type definition
+    /**
+     * More detailed options seen in the below type definition
+     */
     resource?: MatchResource;
-    // Output formats you expect
+    /**
+     * Output formats you expect from the server
+     */
     _outputFormat?: string;
-    // Should the server respond only with a single match?
+    /**
+     * Should the server respond only with a single match?
+     */
     onlySingleMatch?: boolean;
-    // Should the server only respond with certain matches?
+    /**
+     * Should the server only respond with certain matches?
+     */
     onlyCertainMatches?: boolean;
-    // The maximum number of records to return per resource
+    /**
+     * The maximum number of records to return per resource
+     */
     count?: number;
 
     /**
@@ -74,7 +119,10 @@ export declare namespace BulkMatchClient {
      */
     config?: string;
 
-    reporter?: "cli" | "text";
+    /**
+     * The kind of reporter to use when logging activity
+     */
+    reporter?: Reporter;
 
     /**
      * Use if you have a status endpoint of an export that has already been
@@ -83,6 +131,9 @@ export declare namespace BulkMatchClient {
     status?: string;
   }
 
+  /**
+   * All match-client configuration options specifiable from the config file
+   */
   interface ConfigFileOptions {
     /**
      * FHIR server base URL. Should be set either here, or as CLI parameter
@@ -90,10 +141,25 @@ export declare namespace BulkMatchClient {
     fhirUrl?: string;
 
     // Patient Match Kick-off parameters -----------------------------------------------------------
+    /**
+     * More detailed options seen in the below type definition
+     */
     resource?: MatchResource;
+    /**
+     * Output formats you expect from the server
+     */
     _outputFormat?: string;
+    /**
+     * Should the server respond only with a single match?
+     */
     onlySingleMatch?: boolean;
+    /**
+     * Should the server only respond with certain matches?
+     */
     onlyCertainMatches?: boolean;
+    /**
+     * The maximum number of records to return per resource
+     */
     count?: number;
 
     // Authorization -------------------------------------------------------------------------------
@@ -171,11 +237,6 @@ export declare namespace BulkMatchClient {
     // Logging and output --------------------------------------------------------------------------
 
     /**
-     * Logging information,
-     */
-    log?: LoggingOptions;
-
-    /**
      * ResponseHeaders to include in error logs for debugging purposes
      * When 'all' is specified, all responseHeaders are returned
      * When 'none' is specified, no responseHeaders are returned
@@ -195,9 +256,17 @@ export declare namespace BulkMatchClient {
      *
      * **Defaults to `cli`**
      */
-    reporter?: "cli" | "text";
+    reporter?: Reporter;
+
+    /**
+     * Logging information,
+     */
+    log?: LoggingOptions;
   }
 
+  /**
+   * All match-client configuration options, after combining the CLI options and the ConfigFile options
+   */
   interface NormalizedOptions {
     /**
      * FHIR server base URL
@@ -220,15 +289,28 @@ export declare namespace BulkMatchClient {
 
     accessTokenLifetime: number;
 
-    reporter: "cli" | "text";
+    reporter: Reporter;
 
+    // Patient Match Kick-off parameters -----------------------------------------------------------
     /**
-     * Patient Matching kick off parameters
+     * More detailed options seen in the below type definition
      */
-    resource: MatchResource;
-    onlySingleMatch?: boolean;
+    resource?: MatchResource;
+    /**
+     * Output formats you expect from the server
+     */
     _outputFormat?: string;
+    /**
+     * Should the server respond only with a single match?
+     */
+    onlySingleMatch?: boolean;
+    /**
+     * Should the server only respond with certain matches?
+     */
     onlyCertainMatches?: boolean;
+    /**
+     * The maximum number of records to return per resource
+     */
     count?: number;
 
     requests: RequestInit;
@@ -250,8 +332,6 @@ export declare namespace BulkMatchClient {
      * **Defaults to `./downloads`**
      */
     destination: string;
-
-    log: LoggingOptions;
 
     /**
      * If the server does not provide `Retry-after` header use this number of
@@ -287,12 +367,59 @@ export declare namespace BulkMatchClient {
      * NOTE: When an empty array is specified, an empty object of responseHeaders will be returned
      */
     logResponseHeaders: "all" | "none" | string | RegExp | (string | RegExp)[];
+
+    /**
+     * Logging information,
+     */
+    log?: LoggingOptions;
   }
 
-  interface JWK {
-    alg: Algorithm;
-    [key: string]: unknown;
+  // Client-level Types ----------------------------------------------------------------------------
+  /**
+   * The shape of Auth Token responses
+   */
+  interface TokenResponse {
+    // Token type should always be bearer
+    token_type: "bearer";
+    // Scope depends on scope requested
+    scope: string;
+    // The auth token itself
+    access_token: string;
+    // Optionally, servers can specify an expiration type
+    expires_in?: number;
   }
+
+  /**
+   * An object tracking the progress of a match request
+   */
+  interface MatchStatus {
+    // When the request was started
+    startedAt: number;
+    // When the request was completed
+    completedAt: number;
+    // The time elapsed from start to the most recent response
+    elapsedTime: number;
+    // The percentage complete the BulkMatch is
+    percentComplete: number;
+    // When the next check should be done; informed by the response-headers & default wait times
+    nextCheckAfter: number;
+    // Information about the request
+    message: string;
+    // The endpoint which is being used for making status requests
+    statusEndpoint: string;
+    // Optional: A specified header for communicating progress information
+    xProgressHeader?: string;
+    // Optional: Any status-response provided retryAfter information
+    retryAfterHeader?: string;
+    // Optional: The body of the status-response, if any
+    body?: unknown;
+    // Optional: An client-created flag for ignoring status-events associated with the request completing
+    virtual?: boolean;
+  }
+
+  /**
+   * Information associated with a response for a Bulk-Match manifest
+   */
   interface MatchManifest {
     /**
      * indicates the server's time when the query is run. The response
@@ -351,6 +478,9 @@ export declare namespace BulkMatchClient {
     extension?: Record<string, unknown>;
   }
 
+  /**
+   * The shape of each individual file in a Bulk-Match Manifest's output or error sub-array
+   */
   interface MatchManifestFile<Type = string> {
     /**
      * the FHIR resource type that is contained in the file.
@@ -383,13 +513,9 @@ export declare namespace BulkMatchClient {
     destination?: string;
   }
 
-  interface KickOffParams {
-    MatchResource?: string;
-    onlySingleMatch?: boolean;
-    onlyCertainMatches?: boolean;
-    count?: number;
-  }
-
+  /**
+   * Metadata associated with a FileDownload, stemming from files referenced in our MatchManifest
+   */
   interface FileDownload {
     /**
      * The file URL
@@ -414,35 +540,11 @@ export declare namespace BulkMatchClient {
      */
     readonly exportType: "output" | "error";
   }
-
-  interface TokenResponse {
-    token_type: "bearer";
-    scope: "string";
-    expires_in?: number;
-    access_token: string;
-  }
-
-  interface MatchStatus {
-    startedAt: number;
-    completedAt: number;
-    elapsedTime: number;
-    percentComplete: number;
-    nextCheckAfter: number;
-    message: string;
-    xProgressHeader?: string;
-    retryAfterHeader?: string;
-    body?: unknown;
-    virtual?: boolean;
-    statusEndpoint: string;
-  }
-
-  type ResponseHeaders = Headers;
-
-  type AugmentedRequestInit = RequestInit & {
-    context?: Record<string, unknown>;
-  };
 }
 
+/**
+ * Some helper types for JSON elements
+ */
 export interface JsonObject {
   [key: string]: JsonValue;
 }

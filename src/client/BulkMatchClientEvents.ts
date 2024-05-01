@@ -110,4 +110,23 @@ export interface BulkMatchClientEvents extends SmartOnFhirClientEvents {
     this: BulkMatchClient,
     downloads: (Types.FileDownload | PromiseRejectedResult)[],
   ) => void;
+
+  // Extending types for SmartOnFhir Client Events
+  /**
+   * Emitted every time new access token is received
+   * @event
+   */
+  authorize: (this: BulkMatchClient, accessToken: string) => void;
+
+  /**
+   * Emitted on error
+   * @event
+   */
+  error: (this: BulkMatchClient, error: Error) => void;
+
+  /**
+   * Emitted when the flow is aborted by the user
+   * @event
+   */
+  abort: (this: BulkMatchClient) => void;
 }
