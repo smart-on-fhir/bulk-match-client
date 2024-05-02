@@ -4,8 +4,6 @@ import { Utils } from "../lib";
 import Reporter from "./reporter";
 
 export default class CLIReporter extends Reporter {
-    private downloadStart: number = 0;
-
     onKickOffStart(requestOptions: RequestInit, url: string) {
         Utils.print("Kick-off started with URL: " + url).commit();
         Utils.print("Options: " + JSON.stringify(requestOptions)).commit();
@@ -32,7 +30,9 @@ export default class CLIReporter extends Reporter {
         const { startedAt, elapsedTime, percentComplete, nextCheckAfter, message } = status;
         Utils.print(message).commit();
         Utils.print(
-            `Job started at ${startedAt}, ${elapsedTime} time has elapsed and job is ${percentComplete !== -1 ? `${percentComplete}% complete` : "still in progress"}. Will try again after ${nextCheckAfter}`,
+            `Job started at ${new Date(startedAt).toISOString()}, ${Utils.formatDuration(elapsedTime)} time has elapsed and job is ` +
+                `${percentComplete !== -1 ? `${percentComplete}% complete` : "still in progress"}.` +
+                `${nextCheckAfter !== -1 ? ` Will try again after ${Utils.formatDuration(nextCheckAfter)}.` : ""}`,
         ).commit();
     }
 
@@ -51,16 +51,37 @@ export default class CLIReporter extends Reporter {
         Utils.print(JSON.stringify(details)).commit();
     }
 
-    onDownloadStart() {
-        if (!this.downloadStart) this.downloadStart = Date.now();
+    onDownloadStart({
+        fileUrl,
+        itemType,
+        duration,
+    }: {
+        fileUrl: string;
+        itemType: string;
+        duration: number;
+    }) {
+        Utils.print(
+            `Begin ${itemType}-file download for ${fileUrl} at ${Utils.formatDuration(duration)}...`,
+        ).commit();
+    }
+    onDownloadComplete({ fileUrl, duration }: { fileUrl: string; duration: number }) {
+        Utils.print(`${fileUrl} download complete in ${Utils.formatDuration(duration)}`).commit();
+    }
+    onDownloadError({
+        fileUrl,
+        message,
+        duration,
+    }: {
+        fileUrl: string;
+        message: string;
+        duration: number;
+    }) {
+        Utils.print(`${fileUrl} download failed in ${Utils.formatDuration(duration)}`).commit();
+        Utils.print("Message: " + message).commit();
     }
 
-    onDownloadComplete() {
-        console.log(
-            `Download completed in ${Utils.formatDuration(Date.now() - this.downloadStart)}`,
-        );
-        // Reset to 0
-        this.downloadStart = 0;
+    onAllDownloadsComplete(_: unknown, duration: number) {
+        Utils.print(`Download completed in ${Utils.formatDuration(duration)}`).commit();
     }
 
     onError(error: Error) {

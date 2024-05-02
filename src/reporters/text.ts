@@ -2,8 +2,6 @@ import { BulkMatchClient as Types } from "../..";
 import { Utils } from "../lib";
 import Reporter from "./reporter";
 export default class TextReporter extends Reporter {
-    private downloadStart = 0;
-
     onKickOffStart(requestOptions: RequestInit, url: string) {
         console.log("Kick-off started with URL: ", url);
         console.log("Options: ", JSON.stringify(requestOptions));
@@ -30,7 +28,9 @@ export default class TextReporter extends Reporter {
         const { startedAt, elapsedTime, percentComplete, nextCheckAfter, message } = status;
         console.log(message);
         console.log(
-            `Job started at ${startedAt}, ${elapsedTime} time has elapsed and job is ${percentComplete !== -1 ? `${percentComplete}% complete` : "still in progress"}. Will try again after ${nextCheckAfter}`,
+            `Job started at ${new Date(startedAt).toISOString()}, ${Utils.formatDuration(elapsedTime)} time has elapsed and job is ` +
+                `${percentComplete !== -1 ? `${percentComplete}% complete` : "still in progress"}.` +
+                `${nextCheckAfter !== -1 ? ` Will try again after ${nextCheckAfter}.` : ""}`,
         );
     }
 
@@ -49,18 +49,39 @@ export default class TextReporter extends Reporter {
         console.error(JSON.stringify(details));
     }
 
-    onDownloadStart() {
-        if (!this.downloadStart) {
-            console.log("Begin file downloads...");
-            this.downloadStart = Date.now();
-        }
+    onDownloadStart({
+        fileUrl,
+        itemType,
+        duration,
+    }: {
+        fileUrl: string;
+        itemType: string;
+        duration: number;
+    }) {
+        console.log(
+            `Begin ${itemType}-file download for ${fileUrl} at ${Utils.formatDuration(duration)}...`,
+        );
     }
 
-    onDownloadComplete() {
-        console.log(
-            `Download completed in ${Utils.formatDuration(Date.now() - this.downloadStart)}`,
-        );
-        this.downloadStart = 0;
+    onDownloadComplete({ fileUrl, duration }: { fileUrl: string; duration: number }) {
+        console.log(`${fileUrl} download completed in ${Utils.formatDuration(duration)}`);
+    }
+
+    onDownloadError({
+        fileUrl,
+        message,
+        duration,
+    }: {
+        fileUrl: string;
+        message: string;
+        duration: number;
+    }) {
+        console.log(`${fileUrl} download FAILED in ${Utils.formatDuration(duration)}`);
+        console.log("Message: " + message);
+    }
+
+    onAllDownloadsComplete(_: unknown, duration: number) {
+        console.log(`All downloads completed in ${Utils.formatDuration(duration)}`);
     }
 
     onError(error: Error) {

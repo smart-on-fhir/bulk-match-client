@@ -32,8 +32,12 @@ async function augmentedFetch<T>(
 
                 // Throw errors for all non-200's, except 429
                 if (!response.ok && response.status !== 429) {
-                    // @ts-ignore
-                    throw new Error(body?.message || body || response.statusText);
+                    const message =
+                        `${options.method}:${input} FAILED with ` +
+                        `${response.status}` +
+                        `${response.statusText ? ` and message ${response.statusText}` : ""}.` +
+                        `${body ? " Body: " + JSON.stringify(body) : ""}`;
+                    throw new Error(message);
                 }
                 debug(
                     "\n=======================================================" +

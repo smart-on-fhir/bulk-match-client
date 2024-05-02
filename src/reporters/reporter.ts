@@ -1,29 +1,58 @@
-import { BulkMatchClient as Types } from "../..";
+import { BulkMatchClientEvents as BMCE } from "../client";
 import BulkMatchClient from "../client/BulkMatchClient";
 
 export default abstract class Reporter {
     private client: BulkMatchClient;
-    protected abstract onAuthorize(accessToken: string): void;
-    protected abstract onKickOffStart(requestOptions: RequestInit, url: string): void;
-    protected abstract onKickOffEnd(data: {
-        response: Types.CustomBodyResponse<object>;
-        capabilityStatement: fhir4.CapabilityStatement;
-        requestOptions: object;
-        responseHeaders?: object;
-    }): void;
-    protected abstract onKickOffError(error: Error): void;
-    protected abstract onJobStart(status: Types.MatchStatus): void;
-    protected abstract onJobProgress(status: Types.MatchStatus): void;
-    protected abstract onJobComplete(manifest: Types.MatchManifest): void;
-    protected abstract onJobError(details: {
-        body: string | fhir4.OperationOutcome | null;
-        code: number | null;
-        message?: string;
-        responseHeaders?: object;
-    }): void;
-    protected abstract onDownloadStart(): void;
-    protected abstract onDownloadComplete(): void;
-    protected abstract onError(error: Error): void;
+    protected abstract onAuthorize(
+        ...args: Parameters<BMCE["authorize"]>
+    ): ReturnType<BMCE["authorize"]>;
+
+    protected abstract onKickOffStart(
+        ...args: Parameters<BMCE["kickOffStart"]>
+    ): ReturnType<BMCE["kickOffStart"]>;
+
+    protected abstract onKickOffEnd(
+        ...args: Parameters<BMCE["kickOffEnd"]>
+    ): ReturnType<BMCE["kickOffEnd"]>;
+
+    protected abstract onKickOffError(
+        ...args: Parameters<BMCE["kickOffError"]>
+    ): ReturnType<BMCE["kickOffError"]>;
+
+    protected abstract onJobStart(
+        ...args: Parameters<BMCE["jobStart"]>
+    ): ReturnType<BMCE["jobStart"]>;
+
+    protected abstract onJobProgress(
+        ...args: Parameters<BMCE["jobProgress"]>
+    ): ReturnType<BMCE["jobProgress"]>;
+
+    protected abstract onJobComplete(
+        ...args: Parameters<BMCE["jobComplete"]>
+    ): ReturnType<BMCE["jobComplete"]>;
+
+    protected abstract onJobError(
+        ...args: Parameters<BMCE["jobError"]>
+    ): ReturnType<BMCE["jobError"]>;
+
+    protected abstract onDownloadStart(
+        ...args: Parameters<BMCE["downloadStart"]>
+    ): ReturnType<BMCE["downloadStart"]>;
+
+    protected abstract onDownloadComplete(
+        ...args: Parameters<BMCE["downloadComplete"]>
+    ): ReturnType<BMCE["downloadComplete"]>;
+
+    protected abstract onDownloadError(
+        ...args: Parameters<BMCE["downloadError"]>
+    ): ReturnType<BMCE["downloadError"]>;
+
+    protected abstract onAllDownloadsComplete(
+        ...args: Parameters<BMCE["allDownloadsComplete"]>
+    ): ReturnType<BMCE["allDownloadsComplete"]>;
+
+    protected abstract onError(...args: Parameters<BMCE["error"]>): ReturnType<BMCE["error"]>;
+
     constructor(client: BulkMatchClient) {
         this.client = client;
         this.client.on("authorize", this.onAuthorize);
@@ -35,7 +64,9 @@ export default abstract class Reporter {
         this.client.on("jobComplete", this.onJobComplete);
         this.client.on("jobError", this.onJobError);
         this.client.on("downloadStart", this.onDownloadStart);
-        this.client.on("allDownloadsComplete", this.onDownloadComplete);
+        this.client.on("downloadError", this.onDownloadError);
+        this.client.on("downloadComplete", this.onDownloadComplete);
+        this.client.on("allDownloadsComplete", this.onAllDownloadsComplete);
         this.client.on("error", this.onError);
     }
     // Common destroyer
@@ -49,7 +80,9 @@ export default abstract class Reporter {
         this.client.off("jobComplete", this.onJobComplete);
         this.client.off("jobError", this.onJobError);
         this.client.off("downloadStart", this.onDownloadStart);
-        this.client.off("allDownloadsComplete", this.onDownloadComplete);
+        this.client.off("downloadError", this.onDownloadError);
+        this.client.off("downloadComplete", this.onDownloadComplete);
+        this.client.off("allDownloadsComplete", this.onAllDownloadsComplete);
         this.client.off("error", this.onError);
     }
 }

@@ -14,29 +14,25 @@
         -   Test X
     -   Consider NDJSON format for resource definitions X & TEST
 -   Fix events (signatures, remove unnecessary)
-    -   kickOffStart
-    -   kickOffEnd
-    -   kickOffError
-    -   jobStart
-    -   jobProgress
-    -   jobError
-    -   jobComplete
-    -   downloadStart
-    -   downloadError
-    -   downloadComplete
-    -   allDownloadsComplete
-    -   downloads
-    -   authorize
-    -   error
-    -   abort
+    -   kickOffStart x
+    -   kickOffEnd x
+    -   kickOffError x
+    -   jobStart x
+    -   jobProgress x
+    -   jobError x
+    -   jobComplete x
+    -   downloadStart x
+    -   downloadError x
+    -   downloadComplete x
+    -   allDownloadsComplete x
+    -   authorize x
+    -   error x
+    -   abort x
 
 ## Things to remove:
 
--   Clean up Download types (so much unnecessary info on there from file-download days)
-
 ## Things I'm not sure if we should remove/ want to check with Vlad
 
--   Lenient – removed but should check
 -   addDestinationToManifest – still have it but is this as necessary? It feels nice to have but the bundles are so much smaller. I could see an argument for keeping it in order to reduce distance from bulk-data-client, but I'm open to opinions
 
 ## Things I still need to test

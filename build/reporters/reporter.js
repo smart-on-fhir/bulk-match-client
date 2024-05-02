@@ -12,7 +12,9 @@ class Reporter {
         this.client.on("jobComplete", this.onJobComplete);
         this.client.on("jobError", this.onJobError);
         this.client.on("downloadStart", this.onDownloadStart);
-        this.client.on("allDownloadsComplete", this.onDownloadComplete);
+        this.client.on("downloadError", this.onDownloadError);
+        this.client.on("downloadComplete", this.onDownloadComplete);
+        this.client.on("allDownloadsComplete", this.onAllDownloadsComplete);
         this.client.on("error", this.onError);
     }
     // Common destroyer
@@ -26,7 +28,9 @@ class Reporter {
         this.client.off("jobComplete", this.onJobComplete);
         this.client.off("jobError", this.onJobError);
         this.client.off("downloadStart", this.onDownloadStart);
-        this.client.off("allDownloadsComplete", this.onDownloadComplete);
+        this.client.off("downloadError", this.onDownloadError);
+        this.client.off("downloadComplete", this.onDownloadComplete);
+        this.client.off("allDownloadsComplete", this.onAllDownloadsComplete);
         this.client.off("error", this.onError);
     }
 }

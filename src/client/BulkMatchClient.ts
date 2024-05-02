@@ -505,31 +505,30 @@ class BulkMatchClient extends SmartOnFhirClient {
         subFolder?: string;
         exportType?: string;
     }): Promise<void> {
+        const downloadStartTime = Date.now();
         this.emit("downloadStart", {
             fileUrl: file.url,
             itemType: exportType,
+            duration: downloadStartTime,
         });
 
         // Start the download for the ndjson file – ndjson means the response is a string
         return this._request<string>(file.url)
-            .then(async (resp) => {
+            .then(async (res) => {
                 // Download is finished – emit event and save file off
                 this.emit("downloadComplete", {
                     fileUrl: file.url,
+                    duration: Date.now() - downloadStartTime,
                 });
-                const response = resp.body;
-                await this._saveFile(response, fileName, subFolder);
+                const body = res.body;
+                await this._saveFile(body, fileName, subFolder);
             })
             .catch((e) => {
-                if (e instanceof Errors.FileDownloadError) {
-                    this.emit("downloadError", {
-                        body: null,
-                        code: e.code || null,
-                        fileUrl: e.fileUrl,
-                        message: String(e.message || "File download failed"),
-                        responseHeaders: this._formatResponseHeaders(e.responseHeaders),
-                    });
-                }
+                this.emit("downloadError", {
+                    fileUrl: file.url,
+                    message: String(e.message || "File download failed"),
+                    duration: Date.now() - downloadStartTime,
+                });
                 throw e;
             });
     }
@@ -567,7 +566,7 @@ class BulkMatchClient extends SmartOnFhirClient {
         if (subFolder) {
             path = join(path, subFolder);
             if (!existsSync(path)) {
-                mkdirSync(path);
+                mkdirSync(path, { recursive: true });
             }
         }
 
@@ -695,22 +694,34 @@ class BulkMatchClient extends SmartOnFhirClient {
      */
     public addLogger(logger: Logger) {
         this.on("authorize", () => {
-            logger.log("info", "Successfully authorized against token endpoint");
+            logger.log("info", {
+                eventId: "authorize",
+                eventDetail: "Successfully authorized against token endpoint",
+            });
         });
 
-        // kickoff -----------------------------------------------------------------
+        // kickoff ---------------------------------------------------------------------------------
         this.on("kickOffStart", (requestOptions: RequestInit, url: string) => {
-            logger.log("info", "Kick-off started with URL: " + url);
-            logger.log("info", "Options: " + JSON.stringify(requestOptions));
+            logger.log("info", {
+                eventId: "kickoff_start",
+                eventDetail: `Kick-off started with URL: ${url}\n "Options: ${JSON.stringify(requestOptions)}`,
+            });
         });
+
+        // kickoff_error ---------------------------------------------------------------------------
         this.on("kickOffError", (error: Error) => {
-            console.log("Kick-off failed with error: ", error.message);
+            logger.log("info", {
+                eventId: "kickoff_error",
+                eventDetail: "Kick-off failed with error: " + error.message,
+            });
         });
+
+        // kickoff_complete ------------------------------------------------------------------------
         this.on(
             "kickOffEnd",
             ({ capabilityStatement, response: res, responseHeaders, requestOptions }) => {
                 logger.log("info", {
-                    eventId: "kickoff",
+                    eventId: "kickoff_complete",
                     eventDetail: {
                         exportUrl: res.response.url,
                         errorCode: res.response.status >= 400 ? res.response.status : null,
@@ -726,7 +737,7 @@ class BulkMatchClient extends SmartOnFhirClient {
             },
         );
 
-        // Status request events -----------------------------------------------------------------
+        // Status request events -------------------------------------------------------------------
         this.on("jobProgress", (e) => {
             if (!e.virtual) {
                 // skip the artificially triggered 100% event
@@ -746,6 +757,7 @@ class BulkMatchClient extends SmartOnFhirClient {
                 eventDetail,
             });
         });
+        // job completion --------------------------------------------------------------------------
         this.on("jobComplete", (manifest) => {
             logger.log("info", {
                 eventId: "status_complete",
@@ -757,27 +769,25 @@ class BulkMatchClient extends SmartOnFhirClient {
             });
         });
 
-        // download_request --------------------------------------------------------
+        // download_request ------------------------------------------------------------------------
         this.on("downloadStart", (eventDetail) => {
             logger.log("info", { eventId: "download_request", eventDetail });
         });
 
-        // download_complete -------------------------------------------------------
+        // download_complete -----------------------------------------------------------------------
         this.on("downloadComplete", (eventDetail) => {
             logger.log("info", { eventId: "download_complete", eventDetail });
         });
 
-        // download_error ----------------------------------------------------------
+        // download_error --------------------------------------------------------------------------
         this.on("downloadError", (eventDetail) => {
             logger.log("info", { eventId: "download_error", eventDetail });
         });
 
-        // export_complete ---------------------------------------------------------
+        // export_complete -------------------------------------------------------------------------
         this.on("allDownloadsComplete", (downloads, duration) => {
             const eventDetail = {
                 files: 0,
-                resources: 0,
-                bytes: 0,
                 duration,
             };
 
@@ -786,7 +796,7 @@ class BulkMatchClient extends SmartOnFhirClient {
                 eventDetail.files += 1;
             });
 
-            logger.log("info", { eventId: "export_complete", eventDetail });
+            logger.log("info", { eventId: "all_downloads_complete", eventDetail });
         });
     }
 }

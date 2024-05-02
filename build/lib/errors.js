@@ -1,18 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.InvalidNdjsonError = exports.UnknownResourceStringError = exports.OperationOutcomeError = exports.FileDownloadError = void 0;
+exports.InvalidNdjsonError = exports.UnknownResourceStringError = exports.OperationOutcomeError = void 0;
 const utils_1 = require("./utils");
-class FileDownloadError extends Error {
-    constructor({ body, code, responseHeaders, fileUrl }) {
-        super(`Downloading the file from ${fileUrl} returned HTTP status code ${code}.${body ? " Body: " + JSON.stringify(body) : ""}`);
-        this.code = code;
-        this.body = body;
-        this.responseHeaders = responseHeaders;
-        this.fileUrl = fileUrl;
-        Error.captureStackTrace(this, this.constructor);
-    }
-}
-exports.FileDownloadError = FileDownloadError;
 class OperationOutcomeError extends Error {
     constructor({ res }) {
         const url = res.response.url;

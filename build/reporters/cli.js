@@ -7,10 +7,6 @@ require("colors");
 const lib_1 = require("../lib");
 const reporter_1 = __importDefault(require("./reporter"));
 class CLIReporter extends reporter_1.default {
-    constructor() {
-        super(...arguments);
-        this.downloadStart = 0;
-    }
     onKickOffStart(requestOptions, url) {
         lib_1.Utils.print("Kick-off started with URL: " + url).commit();
         lib_1.Utils.print("Options: " + JSON.stringify(requestOptions)).commit();
@@ -31,7 +27,9 @@ class CLIReporter extends reporter_1.default {
     onJobProgress(status) {
         const { startedAt, elapsedTime, percentComplete, nextCheckAfter, message } = status;
         lib_1.Utils.print(message).commit();
-        lib_1.Utils.print(`Job started at ${startedAt}, ${elapsedTime} time has elapsed and job is ${percentComplete !== -1 ? `${percentComplete}% complete` : "still in progress"}. Will try again after ${nextCheckAfter}`).commit();
+        lib_1.Utils.print(`Job started at ${new Date(startedAt).toISOString()}, ${lib_1.Utils.formatDuration(elapsedTime)} time has elapsed and job is ` +
+            `${percentComplete !== -1 ? `${percentComplete}% complete` : "still in progress"}.` +
+            `${nextCheckAfter !== -1 ? ` Will try again after ${lib_1.Utils.formatDuration(nextCheckAfter)}.` : ""}`).commit();
     }
     onJobComplete(manifest) {
         lib_1.Utils.print("Received manifest manifest").commit();
@@ -41,14 +39,18 @@ class CLIReporter extends reporter_1.default {
         lib_1.Utils.print("There was an error in the matching process").commit();
         lib_1.Utils.print(JSON.stringify(details)).commit();
     }
-    onDownloadStart() {
-        if (!this.downloadStart)
-            this.downloadStart = Date.now();
+    onDownloadStart({ fileUrl, itemType, duration, }) {
+        lib_1.Utils.print(`Begin ${itemType}-file download for ${fileUrl} at ${lib_1.Utils.formatDuration(duration)}...`).commit();
     }
-    onDownloadComplete() {
-        console.log(`Download completed in ${lib_1.Utils.formatDuration(Date.now() - this.downloadStart)}`);
-        // Reset to 0
-        this.downloadStart = 0;
+    onDownloadComplete({ fileUrl, duration }) {
+        lib_1.Utils.print(`${fileUrl} download complete in ${lib_1.Utils.formatDuration(duration)}`).commit();
+    }
+    onDownloadError({ fileUrl, message, duration, }) {
+        lib_1.Utils.print(`${fileUrl} download failed in ${lib_1.Utils.formatDuration(duration)}`).commit();
+        lib_1.Utils.print("Message: " + message).commit();
+    }
+    onAllDownloadsComplete(_, duration) {
+        lib_1.Utils.print(`Download completed in ${lib_1.Utils.formatDuration(duration)}`).commit();
     }
     onError(error) {
         console.error(error);

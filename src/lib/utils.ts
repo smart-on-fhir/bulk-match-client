@@ -109,12 +109,12 @@ export async function getWellKnownSmartConfig(baseUrl: string): Promise<JsonObje
 export async function getCapabilityStatement(baseUrl: string): Promise<fhir4.CapabilityStatement> {
     const url = new URL("metadata", baseUrl.replace(/\/*$/, "/"));
     return request(url)
-        .then(async (resp) => {
-            if (resp.response.status === 404) {
-                throw Error(resp.response.statusText);
+        .then(async (res) => {
+            if (res.response.status === 404) {
+                throw Error(res.response.statusText);
             }
             debug("Fetched CapabilityStatement from %s", url);
-            return resp.body as fhir4.CapabilityStatement;
+            return res.body as fhir4.CapabilityStatement;
         })
         .catch((e) => {
             debug(

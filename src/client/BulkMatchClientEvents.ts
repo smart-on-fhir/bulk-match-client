@@ -69,6 +69,7 @@ export interface BulkMatchClientEvents extends SmartOnFhirClientEvents {
         detail: {
             fileUrl: string;
             itemType: string;
+            duration: number;
         },
     ) => void;
 
@@ -79,11 +80,9 @@ export interface BulkMatchClientEvents extends SmartOnFhirClientEvents {
     downloadError: (
         this: BulkMatchClient,
         details: {
-            body: string | fhir4.OperationOutcome | null; // Buffer
-            code: number | null;
             fileUrl: string;
             message?: string;
-            responseHeaders?: object;
+            duration: number;
         },
     ) => void;
 
@@ -95,6 +94,7 @@ export interface BulkMatchClientEvents extends SmartOnFhirClientEvents {
         this: BulkMatchClient,
         detail: {
             fileUrl: string;
+            duration: number;
         },
     ) => void;
 

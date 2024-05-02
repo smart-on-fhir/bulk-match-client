@@ -6,10 +6,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const lib_1 = require("../lib");
 const reporter_1 = __importDefault(require("./reporter"));
 class TextReporter extends reporter_1.default {
-    constructor() {
-        super(...arguments);
-        this.downloadStart = 0;
-    }
     onKickOffStart(requestOptions, url) {
         console.log("Kick-off started with URL: ", url);
         console.log("Options: ", JSON.stringify(requestOptions));
@@ -30,7 +26,9 @@ class TextReporter extends reporter_1.default {
     onJobProgress(status) {
         const { startedAt, elapsedTime, percentComplete, nextCheckAfter, message } = status;
         console.log(message);
-        console.log(`Job started at ${startedAt}, ${elapsedTime} time has elapsed and job is ${percentComplete !== -1 ? `${percentComplete}% complete` : "still in progress"}. Will try again after ${nextCheckAfter}`);
+        console.log(`Job started at ${new Date(startedAt).toISOString()}, ${lib_1.Utils.formatDuration(elapsedTime)} time has elapsed and job is ` +
+            `${percentComplete !== -1 ? `${percentComplete}% complete` : "still in progress"}.` +
+            `${nextCheckAfter !== -1 ? ` Will try again after ${nextCheckAfter}.` : ""}`);
     }
     onJobComplete(manifest) {
         console.log("Received manifest manifest");
@@ -40,15 +38,18 @@ class TextReporter extends reporter_1.default {
         console.error("There was an error in the matching process");
         console.error(JSON.stringify(details));
     }
-    onDownloadStart() {
-        if (!this.downloadStart) {
-            console.log("Begin file downloads...");
-            this.downloadStart = Date.now();
-        }
+    onDownloadStart({ fileUrl, itemType, duration, }) {
+        console.log(`Begin ${itemType}-file download for ${fileUrl} at ${lib_1.Utils.formatDuration(duration)}...`);
     }
-    onDownloadComplete() {
-        console.log(`Download completed in ${lib_1.Utils.formatDuration(Date.now() - this.downloadStart)}`);
-        this.downloadStart = 0;
+    onDownloadComplete({ fileUrl, duration }) {
+        console.log(`${fileUrl} download completed in ${lib_1.Utils.formatDuration(duration)}`);
+    }
+    onDownloadError({ fileUrl, message, duration, }) {
+        console.log(`${fileUrl} download FAILED in ${lib_1.Utils.formatDuration(duration)}`);
+        console.log("Message: " + message);
+    }
+    onAllDownloadsComplete(_, duration) {
+        console.log(`All downloads completed in ${lib_1.Utils.formatDuration(duration)}`);
     }
     onError(error) {
         console.error(error);

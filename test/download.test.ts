@@ -50,7 +50,7 @@ describe("download", function () {
         });
     });
 
-    it.skip("Integration: Manifest will be parsed and all output files will be downloaded", async () => {
+    it("Integration: Manifest will be parsed and all output files will be downloaded", async () => {
         // Mock the kick-off response
         mockServer.mock(
             { method: "post", path: "/Patient/\\$bulk-match" },
