@@ -30,7 +30,8 @@ async function augmentedFetch<T>(
                     body = JSON.parse(body);
                 }
 
-                if (!response.ok) {
+                // Throw errors for all non-200's, except 429
+                if (!response.ok && response.status !== 429) {
                     // @ts-ignore
                     throw new Error(body?.message || body || response.statusText);
                 }

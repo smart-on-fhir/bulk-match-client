@@ -24,7 +24,7 @@ export interface MockOptions {
     status?: number;
     _delay?: number;
     file?: string;
-    body?: string | Record<string, any>;
+    body?: string | Record<string, unknown>;
 }
 
 function routeWrap(fn: RequestHandler) {
@@ -57,7 +57,7 @@ export default class MockServer {
 
         this.app.use(cors());
 
-        this.app.use((req: Request, res: any, next: NextFunction) => {
+        this.app.use((req: Request, res: Response, next: NextFunction) => {
             res.set({
                 "cache-control": "no-cache, no-store, must-revalidate",
                 pragma: "no-cache",
@@ -70,12 +70,12 @@ export default class MockServer {
             this.router(req, res, next);
         });
 
-        this.app.use((req: Request, res: Response, next: NextFunction) => {
+        this.app.use((req: Request, res: Response) => {
             // console.log(`${this.name} ====> Not Found: ${this._baseUrl}${req.url}`)
             res.status(404).send("Not Found");
         });
 
-        this.app.use((err: Error, _req: Request, res: any, next: NextFunction) => {
+        this.app.use((err: Error, _req: Request, res: Response) => {
             console.log(`============= ${this.name} Error =============`);
             console.error(err);
             console.log("=============================================");
@@ -92,7 +92,7 @@ export default class MockServer {
             this.router[a.method](a.path, mock.bodyParser);
         }
 
-        this.router[a.method](a.path, (req: Request, res: any, next: NextFunction) => {
+        this.router[a.method](a.path, (req: Request, res: Response, next: NextFunction) => {
             if (mock.handler) {
                 return routeWrap(mock.handler)(req, res, next);
             }

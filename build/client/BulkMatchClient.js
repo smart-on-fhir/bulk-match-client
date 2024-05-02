@@ -56,6 +56,22 @@ const debug = (0, util_1.debuglog)("bulk-match-client");
  * ```
  */
 class BulkMatchClient extends SmartOnFhirClient_1.default {
+    _getRetryAfter(response) {
+        const now = Date.now();
+        const retryAfter = String(response.headers.get("retry-after") || "").trim();
+        let retryAfterMSec = this?.options?.retryAfterMSec;
+        if (retryAfter) {
+            if (retryAfter.match(/\d+/)) {
+                retryAfterMSec = parseInt(retryAfter, 10) * 1000;
+            }
+            else {
+                const d = new Date(retryAfter);
+                retryAfterMSec = Math.ceil(d.getTime() - now);
+            }
+        }
+        const poolDelay = Math.min(Math.max(retryAfterMSec, 100), 1000 * 60);
+        return [retryAfter, poolDelay];
+    }
     /**
      * Internal method for formatting response headers for some emitted events
      * based on `options.logResponseHeaders`
@@ -256,20 +272,11 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
     async _statusPending(status, statusEndpoint, res) {
         const now = Date.now();
         const elapsedTime = now - status.startedAt;
+        // Track status progress
         const progress = String(res.response.headers.get("x-progress") || "").trim();
-        const retryAfter = String(res.response.headers.get("retry-after") || "").trim();
         const progressPct = parseInt(progress, 10);
-        let retryAfterMSec = this.options.retryAfterMSec;
-        if (retryAfter) {
-            if (retryAfter.match(/\d+/)) {
-                retryAfterMSec = parseInt(retryAfter, 10) * 1000;
-            }
-            else {
-                const d = new Date(retryAfter);
-                retryAfterMSec = Math.ceil(d.getTime() - now);
-            }
-        }
-        const poolDelay = Math.min(Math.max(retryAfterMSec, 100), 1000 * 60);
+        // Get retryAfter info
+        const [retryAfter, poolDelay] = this._getRetryAfter(res.response);
         Object.assign(status, {
             percentComplete: isNaN(progressPct) ? -1 : progressPct,
             nextCheckAfter: poolDelay,
@@ -293,9 +300,9 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
      * @returns If the operationOutcome is fatal, resolve to that operationOutcome; else call _statusPending
      */
     async _statusTooManyRequests(status, statusEndpoint, res) {
-        // Make sure we stop if the
+        // Make sure we stop if the operation outcome is a fatal error
         const operationOutcome = res.body;
-        if (operationOutcome.issue[0].severity === "fatal") {
+        if (operationOutcome?.issue[0]?.severity === "fatal") {
             const msg = `Unexpected status response ${res.response.status} ${res.response.statusText}`;
             this.emit("jobError", {
                 body: JSON.stringify(res.body) || null,
@@ -307,6 +314,7 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
                 res: res,
             });
         }
+        // Otherwise, handle the response as usual, which always respects the server-responded retryAfter
         return this._statusPending(status, statusEndpoint, res);
     }
     /**
@@ -385,24 +393,37 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
         // Body must be stringified
         requestOptions.body = JSON.stringify(await this._buildKickoffPayload());
         this.emit("kickOffStart", requestOptions, String(url));
-        return this._request(url, requestOptions, "kick-off patient match request")
-            .then(async (res) => {
-            const location = res.response.headers.get("content-location");
-            if (!location) {
-                throw new Error("The kick-off patient match response did not include content-location header");
-            }
-            this.emit("kickOffEnd", {
-                response: res,
-                requestOptions: requestOptions,
-                capabilityStatement: capabilityStatement,
-                responseHeaders: this._formatResponseHeaders(res.response.headers),
-            });
-            return location;
-        })
-            .catch((error) => {
+        // Get response and handle errors
+        const res = await this._request(url, requestOptions, "kick-off patient match request").catch((error) => {
             this.emit("kickOffError", error);
             throw error;
         });
+        // Optionally handle 429 responses gracefully
+        if (res.response.status === 429) {
+            const operationOutcome = res.body;
+            if (operationOutcome?.issue[0]?.severity === "fatal") {
+                const err = new Error(`Unexpected kick-off response ${res.response.status} ${res.response.statusText}`);
+                this.emit("kickOffError", err);
+                throw new lib_1.Errors.OperationOutcomeError({
+                    res: res,
+                });
+            }
+            // Otherwise, wait and try kickoff again
+            const [, poolDelay] = this._getRetryAfter(res.response);
+            return lib_1.Utils.wait(poolDelay, this.abortController.signal).then(() => this.kickOff());
+        }
+        // Then parse location information
+        const location = res.response.headers.get("content-location");
+        if (!location) {
+            throw new Error("The kick-off patient match response did not include content-location header");
+        }
+        this.emit("kickOffEnd", {
+            response: res,
+            requestOptions: requestOptions,
+            capabilityStatement: capabilityStatement,
+            responseHeaders: this._formatResponseHeaders(res.response.headers),
+        });
+        return location;
     }
     /**
      * Download a single File from a MatchManifest

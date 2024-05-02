@@ -26,7 +26,8 @@ async function augmentedFetch(input, options = {}) {
         if (body.length && contentType.match(/\bjson\b/i)) {
             body = JSON.parse(body);
         }
-        if (!response.ok) {
+        // Throw errors for all non-200's, except 429
+        if (!response.ok && response.status !== 429) {
             // @ts-ignore
             throw new Error(body?.message || body || response.statusText);
         }
