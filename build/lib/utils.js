@@ -97,9 +97,6 @@ async function getCapabilityStatement(baseUrl) {
     const url = new url_1.URL("metadata", baseUrl.replace(/\/*$/, "/"));
     return (0, request_1.default)(url)
         .then(async (res) => {
-        if (res.response.status === 404) {
-            throw Error(res.response.statusText);
-        }
         debug("Fetched CapabilityStatement from %s", url);
         return res.body;
     })

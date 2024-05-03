@@ -3,14 +3,14 @@ import { existsSync, readFileSync, rmSync } from "fs";
 import { join } from "path";
 import baseSettings from "../config/defaults.js";
 import { BulkMatchClient } from "../src/client";
-import { emptyFolder, invoke, mockServer } from "./lib";
+import { Utils, invoke, mockServer } from "./lib";
 
 describe("download", function () {
     this.timeout(60000);
 
     after(async () => {
-        emptyFolder(__dirname + "/tmp/downloads/error");
-        emptyFolder(__dirname + "/tmp/downloads");
+        Utils.emptyFolder(__dirname + "/tmp/downloads/error");
+        Utils.emptyFolder(__dirname + "/tmp/downloads");
     });
 
     afterEach(async () => {

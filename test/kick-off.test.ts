@@ -1,3 +1,4 @@
+import { expect } from "@hapi/code";
 import baseSettings from "../config/defaults.js";
 import { BulkMatchClient } from "../src/client";
 import { mockServer } from "./lib";
@@ -28,19 +29,21 @@ describe("kick-off", () => {
             },
         );
         // A risky race-condition, but let's hope this works
+        const expectedUrl = "http://example.com";
         setTimeout(() => {
             mockServer.clear();
             mockServer.mock("/metadata", { status: 200, body: {} });
             mockServer.mock(
                 { method: "post", path: "/Patient/\\$bulk-match" },
-                { status: 200, body: "Success", headers: { "content-location": "x" } },
+                { status: 200, body: "Success", headers: { "content-location": expectedUrl } },
             );
         }, waitTime * 500);
         const client = new BulkMatchClient({
             ...baseSettings,
             fhirUrl: mockServer.baseUrl,
         });
-        await client.kickOff();
+        const url = await client.kickOff();
+        expect(url).to.equal(expectedUrl);
     });
 });
 

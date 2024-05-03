@@ -1,44 +1,22 @@
 import { spawn, StdioOptions } from "child_process";
-import { existsSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "fs";
-import path, { join } from "path";
+import { readFileSync, writeFileSync } from "fs";
+import { join } from "path";
 import baseSettings from "../../config/defaults.js";
 import { BulkMatchClient as types } from "../../index";
 import MockServer from "./MockServer";
+export * as Utils from "./utils";
 
+// Setup server for use by tests
 export const mockServer = new MockServer("Mock Server", true);
-
 before(async () => {
     await mockServer.start();
 });
-
 after(async () => {
     await mockServer.stop();
 });
-
 afterEach(async () => {
     mockServer.clear();
 });
-
-export function isFile(path: string) {
-    return statSync(path).isFile();
-}
-
-export function emptyFolder(path: string) {
-    if (existsSync(path)) {
-        readdirSync(path, { withFileTypes: true }).forEach((entry) => {
-            if (entry.name !== ".gitkeep" && entry.isFile()) {
-                rmSync(join(path, entry.name));
-            }
-        });
-    }
-}
-export function getFixturePath(file: string): string {
-    return path.join(process.cwd(), "test/fixtures", file);
-}
-
-export function getFixture(file: string): string {
-    return readFileSync(getFixturePath(file), "utf-8");
-}
 
 /**
  * Invokes the client and replies with a promise that will resolve when the
@@ -75,6 +53,8 @@ export async function invoke({
     log: string;
     exitCode: number | null;
 }> {
+    // Can override STDIO with env var
+    const finalStdio = process.env.ALL_TEST_OUTPUT ? "inherit" : stdio;
     return new Promise((resolve) => {
         const logFile = join(__dirname, "../tmp/log.ndjson");
         const fullOptions = {
@@ -101,7 +81,7 @@ export async function invoke({
         const spawnProcess = spawn("ts-node", ["./src/app.ts", "--config", configPath, ...args], {
             cwd: join(__dirname, "../.."),
             timeout,
-            stdio,
+            stdio: finalStdio,
             env: {
                 ...process.env,
             },

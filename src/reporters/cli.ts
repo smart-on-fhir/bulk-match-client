@@ -13,7 +13,7 @@ export default class CLIReporter extends Reporter {
         Utils.print("Kick-off completed").commit();
     }
 
-    onKickOffError(error: Error) {
+    onKickOffError({ error }: { error: Error }) {
         Utils.print("Kick-off failed with error: " + error.message).commit();
     }
 

@@ -13,7 +13,7 @@ class TextReporter extends reporter_1.default {
     onKickOffEnd() {
         console.log("Kick-off completed");
     }
-    onKickOffError(error) {
+    onKickOffError({ error }) {
         console.log("Kick-off failed with error: ", error.message);
     }
     onAuthorize() {

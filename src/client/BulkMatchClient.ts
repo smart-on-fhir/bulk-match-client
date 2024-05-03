@@ -448,7 +448,11 @@ class BulkMatchClient extends SmartOnFhirClient {
             requestOptions,
             "kick-off patient match request",
         ).catch((error) => {
-            this.emit("kickOffError", error);
+            this.emit("kickOffError", {
+                requestOptions: requestOptions,
+                capabilityStatement: capabilityStatement as fhir4.CapabilityStatement,
+                error: error,
+            });
             throw error;
         });
 
@@ -459,7 +463,12 @@ class BulkMatchClient extends SmartOnFhirClient {
                 const err = new Error(
                     `Unexpected kick-off response ${res.response.status} ${res.response.statusText}`,
                 );
-                this.emit("kickOffError", err);
+                this.emit("kickOffError", {
+                    requestOptions: requestOptions,
+                    capabilityStatement: capabilityStatement as fhir4.CapabilityStatement,
+                    responseHeaders: this._formatResponseHeaders(res.response.headers),
+                    error: err,
+                });
 
                 throw new Errors.OperationOutcomeError({
                     res: res as Types.CustomBodyResponse<fhir4.OperationOutcome>,
@@ -704,17 +713,28 @@ class BulkMatchClient extends SmartOnFhirClient {
         this.on("kickOffStart", (requestOptions: RequestInit, url: string) => {
             logger.log("info", {
                 eventId: "kickoff_start",
-                eventDetail: `Kick-off started with URL: ${url}\n "Options: ${JSON.stringify(requestOptions)}`,
+                eventDetail: `Kick-off started with URL: ${url}\nOptions: ${JSON.stringify(requestOptions)}`,
             });
         });
 
         // kickoff_error ---------------------------------------------------------------------------
-        this.on("kickOffError", (error: Error) => {
-            logger.log("info", {
-                eventId: "kickoff_error",
-                eventDetail: "Kick-off failed with error: " + error.message,
-            });
-        });
+        this.on(
+            "kickOffError",
+            ({ capabilityStatement, responseHeaders, requestOptions, error }) => {
+                logger.log("info", {
+                    eventId: "kickoff_error",
+                    eventDetail: {
+                        softwareName: capabilityStatement.software?.name || null,
+                        softwareVersion: capabilityStatement.software?.version || null,
+                        softwareReleaseDate: capabilityStatement.software?.releaseDate || null,
+                        fhirVersion: capabilityStatement.fhirVersion || null,
+                        requestOptions: requestOptions,
+                        responseHeaders,
+                        error: error.message,
+                    },
+                });
+            },
+        );
 
         // kickoff_complete ------------------------------------------------------------------------
         this.on(

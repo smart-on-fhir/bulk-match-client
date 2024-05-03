@@ -5,6 +5,19 @@ import { BulkMatchClient as Types } from "../..";
 
 const { combine, timestamp, uncolorize, printf } = format;
 
+export type LogEvents =
+    | "authorize"
+    | "kickoff_start"
+    | "kickoff_error"
+    | "kickoff_complete"
+    | "status_progress"
+    | "status_error"
+    | "status_complete"
+    | "download_request"
+    | "download_complete"
+    | "download_error"
+    | "all_downloads_complete";
+
 export function createLogger(options: Types.LoggingOptions = {}) {
     const matchId = Crypto.randomBytes(10).toString("hex");
     return _createLogger({
@@ -27,7 +40,7 @@ export function createLogger(options: Types.LoggingOptions = {}) {
                     ...options.metadata,
                     matchId,
                     timestamp: info.timestamp,
-                    eventId: info.eventId,
+                    eventId: info.eventId as LogEvents,
                     eventDetail: info.eventDetail,
                 }),
             ),

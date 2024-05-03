@@ -1,13 +1,13 @@
 import { expect } from "@hapi/code";
 import { existsSync, rmSync } from "fs";
-import { emptyFolder, invoke, mockServer } from "./lib";
+import { Utils, invoke, mockServer } from "./lib";
 
-describe.skip("Logging", function () {
+describe("Logging", function () {
     this.timeout(10000);
 
     after(async () => {
-        emptyFolder(__dirname + "/tmp/downloads/error");
-        emptyFolder(__dirname + "/tmp/downloads");
+        Utils.emptyFolder(__dirname + "/tmp/downloads/error");
+        Utils.emptyFolder(__dirname + "/tmp/downloads");
     });
 
     afterEach(async () => {
@@ -23,6 +23,9 @@ describe.skip("Logging", function () {
         it("emits kickoff in case of server error", async () => {
             mockServer.mock("/metadata", {
                 status: 200,
+                headers: {
+                    "content-type": "application/json",
+                },
                 body: {
                     fhirVersion: 100,
                     software: {
@@ -33,6 +36,7 @@ describe.skip("Logging", function () {
                 },
             });
 
+            // Respond with a 404 indicating server error
             mockServer.mock(
                 { method: "post", path: "/Patient/\\$bulk-match" },
                 { status: 404, body: "", headers: { "content-location": "x" } },
@@ -42,23 +46,29 @@ describe.skip("Logging", function () {
                 options: { logResponseHeaders: [] },
             });
             const { log } = response;
-            const logs = log
-                .split("\n")
-                .filter(Boolean)
-                .map((line) => JSON.parse(line));
-            const entry = logs.find((l) => l.eventId === "kickoff");
+            const entryStart = Utils.getLogEvents(log, "kickoff_start");
+            expect(entryStart, "kickoff log entry not found").to.exist();
+            expect(entryStart.eventDetail).to.equal(
+                `Kick-off started with URL: ${mockServer.baseUrl}/Patient/$bulk-match\n` +
+                    'Options: {"headers":{"Content-Type":"application/json","accept":"application/fhir+ndjson","prefer":"respond-async"},"method":"POST","body":"{\\"resourceType\\":\\"Parameters\\",\\"parameter\\":[]}"}',
+            );
 
-            expect(entry, "kickoff log entry not found").to.exist();
-            expect(entry.eventDetail).to.equal({
-                exportUrl: mockServer.baseUrl + "/Patient/$bulk-match",
-                errorCode: 404,
-                errorBody: "Not Found",
+            const entryComplete = Utils.getLogEvents(log, "kickoff_error");
+            expect(entryComplete.eventDetail).to.equal({
+                error: `POST ${mockServer.baseUrl}/Patient/$bulk-match FAILED with 404 and message Not Found.`,
                 softwareName: "Software Name",
                 softwareVersion: "Software Version",
                 softwareReleaseDate: "01-02-03",
                 fhirVersion: 100,
-                requestParameters: {},
-                responseHeaders: {},
+                requestOptions: {
+                    body: '{"resourceType":"Parameters","parameter":[]}',
+                    headers: {
+                        "Content-Type": "application/json",
+                        accept: "application/fhir+ndjson",
+                        prefer: "respond-async",
+                    },
+                    method: "POST",
+                },
             });
         });
 
@@ -255,7 +265,7 @@ describe.skip("Logging", function () {
         });
     });
 
-    describe("status events", () => {
+    describe.skip("status events", () => {
         it("logs status_progress events in case of 202 status responses", async () => {
             mockServer.mock("/metadata", { status: 200, body: {} });
 
@@ -443,7 +453,7 @@ describe.skip("Logging", function () {
         });
     });
 
-    describe("download events", () => {
+    describe.skip("download events", () => {
         it("download without errors", async () => {
             mockServer.mock("/metadata", { status: 200, body: {} });
 

@@ -26,7 +26,8 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Clients = exports.Types = void 0;
+exports.Logger = exports.Clients = exports.Types = void 0;
 exports.Types = __importStar(require(".."));
 exports.Clients = __importStar(require("./client"));
 __exportStar(require("./lib"), exports);
+exports.Logger = __importStar(require("./logger"));

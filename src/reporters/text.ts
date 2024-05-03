@@ -11,7 +11,7 @@ export default class TextReporter extends Reporter {
         console.log("Kick-off completed");
     }
 
-    onKickOffError(error: Error) {
+    onKickOffError({ error }: { error: Error }) {
         console.log("Kick-off failed with error: ", error.message);
     }
 

@@ -30,7 +30,15 @@ export interface BulkMatchClientEvents extends SmartOnFhirClientEvents {
      * Emitted when a kick-off patient match response is received
      * @event
      */
-    kickOffError: (this: BulkMatchClient, error: Error) => void;
+    kickOffError: (
+        this: BulkMatchClient,
+        data: {
+            capabilityStatement: fhir4.CapabilityStatement;
+            requestOptions: object;
+            responseHeaders?: object;
+            error: Error;
+        },
+    ) => void;
 
     /**
      * Emitted when the patient match has began

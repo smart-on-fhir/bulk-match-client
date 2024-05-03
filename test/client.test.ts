@@ -6,7 +6,7 @@ import path from "path";
 import baseSettings from "../config/defaults.js";
 import { BulkMatchClient } from "../src/client";
 import { Errors } from "../src/lib";
-import { getFixture } from "./lib/";
+import { Utils } from "./lib/";
 
 describe("client testing", function () {
     describe("BulkMatchClient", function () {
@@ -18,7 +18,7 @@ describe("client testing", function () {
         });
         describe("_parseResourceNdjson", function () {
             it("Should work on NDJSON ", () => {
-                const ndjsonExample = getFixture("patients.ndjson");
+                const ndjsonExample = Utils.getFixture("patients.ndjson");
                 const interiorJson = ndjsonExample.split("\n").map((j) => JSON.parse(j));
                 // @ts-expect-error
                 expect(client._parseResourceNdjson(ndjsonExample)).to.equal(interiorJson);

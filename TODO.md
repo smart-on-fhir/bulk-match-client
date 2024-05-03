@@ -1,5 +1,7 @@
 # TODO
 
+-   Add testing ENV var for invoke args going to console
+
 ## Things I still need to add
 
 -   Support for multiple forms of resources

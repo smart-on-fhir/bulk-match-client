@@ -110,9 +110,6 @@ export async function getCapabilityStatement(baseUrl: string): Promise<fhir4.Cap
     const url = new URL("metadata", baseUrl.replace(/\/*$/, "/"));
     return request(url)
         .then(async (res) => {
-            if (res.response.status === 404) {
-                throw Error(res.response.statusText);
-            }
             debug("Fetched CapabilityStatement from %s", url);
             return res.body as fhir4.CapabilityStatement;
         })
