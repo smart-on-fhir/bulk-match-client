@@ -52,7 +52,7 @@ Download related options:
     -   `""` - do nothing
     -   `"none"` - do nothing
     -   `"> /dev/null"` - do nothing
-    Can be overridden from terminal parameter `-d` or `--destination`
+        Can be overridden from terminal parameter `-d` or `--destination`
 -   _boolean_ **`saveManifest`** - In some cases it might be useful to also save the export manifest file along with the downloaded NDJSON files.
 -   _boolean_ **`addDestinationToManifest`** - The original export manifest will have an `url` property for each file, containing the source location. It his is set to `true`, add a `destination` property to each file containing the path (relative to the manifest file) to the saved file. This is ONLY used if `saveManifest` is set to `true`.
 
@@ -70,13 +70,9 @@ Logging related options:
 Options relating to HTTP requests:
 
 -   _number_ **`retryAfterMSec`** - If the server does not provide `Retry-after` header use this number of milliseconds before checking the status again.
--   _object_ **`requests`** - Custom options for every request, EXCLUDING the authorization request and any upload requests (in case we use remote destination). Many options are available so be careful what you specify here! See [https://github.com/sindresorhus/got/blob/main/documentation/2-options.md](https://github.com/sindresorhus/got/blob/main/documentation/2-options.md). Example:
+-   _object_ **`requests`** - Custom options for every request. Many options are available so be careful what you specify here! See [https://developer.mozilla.org/en-US/docs/Web/API/Fetch#options](https://developer.mozilla.org/en-US/docs/Web/API/Fetch#options). Example:
     ```js
     requests: {
-        https: {
-            rejectUnauthorized: true // reject self-signed certs
-        },
-        timeout: 20000, // 20 seconds custom timeout
         headers: {
             "x-client-id": "whatever" // pass custom headers
         }
