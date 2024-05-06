@@ -44,7 +44,7 @@ Bulk Match Parameter Options:
 
 Download related options:
 
--   _string_ **`destination`** - Examples:
+-   _string_ **`destination`**: Where to save the patient matches. Can be overridden from terminal parameter `-d` or `--destination`. Examples:
     -   `./downloads` - Save to local folder (relative to the config file)
     -   `downloads` - Save to local folder (relative to the config file)
     -   `/path/to/downloads` - Save to local folder (absolute path)
@@ -52,7 +52,6 @@ Download related options:
     -   `""` - do nothing
     -   `"none"` - do nothing
     -   `"> /dev/null"` - do nothing
-        Can be overridden from terminal parameter `-d` or `--destination`
 -   _boolean_ **`saveManifest`** - In some cases it might be useful to also save the export manifest file along with the downloaded NDJSON files.
 -   _boolean_ **`addDestinationToManifest`** - The original export manifest will have an `url` property for each file, containing the source location. It his is set to `true`, add a `destination` property to each file containing the path (relative to the manifest file) to the saved file. This is ONLY used if `saveManifest` is set to `true`.
 
