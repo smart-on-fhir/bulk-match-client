@@ -518,7 +518,7 @@ class BulkMatchClient extends SmartOnFhirClient {
         this.emit("downloadStart", {
             fileUrl: file.url,
             itemType: exportType,
-            duration: downloadStartTime,
+            startTime: downloadStartTime,
         });
 
         // Start the download for the ndjson file – ndjson means the response is a string
@@ -557,7 +557,11 @@ class BulkMatchClient extends SmartOnFhirClient {
         debug(`Saving ${fileName} ${subFolder ? `with subfolder ${subFolder}` : ""}`);
         const destination = String(this.options.destination || "none").trim();
         // No destination, write nothing ---------------------------------------
-        if (!destination || destination.toLowerCase() === "none") {
+        if (
+            !destination ||
+            destination.toLowerCase() === "none" ||
+            destination.toLowerCase().indexOf("dev/null") !== -1
+        ) {
             return;
         }
 

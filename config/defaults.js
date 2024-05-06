@@ -10,6 +10,7 @@
  */
 // eslint-disable-next-line no-undef
 module.exports = {
+    // Server Configuration and Auth configuration -------------------------------------------------
     /**
      * FHIR server base URL. Can be overridden by the `-f` or `--fhir-url`
      * CLI parameter.
@@ -44,6 +45,7 @@ module.exports = {
      */
     accessTokenLifetime: 300,
 
+    // Customizing the Match request ---------------------------------------------------------------
     /**
      * The FHIR resource(s) to match, processed into the `resource` parameter(s) for Bulk Match kick-off
      * Can take the following forms
@@ -91,17 +93,7 @@ module.exports = {
      */
     count: undefined,
 
-    /**
-     * The default reporter is "cli". That works well in terminal and
-     * renders some fancy stuff like progress bars. However, this does not
-     * look good when your STDOUT ends up in log files. For example, if
-     * you are using this tool as part of some kind of pipeline and want to
-     * maintain clean logs, then consider changing this to "text".
-     *
-     * Can be overridden from terminal parameter `--reporter`.
-     */
-    reporter: "cli",
-
+    // Customizing the request logic ---------------------------------------------------------------
     /**
      * Custom options for every request, EXCLUDING the authorization request and
      * any upload requests (in case we use remote destination).
@@ -110,10 +102,28 @@ module.exports = {
     requests: {},
 
     /**
-     * In some cases it might be useful to also save the export manifest
-     * file along with the downloaded NDJSON files.
+     * If the server does not provide `Retry-after` header use this number of
+     * milliseconds before checking the status again
      */
-    saveManifest: true,
+    retryAfterMSec: 200,
+
+    /**
+     * Auto-retry on transient errors
+     */
+    autoRetryOnTransientError: false,
+
+    // Destination options -------------------------------------------------------------------------
+    /**
+     * The original export manifest will have an `url` property for each
+     * file, containing the source location. If this is set to `true`, add
+     * a `destination` property to each file containing the path (relative
+     * to the manifest file) to the saved file.
+     *
+     * This is ONLY useful if `saveManifest` is set to `true`.
+     *
+     * **Defaults to `false`**
+     */
+    addDestinationToManifest: false,
 
     /**
      * Examples:
@@ -127,6 +137,13 @@ module.exports = {
      */
     destination: "./downloads",
 
+    /**
+     * In some cases it might be useful to also save the export manifest
+     * file along with the downloaded NDJSON files.
+     */
+    saveManifest: true,
+
+    // Logging options -----------------------------------------------------------------------------
     /**
      * Logging options for winston logging
      */
@@ -143,12 +160,6 @@ module.exports = {
     },
 
     /**
-     * If the server does not provide `Retry-after` header use this number of
-     * milliseconds before checking the status again
-     */
-    retryAfterMSec: 200,
-
-    /**
      * ResponseHeaders to include in error logs for debugging purposes
      * When 'all' is specified, all responseHeaders are returned
      * When 'none' is specified, no responseHeaders are returned
@@ -156,4 +167,15 @@ module.exports = {
      * NOTE: When an empty array is specified, an empty object of responseHeaders will be returned
      */
     logResponseHeaders: "all",
+
+    /**
+     * The default reporter is "cli". That works well in terminal and
+     * renders some fancy stuff like progress bars. However, this does not
+     * look good when your STDOUT ends up in log files. For example, if
+     * you are using this tool as part of some kind of pipeline and want to
+     * maintain clean logs, then consider changing this to "text".
+     *
+     * Can be overridden from terminal parameter `--reporter`.
+     */
+    reporter: "cli",
 };

@@ -1,12 +1,15 @@
 import "colors";
+import { debuglog } from "util";
 import { BulkMatchClient as Types } from "../..";
 import { Utils } from "../lib";
 import Reporter from "./reporter";
 
+const debug = debuglog("bulk-match-cli-reporter");
+
 export default class CLIReporter extends Reporter {
     onKickOffStart(requestOptions: RequestInit, url: string) {
         Utils.print("Kick-off started with URL: " + url).commit();
-        Utils.print("Options: " + JSON.stringify(requestOptions)).commit();
+        debug("Options: " + JSON.stringify(requestOptions));
     }
 
     onKickOffEnd() {
@@ -18,27 +21,27 @@ export default class CLIReporter extends Reporter {
     }
 
     onAuthorize() {
-        Utils.print("Got new access token").commit();
+        Utils.print("Authorized").commit();
     }
 
     onJobStart(status: Types.MatchStatus) {
-        Utils.print(status.message).commit();
-        Utils.print(`Status endpoint: ${status.statusEndpoint}`).commit();
+        Utils.print(`${status.message}, using status endpoint ${status.statusEndpoint}`).commit();
     }
 
     onJobProgress(status: Types.MatchStatus) {
         const { startedAt, elapsedTime, percentComplete, nextCheckAfter, message } = status;
-        Utils.print(message).commit();
-        Utils.print(
-            `Job started at ${new Date(startedAt).toISOString()}, ${Utils.formatDuration(elapsedTime)} time has elapsed and job is ` +
+        Utils.print(message);
+        debug(
+            `Job started at ${Utils.formatDatetimeTimestamp(startedAt)}, ${Utils.formatDuration(elapsedTime)} time has elapsed and job is ` +
                 `${percentComplete !== -1 ? `${percentComplete}% complete` : "still in progress"}.` +
                 `${nextCheckAfter !== -1 ? ` Will try again after ${Utils.formatDuration(nextCheckAfter)}.` : ""}`,
-        ).commit();
+        );
     }
 
     onJobComplete(manifest: Types.MatchManifest) {
+        Utils.print.commit();
         Utils.print("Received manifest manifest").commit();
-        Utils.print(JSON.stringify(manifest)).commit();
+        debug(JSON.stringify(manifest));
     }
 
     onJobError(details: {
@@ -47,21 +50,22 @@ export default class CLIReporter extends Reporter {
         message?: string;
         responseHeaders?: object;
     }) {
-        Utils.print("There was an error in the matching process").commit();
-        Utils.print(JSON.stringify(details)).commit();
+        Utils.print(
+            "There was an error in the matching process: " + JSON.stringify(details),
+        ).commit();
     }
 
     onDownloadStart({
         fileUrl,
         itemType,
-        duration,
+        startTime,
     }: {
         fileUrl: string;
         itemType: string;
-        duration: number;
+        startTime: number;
     }) {
         Utils.print(
-            `Begin ${itemType}-file download for ${fileUrl} at ${Utils.formatDuration(duration)}...`,
+            `Begin ${itemType === "error" ? "error-file " : " "}download for ${fileUrl} at ${Utils.formatDatetimeTimestamp(startTime)}...`,
         ).commit();
     }
     onDownloadComplete({ fileUrl, duration }: { fileUrl: string; duration: number }) {
@@ -81,7 +85,7 @@ export default class CLIReporter extends Reporter {
     }
 
     onAllDownloadsComplete(_: unknown, duration: number) {
-        Utils.print(`Download completed in ${Utils.formatDuration(duration)}`).commit();
+        Utils.print(`All downloads completed in ${Utils.formatDuration(duration)}`).commit();
     }
 
     onError(error: Error) {

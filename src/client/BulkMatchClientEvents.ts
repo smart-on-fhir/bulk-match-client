@@ -77,7 +77,7 @@ export interface BulkMatchClientEvents extends SmartOnFhirClientEvents {
         detail: {
             fileUrl: string;
             itemType: string;
-            duration: number;
+            startTime: number;
         },
     ) => void;
 

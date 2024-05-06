@@ -8,6 +8,7 @@ const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const node_jose_1 = __importDefault(require("node-jose"));
 const stream_1 = require("stream");
 const util_1 = require("util");
+const lib_1 = require("../lib");
 const request_1 = __importDefault(require("../lib/request"));
 const utils_1 = require("../lib/utils");
 const debug = (0, util_1.debuglog)("bulk-match-SOF-client");
@@ -67,6 +68,7 @@ class SmartOnFhirClient extends stream_1.EventEmitter {
             context: {
                 interactive: this.options.reporter === "cli",
             },
+            autoRetryOnTransientError: lib_1.Utils.parseBoolean(this.options.autoRetryOnTransientError),
         };
         const accessToken = await this.getAccessToken();
         if (accessToken) {
@@ -134,7 +136,6 @@ class SmartOnFhirClient extends stream_1.EventEmitter {
         return authRequest
             .then(async (res) => {
             const json = res.body;
-            console.log(json);
             (0, utils_1.assert)(json, "Authorization request got empty body");
             (0, utils_1.assert)(json.access_token, "Authorization response does not include access_token");
             (0, utils_1.assert)(json.expires_in, "Authorization response does not include expires_in");

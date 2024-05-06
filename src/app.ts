@@ -1,3 +1,4 @@
+#! /usr/bin/env node
 import "colors";
 import { Command } from "commander";
 import jose from "node-jose";
@@ -31,15 +32,15 @@ APP.option(
 );
 APP.option(
     "-r, --resource [resource/filepath]",
-    "The resources to find matches for; can be either an inline FHIR resource, a path to a FHIR JSON file, or a path to an NDJSON resource file",
+    "The patients to match; can be inline FHIR resources, a path to a FHIR JSON, a path to an NDJSON file, or a path to a directory containing FHIR JSON  ",
 );
 APP.option(
     "-s, --onlySingleMatch",
-    "If there are multiple potential matches, the server should identify the single most appropriate match that should be used with future interactions with the server; defaults to false",
+    "If there are multiple potential matches, the server should only return the single most appropriate match; defaults to false",
 );
 APP.option(
     "-C, --onlyCertainMatches",
-    "If there are multiple potential matches, the server should be certain that each of the records are for the same patient. This could happen if the records are duplicates, are the same person for the purpose of data segregation, or other reasons; defaults to false",
+    "If there are multiple potential matches, the server should be certain that each of the records are for the same patient. defaults to false",
 );
 APP.option(
     "-c, --count [number]",

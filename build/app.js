@@ -1,3 +1,4 @@
+#! /usr/bin/env node
 "use strict";
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
@@ -47,9 +48,9 @@ APP.version("2.0.0");
 APP.option("--config <path>", "Relative path to config file.");
 // Bulk Match Server base URL
 APP.option("-f, --fhir-url [url]", "FHIR server base URL. Must be set either as parameter or in the configuration file.");
-APP.option("-r, --resource [resource/filepath]", "The resources to find matches for; can be either an inline FHIR resource, a path to a FHIR JSON file, or a path to an NDJSON resource file");
-APP.option("-s, --onlySingleMatch", "If there are multiple potential matches, the server should identify the single most appropriate match that should be used with future interactions with the server; defaults to false");
-APP.option("-C, --onlyCertainMatches", "If there are multiple potential matches, the server should be certain that each of the records are for the same patient. This could happen if the records are duplicates, are the same person for the purpose of data segregation, or other reasons; defaults to false");
+APP.option("-r, --resource [resource/filepath]", "The patients to match; can be inline FHIR resources, a path to a FHIR JSON, a path to an NDJSON file, or a path to a directory containing FHIR JSON  ");
+APP.option("-s, --onlySingleMatch", "If there are multiple potential matches, the server should only return the single most appropriate match; defaults to false");
+APP.option("-C, --onlyCertainMatches", "If there are multiple potential matches, the server should be certain that each of the records are for the same patient. defaults to false");
 APP.option("-c, --count [number]", "The maximum number of records to return per resource. If no value is provided, the server may decide how many matches to return. Note that clients should be careful when using this, as it may prevent probable - and valid - matches from being returned.");
 APP.option("-F, --_outputFormat [string]", `The output format you expect.`);
 APP.option("-d, --destination [destination]", "Download destination. See config/defaults.js for examples");

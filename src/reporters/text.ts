@@ -1,10 +1,13 @@
+import { debuglog } from "util";
 import { BulkMatchClient as Types } from "../..";
 import { Utils } from "../lib";
 import Reporter from "./reporter";
+const debug = debuglog("bulk-match-text-reporter");
+
 export default class TextReporter extends Reporter {
     onKickOffStart(requestOptions: RequestInit, url: string) {
         console.log("Kick-off started with URL: ", url);
-        console.log("Options: ", JSON.stringify(requestOptions));
+        debug("Options: " + JSON.stringify(requestOptions));
     }
 
     onKickOffEnd() {
@@ -16,7 +19,7 @@ export default class TextReporter extends Reporter {
     }
 
     onAuthorize() {
-        console.log("Got new access token");
+        console.log("Authorized");
     }
 
     onJobStart(status: Types.MatchStatus) {
@@ -27,16 +30,16 @@ export default class TextReporter extends Reporter {
     onJobProgress(status: Types.MatchStatus) {
         const { startedAt, elapsedTime, percentComplete, nextCheckAfter, message } = status;
         console.log(message);
-        console.log(
+        debug(
             `Job started at ${new Date(startedAt).toISOString()}, ${Utils.formatDuration(elapsedTime)} time has elapsed and job is ` +
                 `${percentComplete !== -1 ? `${percentComplete}% complete` : "still in progress"}.` +
-                `${nextCheckAfter !== -1 ? ` Will try again after ${nextCheckAfter}.` : ""}`,
+                `${nextCheckAfter !== -1 ? ` Will try again after ${Utils.formatDuration(nextCheckAfter)}.` : ""}`,
         );
     }
 
     onJobComplete(manifest: Types.MatchManifest) {
         console.log("Received manifest manifest");
-        console.log(JSON.stringify(manifest));
+        debug(JSON.stringify(manifest));
     }
 
     onJobError(details: {
@@ -52,14 +55,14 @@ export default class TextReporter extends Reporter {
     onDownloadStart({
         fileUrl,
         itemType,
-        duration,
+        startTime,
     }: {
         fileUrl: string;
         itemType: string;
-        duration: number;
+        startTime: number;
     }) {
         console.log(
-            `Begin ${itemType}-file download for ${fileUrl} at ${Utils.formatDuration(duration)}...`,
+            `Begin ${itemType}-file download for ${fileUrl} at ${Utils.formatDuration(startTime)}...`,
         );
     }
 

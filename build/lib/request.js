@@ -27,8 +27,6 @@ async function augmentedFetch(input, options = {}) {
             body = JSON.parse(body);
         }
         // Throw errors for all non-200's, except 429
-        console.log(response.ok);
-        console.log(response.status);
         if (!response.ok && response.status !== 429) {
             const message = `${options.method} ${input} FAILED with ` +
                 `${response.status}` +
@@ -72,9 +70,9 @@ async function augmentedFetch(input, options = {}) {
                     if (msg) {
                         console.log("- " + msg.join("\n- "));
                     }
-                    const answer = process.env.AUTO_RETRY_TRANSIENT_ERRORS ||
+                    const answer = options.autoRetryOnTransientError ||
                         (0, prompt_sync_1.default)()("Would you like to retry? [Y/n]".cyan);
-                    if (!answer || answer.toLowerCase() === "y") {
+                    if (!answer || answer === true || answer.toLowerCase() === "y") {
                         return augmentedFetch(input, options);
                     }
                     else {

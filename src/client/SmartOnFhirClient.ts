@@ -5,6 +5,7 @@ import { EventEmitter } from "stream";
 import { URL } from "url";
 import { debuglog } from "util";
 import { BulkMatchClient as Types } from "../..";
+import { Utils } from "../lib";
 import request from "../lib/request";
 import { assert, getAccessTokenExpiration } from "../lib/utils";
 import { SmartOnFhirClientEvents } from "./SmartOnFhirClientEvents";
@@ -97,6 +98,7 @@ class SmartOnFhirClient extends EventEmitter {
             context: {
                 interactive: this.options.reporter === "cli",
             },
+            autoRetryOnTransientError: Utils.parseBoolean(this.options.autoRetryOnTransientError),
         };
 
         const accessToken = await this.getAccessToken();
@@ -180,7 +182,6 @@ class SmartOnFhirClient extends EventEmitter {
         return authRequest
             .then(async (res) => {
                 const json = res.body;
-                console.log(json);
                 assert(json, "Authorization request got empty body");
                 assert(json.access_token, "Authorization response does not include access_token");
                 assert(json.expires_in, "Authorization response does not include expires_in");

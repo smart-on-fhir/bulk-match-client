@@ -14,6 +14,7 @@ export declare namespace BulkMatchClient {
 
     type AugmentedRequestInit = RequestInit & {
         context?: Record<string, unknown>;
+        autoRetryOnTransientError?: boolean;
     };
 
     // Config-related subtypes -----------------------------------------------------------------------
@@ -136,34 +137,12 @@ export declare namespace BulkMatchClient {
      * All match-client configuration options specifiable from the config file
      */
     interface ConfigFileOptions {
+        // Authorization and FHIR Server configuration -------------------------------------------------------------------------------
         /**
          * FHIR server base URL. Should be set either here, or as CLI parameter
          */
         fhirUrl?: string;
 
-        // Patient Match Kick-off parameters -----------------------------------------------------------
-        /**
-         * More detailed options seen in the above type definition
-         */
-        resource?: MatchResource;
-        /**
-         * Optional: Output formats you expect from the server
-         */
-        _outputFormat?: string;
-        /**
-         * Optional: Should the server respond only with a single match?
-         */
-        onlySingleMatch?: boolean;
-        /**
-         * Optional: Should the server only respond with certain matches?
-         */
-        onlyCertainMatches?: boolean;
-        /**
-         * Optional: The maximum number of records to return per resource
-         */
-        count?: number;
-
-        // Authorization -------------------------------------------------------------------------------
         /**
          * Ideally, this can be auto-detected from fhirUrl using metadata in the
          * CapabilityStatement or from /.well-known/smart-configuration.
@@ -198,7 +177,29 @@ export declare namespace BulkMatchClient {
          */
         accessTokenLifetime?: number;
 
-        // Request Modifications -----------------------------------------------------------------------
+        // Patient Match Kick-off parameters -------------------------------------------------------
+        /**
+         * More detailed options seen in the above type definition
+         */
+        resource?: MatchResource;
+        /**
+         * Optional: Should the server respond only with a single match?
+         */
+        onlySingleMatch?: boolean;
+        /**
+         * Optional: Should the server only respond with certain matches?
+         */
+        onlyCertainMatches?: boolean;
+        /**
+         * Optional: The maximum number of records to return per resource
+         */
+        count?: number;
+        /**
+         * Optional: Output formats you expect from the server
+         */
+        _outputFormat?: string;
+
+        // Request Configurations-------------------------------------------------------------------
 
         /**
          * Custom options for every request, EXCLUDING the authorization request and
@@ -213,7 +214,12 @@ export declare namespace BulkMatchClient {
          */
         retryAfterMSec?: number;
 
-        // Download ------------------------------------------------------------------------------------
+        /**
+         * Auto-retry on transient errors
+         */
+        autoRetryOnTransientError?: boolean;
+
+        // Download --------------------------------------------------------------------------------
 
         /**
          * The destination where patient match payloads should be
@@ -239,7 +245,7 @@ export declare namespace BulkMatchClient {
          */
         addDestinationToManifest?: boolean;
 
-        // Logging and output --------------------------------------------------------------------------
+        // Logging and output ----------------------------------------------------------------------
 
         /**
          * ResponseHeaders to include in error logs for debugging purposes
@@ -341,15 +347,20 @@ export declare namespace BulkMatchClient {
         // Request Modifications -----------------------------------------------------------------------
 
         /**
+         * Optional: Modifications to RequestInit to be applied on every request
+         */
+        requests?: AugmentedRequestInit;
+
+        /**
          * If the server does not provide `Retry-after` header use this number of
          * milliseconds before checking the status again
          */
         retryAfterMSec: number;
 
         /**
-         * Optional: Modifications to RequestInit to be applied on every request
+         * Auto-retry on transient errors
          */
-        requests?: AugmentedRequestInit;
+        autoRetryOnTransientError: boolean;
 
         // Destination options -------------------------------------------------------------------------
 

@@ -31,8 +31,6 @@ async function augmentedFetch<T>(
                 }
 
                 // Throw errors for all non-200's, except 429
-                console.log(response.ok);
-                console.log(response.status);
                 if (!response.ok && response.status !== 429) {
                     const message =
                         `${options.method} ${input} FAILED with ` +
@@ -89,9 +87,9 @@ async function augmentedFetch<T>(
                                 console.log("- " + msg.join("\n- "));
                             }
                             const answer =
-                                process.env.AUTO_RETRY_TRANSIENT_ERRORS ||
+                                options.autoRetryOnTransientError ||
                                 prompt()("Would you like to retry? [Y/n]".cyan);
-                            if (!answer || answer.toLowerCase() === "y") {
+                            if (!answer || answer === true || answer.toLowerCase() === "y") {
                                 return augmentedFetch(input, options);
                             } else {
                                 print("Cancelled by user");

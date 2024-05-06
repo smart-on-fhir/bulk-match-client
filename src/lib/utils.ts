@@ -340,6 +340,15 @@ export function formatDuration(ms: number) {
 }
 
 /**
+ * A common formatting helper for turning date-time timestamps into a common, human-readable format
+ * @param t
+ * @returns
+ */
+export function formatDatetimeTimestamp(t: number) {
+    return new Date(t).toISOString();
+}
+
+/**
  * An old-school not-class style helper for maintaining clean terminal output
  */
 export const print = (() => {

@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.assert = exports.print = exports.formatDuration = exports.generateProgress = exports.humanFileSize = exports.wait = exports.parseBoolean = exports.fhirInstant = exports.displayCodeableConcept = exports.detectTokenUrl = exports.getTokenEndpointFromCapabilityStatement = exports.getTokenEndpointFromWellKnownSmartConfig = exports.getCapabilityStatement = exports.getWellKnownSmartConfig = exports.getAccessTokenExpiration = exports.filterResponseHeaders = void 0;
+exports.assert = exports.print = exports.formatDatetimeTimestamp = exports.formatDuration = exports.generateProgress = exports.humanFileSize = exports.wait = exports.parseBoolean = exports.fhirInstant = exports.displayCodeableConcept = exports.detectTokenUrl = exports.getTokenEndpointFromCapabilityStatement = exports.getTokenEndpointFromWellKnownSmartConfig = exports.getCapabilityStatement = exports.getWellKnownSmartConfig = exports.getAccessTokenExpiration = exports.filterResponseHeaders = void 0;
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 require("colors");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
@@ -317,6 +317,15 @@ function formatDuration(ms) {
     return out.join(", ");
 }
 exports.formatDuration = formatDuration;
+/**
+ * A common formatting helper for turning date-time timestamps into a common, human-readable format
+ * @param t
+ * @returns
+ */
+function formatDatetimeTimestamp(t) {
+    return new Date(t).toISOString();
+}
+exports.formatDatetimeTimestamp = formatDatetimeTimestamp;
 /**
  * An old-school not-class style helper for maintaining clean terminal output
  */
