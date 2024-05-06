@@ -31,7 +31,7 @@ Auth and FHIR Server Options:
 -   _string_ **`fhirUrl`** - FHIR server base URL. Can be overridden by the `-f` or `--fhir-url` CLI parameter.
 -   _string_ **`tokenUrl`** - The Bulk Data server token URL (use `"none"` for open servers and `""` to try to auto-detect it)
 -   _object_ **`privateKey`** - The private key (as `JWK`) used to sign authentication tokens. This is not needed for open servers
--   _string_ **`clientId`** - This is not needed for open servers
+-   _string_ **`clientId`** - This is not needed for open servers, but identifies the client when making requests. Important for auth servers
 -   _number_ **`accessTokenLifetime`** - The access token lifetime in seconds. Note that the authentication server may ignore or restrict this to its own boundaries
 
 Bulk Match Parameter Options:

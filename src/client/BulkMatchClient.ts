@@ -85,8 +85,10 @@ class BulkMatchClient extends SmartOnFhirClient {
      */
     private _parseResourceNdjson(resource: string): fhir4.FhirResource[] {
         try {
-            const jsonArr = resource.split("\n");
-            return jsonArr.map((j) => JSON.parse(j));
+            return resource
+                .split("\n")
+                .filter(Boolean)
+                .map((j) => JSON.parse(j));
         } catch (e) {
             throw new InvalidNdjsonError({
                 resource,
