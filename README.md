@@ -36,10 +36,10 @@ Auth and FHIR Server Options:
 
 Bulk Match Parameter Options:
 
--   _string_ **`resource`** - The patients to match; can be inline FHIR resources, a path to a FHIR JSON, a path to an NDJSON file, or a path to a directory containing FHIR JSON. Can be overridden using CLI parameter `-r` or `--resource [resource/filepath]`.
--   _boolean_ **`onlySingleMatch`** - If there are multiple potential matches, the server should only return the single most appropriate match; defaults to `false`.. Can be overridden using CLI parameter `-s` or `--onlySingleMatch`
--   _boolean_ **`onlyCertainMatches`** - If there are multiple potential matches, the server should be certain that each of the records are for the same patient. defaults to `false`. Can be overridden using CLI parameter `-C` or `--onlyCertainMatches`
--   _number_ **`count`** - Specifies the maximum number of records to return per resource. If no value is provided, the server may decide how many matches to return. Can be overridden using CLI parameter `-c` or `--count [number]`
+-   _string_ **`resource`** - The patients to match; can be inline FHIR resources, a path to a FHIR JSON, a path to an NDJSON file, or a path to a directory containing FHIR JSON. Can be overridden using CLI parameter `-r` or `--resource`.
+-   _boolean_ **`onlySingleMatch`** - If there are multiple potential matches, the server should only return the single most appropriate match; defaults to `false`. Can be overridden using CLI flag `-s` or `--onlySingleMatch`
+-   _boolean_ **`onlyCertainMatches`** - If there are multiple potential matches, the server should be certain that each of the records are for the same patient. defaults to `false`. Can be overridden using CLI flag `-C` or `--onlyCertainMatches`
+-   _number_ **`count`** - Specifies the maximum number of records to return per resource. If no value is provided, the server may decide how many matches to return. Can be overridden using CLI parameter `-c` or `--count`
 -   _string_ **`_outputFormat`** - The value of the `_outputFormat` parameter for Bulk Data kick-off requests. Will be ignored if empty or falsy. Can be overridden from terminal parameter `-F` or `--_outputFormat`
 
 Download related options:
@@ -85,15 +85,15 @@ Note that you can pass a `--help` parameter with the CLI to see this listed in y
 
 | short | long                             | description                                                                                                                                                                     |
 | ----- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-|       | `--config`                       | Relative path to config file. These options are merged with those defined in `config/default.js`                                                                                |
-| `-f`  | `--fhir-url`                     | FHIR server base URL. Must be set either as parameter or in the configuration file                                                                                              |
+|       | `--config [config]`              | Relative path to config file. These options are merged with those defined in `config/default.js`                                                                                |
+| `-f`  | `--fhir-url [url]`               | FHIR server base URL. Must be set either as parameter or in the configuration file                                                                                              |
 | `-r`  | `--resource [resource/filepath]` | The patients to match; can be inline FHIR resources, a path to a FHIR JSON, a path to an NDJSON file, or a path to a directory containing FHIR JSON                             |
 | `-s`  | `--onlySingleMatch`              | If there are multiple potential matches, the server should only return the single most appropriate match; defaults to `false`                                                   |
 | `-C`  | `--onlyCertainMatches`           | If there are multiple potential matches, the server should be certain that each of the records are for the same patient. defaults to `false`                                    |
 | `-c`  | `--count [number]`               | Specifies the maximum number of records to return per resource. If no value is provided, the server may decide how many matches to return                                       |
-| `-F`  | `--_outputFormat`                | The output format you expect back from the server                                                                                                                               |
+| `-F`  | `--_outputFormat [file-format]`  | The output format you expect back from the server                                                                                                                               |
 | `-d`  | `--destination [destination]`    | Specifies the download destination. See `config/defaults.js` for examples                                                                                                       |
-|       | `--reporter`                     | Reporter to use to render the output. `cli` renders fancy progress bars and tables. `text` is better for log files. Defaults to `cli`                                           |
+|       | `--reporter [reporterType]`      | Reporter to use to render the output. `cli` renders fancy progress bars and tables. `text` is better for log files. Defaults to `cli`                                           |
 |       | `--status  [url]`                | If a status request fails for some reason the client will exit. However, if the status endpoint is printed in the output, you can retry by passing it as `--status` option here |
 
 ### Environment Variables
