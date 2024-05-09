@@ -59,7 +59,8 @@ APP.option("--status [url]", "Status endpoint of already started export.");
 
 APP.action(async (args: Types.CLIOptions) => {
     const { config, ...params } = args;
-    const defaultsPath = resolve(__dirname, "../config/template-config.js");
+    // Will be a js file after transpilation
+    const defaultsPath = resolve(__dirname, "./default-config.js");
 
     const base: Types.NormalizedOptions = await import(defaultsPath);
     // Options will be a combination of Normalized Options and CLI Options, building up from the default config

@@ -58,7 +58,8 @@ APP.option("--reporter [cli|text]", 'Reporter to use to render the output. "cli"
 APP.option("--status [url]", "Status endpoint of already started export.");
 APP.action(async (args) => {
     const { config, ...params } = args;
-    const defaultsPath = (0, path_1.resolve)(__dirname, "../config/template-config.js");
+    // Will be a js file after transpilation
+    const defaultsPath = (0, path_1.resolve)(__dirname, "./default-config.js");
     const base = await Promise.resolve(`${defaultsPath}`).then(s => __importStar(require(s)));
     // Options will be a combination of Normalized Options and CLI Options, building up from the default config
     const options = {
