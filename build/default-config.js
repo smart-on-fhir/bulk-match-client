@@ -1,15 +1,9 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 /**
- * This file lists all the available options and their descriptions and default
- * values.
- *
- * USE THIS AS A TEMPLATE FOR CREATING YOU OWN CONFIGURATION FILES THAT ONLY
- * OVERRIDE THE PROPERTIES YOU NEED TO CHANGE. Then use the `--config` parameter
- * in CLI to load your configuration file.
- *
- * @type {import("../build/app").BulkMatchClient.ConfigFileOptions}
+ * This file lists default values for all the available options and their descriptions.
+ * @type {BulkMatchClient.ConfigFileOptions}
  */
-// eslint-disable-next-line no-undef
 module.exports = {
     // Server Configuration and Auth configuration -------------------------------------------------
     /**

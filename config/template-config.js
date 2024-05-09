@@ -6,7 +6,6 @@
  * OVERRIDE THE PROPERTIES YOU NEED TO CHANGE. Then use the `--config` parameter
  * in CLI to load your configuration file.
  *
- * @type {import("../build/app").BulkMatchClient.ConfigFileOptions}
  */
 // eslint-disable-next-line no-undef
 module.exports = {
