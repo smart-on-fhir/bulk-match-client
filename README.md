@@ -4,7 +4,19 @@ The Bulk Match Client is an open-source command-line interface for matching FHIR
 
 ## Installation
 
-To install and use the Bulk Match Client CLI, you need to have Node.js installed on your system. After cloning the project onto your machine, you can run the CLI using `node .`:
+To install and use the Bulk Match Client CLI, you need to have Node.js installed on your system. This project requires Node v21 or above. We recommend using [NVM](https://github.com/nvm-sh/nvm) to switch between different node version.
+
+After cloning the project onto your machine, you can run the CLI using `node .`:
+
+```bash
+# Use this if you have NVM; otherwise, use node >= v21
+nvm use
+
+# Then, install the relevant dependencies to run the CLI
+npm install
+```
+
+## Usage
 
 ```bash
 # Installing the relevant dependencies to run the CLI
@@ -24,14 +36,14 @@ There are many options for configuring the `bulk-match-client` to your usecase, 
 
 ### Config File Options
 
-The Bulk Match Client uses `js` configuration files, but you can think of them as JSON configuration objects. The only reason to use JS is to allow for comments and type hinting. Below are all the options that can be set in a configuration file.
+The Bulk Match Client uses `js` configuration files, but you can think of them as JSON configuration objects. The only reason to use JS is to allow for comments and type suggestions. Below are all the options that can be set in a configuration file.
 
 Auth and FHIR Server Options:
 
 -   _string_ **`fhirUrl`** - FHIR server base URL. Can be overridden by the `-f` or `--fhir-url` CLI parameter.
--   _string_ **`tokenUrl`** - The Bulk Data server token URL (use `"none"` for open servers and `""` to try to auto-detect it)
+-   _string_ **`tokenUrl`** - The Bulk Data server token URL (use `"none"` or `""` for open servers and `"auto"` to try to auto-detect it)
 -   _object_ **`privateKey`** - The private key (as `JWK`) used to sign authentication tokens. This is not needed for open servers
--   _string_ **`clientId`** - This is not needed for open servers, but identifies the client when making requests. Important for auth servers
+-   _string_ **`clientId`** - This is not needed for open servers, but identifies the client when making requests. Important for connecting to protected servers
 -   _number_ **`accessTokenLifetime`** - The access token lifetime in seconds. Note that the authentication server may ignore or restrict this to its own boundaries
 
 Bulk Match Parameter Options:
@@ -51,9 +63,9 @@ Download related options:
     -   `file:///path/to/downloads` - Save to local folder (file url)
     -   `""` - do nothing
     -   `"none"` - do nothing
-    -   `"> /dev/null"` - do nothing
--   _boolean_ **`saveManifest`** - In some cases it might be useful to also save the export manifest file along with the downloaded NDJSON files.
--   _boolean_ **`addDestinationToManifest`** - The original export manifest will have an `url` property for each file, containing the source location. It his is set to `true`, add a `destination` property to each file containing the path (relative to the manifest file) to the saved file. This is ONLY used if `saveManifest` is set to `true`.
+    -   `"/dev/null"` - do nothing
+-   _boolean_ **`saveManifest`** - In some cases it might be useful to also save the match manifest file along with the downloaded NDJSON files.
+-   _boolean_ **`addDestinationToManifest`** - The original match manifest will have an `url` property for each file, containing the source location. It his is set to `true`, add a `destination` property to each file containing the path (relative to the manifest file) to the saved file. This is ONLY used if `saveManifest` is set to `true`.
 
 Logging related options:
 

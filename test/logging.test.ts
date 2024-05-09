@@ -447,7 +447,7 @@ describe("Logging", function () {
             expect(entry.eventDetail.code).to.equal(200);
             expect(entry.eventDetail.body).to.equal("{}");
             expect(entry.eventDetail.message).to.equal(
-                "The export manifest output is not an array: Expected undefined " +
+                "The match manifest output is not an array: Expected undefined " +
                     "to be an array but got 'undefined'",
             );
         });

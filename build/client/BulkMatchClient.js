@@ -484,7 +484,7 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
         // No destination, write nothing ---------------------------------------
         if (!destination ||
             destination.toLowerCase() === "none" ||
-            destination.toLowerCase().indexOf("dev/null") !== -1) {
+            destination.toLowerCase().indexOf("/dev/null") !== -1) {
             return;
         }
         // local filesystem destinations ---------------------------------------
@@ -538,7 +538,7 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
         return this._checkStatus(status, statusEndpoint);
     }
     /**
-     * Download all the ndsjson files specified in the match-response's manifest
+     * Download all the ndjson files specified in the match-response's manifest
      * @param manifest
      * @returns
      */

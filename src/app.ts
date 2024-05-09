@@ -85,8 +85,8 @@ APP.action(async (args: Types.CLIOptions) => {
     }
     options.fhirUrl = options.fhirUrl.replace(/\/*$/, "/");
 
-    // Verify tokenUrl ---------------------------------------------------------
-    if (!options.tokenUrl) {
+    // Auto-detect tokenUrl -----------------------------------------------------
+    if (options.tokenUrl === "auto") {
         try {
             options.tokenUrl = await Utils.detectTokenUrl(options.fhirUrl);
         } catch {
@@ -97,8 +97,8 @@ APP.action(async (args: Types.CLIOptions) => {
         }
     }
 
-    // Verify privateKey -------------------------------------------------------
-    if (options.tokenUrl !== "none") {
+    // Verify privateKey if using auth ------------------------------------------
+    if (options.tokenUrl !== "none" && options.tokenUrl !== "") {
         if (!options.privateKey) {
             console.log("A 'privateKey' option must be set in the config file!".red);
             return;

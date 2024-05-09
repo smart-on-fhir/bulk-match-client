@@ -562,7 +562,7 @@ class BulkMatchClient extends SmartOnFhirClient {
         if (
             !destination ||
             destination.toLowerCase() === "none" ||
-            destination.toLowerCase().indexOf("dev/null") !== -1
+            destination.toLowerCase().indexOf("/dev/null") !== -1
         ) {
             return;
         }
@@ -624,7 +624,7 @@ class BulkMatchClient extends SmartOnFhirClient {
     }
 
     /**
-     * Download all the ndsjson files specified in the match-response's manifest
+     * Download all the ndjson files specified in the match-response's manifest
      * @param manifest
      * @returns
      */

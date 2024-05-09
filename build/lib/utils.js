@@ -133,7 +133,8 @@ exports.getTokenEndpointFromCapabilityStatement = getTokenEndpointFromCapability
  * Given a FHIR server baseURL, looks up it's `.well-known/smart-configuration`
  * and/or it's `CapabilityStatement` (whichever arrives first) and resolves with
  * the token endpoint as defined there.
- * @param baseUrl The base URL of the FHIR server
+ * If no token URL is found, return 'none'
+ * @param baseUrl The base URL of the FHIR server, or 'none'
  */
 async function detectTokenUrl(baseUrl) {
     try {
@@ -144,6 +145,7 @@ async function detectTokenUrl(baseUrl) {
         return tokenUrl;
     }
     catch {
+        debug("Could not detect a tokenURL from either a well-known smart config or a capability statement; proceeding with an open-server approach");
         return "none";
     }
 }

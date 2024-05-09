@@ -1,53 +1,7 @@
-# TODO
+# Feedback
 
--   Add testing ENV var for invoke args going to console
-
-## Things I still need to add
-
--   Support for multiple forms of resources
-    -   inline object
-        -   Implement X
-        -   Test X
-    -   path to file
-        -   Implement X
-        -   Test X
-    -   path to dir of patients?
-        -   Implement X
-        -   Test X
-    -   Consider NDJSON format for resource definitions X & TEST
--   Fix events (signatures, remove unnecessary)
-    -   kickOffStart x
-    -   kickOffEnd x
-    -   kickOffError x
-    -   jobStart x
-    -   jobProgress x
-    -   jobError x
-    -   jobComplete x
-    -   downloadStart x
-    -   downloadError x
-    -   downloadComplete x
-    -   allDownloadsComplete x
-    -   authorize x
-    -   error x
-    -   abort x
-
-## Things to remove:
-
-## Things I'm not sure if we should remove/ want to check with Vlad
-
--   addDestinationToManifest – still have it but is this as necessary? It feels nice to have but the bundles are so much smaller. I could see an argument for keeping it in order to reduce distance from bulk-data-client, but I'm open to opinions
-
-## Things I still need to test
-
--   The smart data client - surely we have tests for this somewhere?
-
----
-
-# DONE
-
--   Removed parallelDownloads
--   Removed lenient, not sure if this is ideal; might add back
--   ndjsonMaxLineLength
--   ndjsonValidateFHIRResourceType
--   ndjsonValidateFHIRResourceCount
--   module.exports - to use [stable fetch we need to guarantee minimum node 21](https://nodejs.org/en/blog/announcements/v21-release-announce) so is used export/import syntax everywhere valid? Related – do we want to just type the project as "module" altogether? e.g. change the compilation target in our tsconfig accordingly?
+-   [ ] default-config.js shouldn't be conflated with a template-config file. Create a new template config file, reference that in README, don't mention default-config.js when talking about customizing to use-cases.
+    -   [ ] TODO: Move default into src, leave template in the config dir
+-   [ ] More careful language when discussing how configs (default + custom + CLI args) get combined. Avoid confusion.
+-   [x] "auto" should be used as a keyword for autodetecting tokenurls; empty string and 'none' should be code for open server
+-   [ ] Maybe find a good link for JWK documentation and hyperlink.

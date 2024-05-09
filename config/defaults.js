@@ -18,7 +18,7 @@ module.exports = {
     fhirUrl: "",
 
     /**
-     * The Bulk Match server token URL ("none" for open servers; "" to autodetect)
+     * The Bulk Match server token URL ("none" or "" for open servers; "auto" to auto-detect it)
      */
     tokenUrl: "none",
 
@@ -114,7 +114,7 @@ module.exports = {
 
     // Destination options -------------------------------------------------------------------------
     /**
-     * The original export manifest will have an `url` property for each
+     * The original match manifest will have an `url` property for each
      * file, containing the source location. If this is set to `true`, add
      * a `destination` property to each file containing the path (relative
      * to the manifest file) to the saved file.
@@ -138,7 +138,7 @@ module.exports = {
     destination: "./downloads",
 
     /**
-     * In some cases it might be useful to also save the export manifest
+     * In some cases it might be useful to also save the match manifest
      * file along with the downloaded NDJSON files.
      */
     saveManifest: true,

@@ -227,14 +227,14 @@ export declare namespace BulkMatchClient {
         destination: string;
 
         /**
-         * In some cases it might be useful to also save the export manifest
+         * In some cases it might be useful to also save the match manifest
          * file along with the downloaded NDJSON files.
          * **Defaults to `false`**
          */
         saveManifest?: boolean;
 
         /**
-         * The original export manifest will have an `url` property for each
+         * The original match manifest will have an `url` property for each
          * file, containing the source location. If this is set to `true`, add
          * a `destination` property to each file containing the path (relative
          * to the manifest file) to the saved file.
@@ -302,7 +302,7 @@ export declare namespace BulkMatchClient {
         // Authorization -------------------------------------------------------------------------------
 
         /**
-         * The Bulk Match server token URL ("none" for open servers)
+         * The Bulk Match server token URL ("none" or "" for open servers; "auto" to auto-detect it)
          */
         tokenUrl: string;
 
@@ -382,14 +382,14 @@ export declare namespace BulkMatchClient {
 
         // Download ------------------------------------------------------------------------------------
         /**
-         * In some cases it might be useful to also save the export manifest
+         * In some cases it might be useful to also save the match manifest
          * file along with the downloaded NDJSON files.
          * **Defaults to `false`**
          */
         saveManifest: boolean;
 
         /**
-         * The original export manifest will have an `url` property for each
+         * The original match manifest will have an `url` property for each
          * file, containing the source location. If this is set to `true`, add
          * a `destination` property to each file containing the path (relative
          * to the manifest file) to the saved file.
