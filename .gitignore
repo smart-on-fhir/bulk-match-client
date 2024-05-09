@@ -135,7 +135,7 @@ dist
 downloads/*
 config/*
 !.gitkeep
-!config/defaults.js
+!config/template-config.js
 .DS_Store
 .vscode
 data/*
