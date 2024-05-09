@@ -55,7 +55,7 @@ module.exports = {
      *    - "/User/absolute/path/to/fhir.ndjson"
      *    - "./relative/absolute/path/to/fhir.ndjson"
      *    - "{"resourceType": "Patient"}" A string representation of the resource
-     *    - {"resourceType": "Patient"} An inline object resresenting the resource
+     *    - {"resourceType": "Patient"} An inline object representing the resource
      *    - [{"resourceType": "Patient", "id": 1}, {"resourceType": "Patient", "id": 2}] An inline array
      *      of resources to match
      *

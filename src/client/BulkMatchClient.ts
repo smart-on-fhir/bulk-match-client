@@ -653,7 +653,7 @@ class BulkMatchClient extends SmartOnFhirClient {
                     exportType: downloadMetadata.exportType,
                 });
 
-                // After saving files, optinoally add destination to manifest
+                // After saving files, optionally add destination to manifest
                 if (this.options.addDestinationToManifest) {
                     f.destination = join(
                         this.options.destination,
