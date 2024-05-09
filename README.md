@@ -4,9 +4,7 @@ The Bulk Match Client is an open-source command-line interface for matching FHIR
 
 ## Installation
 
-To install and use the Bulk Match Client CLI, you need to have Node.js installed on your system. This project requires Node v21 or above. We recommend using [NVM](https://github.com/nvm-sh/nvm) to switch between different node version.
-
-After cloning the project onto your machine, you can run the CLI using `node .`:
+To install and use the Bulk Match Client CLI, you need to have Node.js installed on your system. This project requires Node v21 or above. We recommend using [NVM](https://github.com/nvm-sh/nvm) to switch between different node versions.
 
 ```bash
 # Use this if you have NVM; otherwise, use node >= v21
@@ -18,12 +16,16 @@ npm install
 
 ## Usage
 
-```bash
-# Installing the relevant dependencies to run the CLI
-npm install
+After cloning and installing the project onto your machine, you can run the CLI using `node .`:
 
-# Running the CLI directly from within the project directory
+```bash
+# Generic formula for running the CLI
 node . [options]
+
+# To see all available CLI options
+node . --help
+
+# An example of running the CLI with a custom config, and a CLI-specified FHIR URL and pointer to a patients.ndjson file
 node . --config config/my-config.json -f https://bulk-match-provider-df228d68a43b.herokuapp.com/fhir/ --resource data/patients-to-match.ndjson
 ```
 
