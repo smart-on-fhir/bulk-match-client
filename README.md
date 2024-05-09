@@ -31,10 +31,12 @@ node . --config config/my-config.json -f https://bulk-match-provider-df228d68a43
 
 ## Options
 
-There are many options for configuring the `bulk-match-client` to your usecase, and two ways of specifying those options
+There are many options for configuring the `bulk-match-client`. Default values are set by the client for many of them, but there are two ways of specifying custom options to suit your usecase: Config Files and CLI arguments:
 
-1. Create new configuration files by duplicating our default config in `config/defaults.js` and specifying arguments there.
-2. Providing them as CLI arguments, which will override the values specified in the config-file
+1. First, you can create a new configuration files by duplicating our default config in `config/template-config.js` and specifying your options there. These will override the default values used by the client.
+2. Additionally, you can provide some options as CLI arguments, which will override the client's default values as well as those specified in custom config-files.
+
+Below we break down which options are available to using these methods.
 
 ### Config File Options
 
