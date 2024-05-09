@@ -49,7 +49,7 @@ APP.option(
 APP.option("-F, --_outputFormat [string]", `The output format you expect.`);
 APP.option(
     "-d, --destination [destination]",
-    "Download destination. See config/defaults.js for examples",
+    "Download destination. See config/template-config.js for examples",
 );
 APP.option(
     "--reporter [cli|text]",
@@ -59,7 +59,7 @@ APP.option("--status [url]", "Status endpoint of already started export.");
 
 APP.action(async (args: Types.CLIOptions) => {
     const { config, ...params } = args;
-    const defaultsPath = resolve(__dirname, "../config/defaults.js");
+    const defaultsPath = resolve(__dirname, "../config/template-config.js");
 
     const base: Types.NormalizedOptions = await import(defaultsPath);
     // Options will be a combination of Normalized Options and CLI Options, building up from the default config

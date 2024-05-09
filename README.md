@@ -108,7 +108,7 @@ Note that you can pass a `--help` parameter with the CLI to see this listed in y
 | `-C`  | `--onlyCertainMatches`           | If there are multiple potential matches, the server should be certain that each of the records are for the same patient. defaults to `false`                                    |
 | `-c`  | `--count [number]`               | Specifies the maximum number of records to return per resource. If no value is provided, the server may decide how many matches to return                                       |
 | `-F`  | `--_outputFormat [file-format]`  | The output format you expect back from the server                                                                                                                               |
-| `-d`  | `--destination [destination]`    | Specifies the download destination. See `config/defaults.js` for examples                                                                                                       |
+| `-d`  | `--destination [destination]`    | Specifies the download destination. See `config/template-config.js` for examples                                                                                                |
 |       | `--reporter [reporterType]`      | Reporter to use to render the output. `cli` renders fancy progress bars and tables. `text` is better for log files. Defaults to `cli`                                           |
 |       | `--status  [url]`                | If a status request fails for some reason the client will exit. However, if the status endpoint is printed in the output, you can retry by passing it as `--status` option here |
 

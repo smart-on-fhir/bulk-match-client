@@ -3,7 +3,7 @@ import { expect } from "@hapi/code";
 import { readFileSync } from "fs";
 import { readdir } from "fs/promises";
 import path from "path";
-import baseSettings from "../config/defaults.js";
+import baseSettings from "../config/template-config.js";
 import { BulkMatchClient } from "../src/client";
 import { Errors } from "../src/lib";
 import { Utils } from "./lib/";

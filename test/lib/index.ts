@@ -1,7 +1,7 @@
 import { spawn, StdioOptions } from "child_process";
 import { readFileSync, writeFileSync } from "fs";
 import { join } from "path";
-import baseSettings from "../../config/defaults.js";
+import baseSettings from "../../config/template-config.js";
 import { BulkMatchClient as types } from "../../index";
 import MockServer from "./MockServer";
 export * as Utils from "./utils";
