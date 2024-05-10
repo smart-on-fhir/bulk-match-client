@@ -4,7 +4,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
  * This file lists default values for all the available options and their descriptions.
  * @type {BulkMatchClient.ConfigFileOptions}
  */
-module.exports = {
+exports.default = {
     // Server Configuration and Auth configuration -------------------------------------------------
     /**
      * FHIR server base URL. Can be overridden by the `-f` or `--fhir-url`
@@ -19,7 +19,7 @@ module.exports = {
      * The private key (JWK) used to sign authentication tokens. This is not
      * needed for open servers
      */
-    privateKey: {},
+    privateKey: undefined,
     /**
      * This is not needed for open servers
      */

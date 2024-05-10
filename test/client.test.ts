@@ -3,8 +3,9 @@ import { expect } from "@hapi/code";
 import { readFileSync } from "fs";
 import { readdir } from "fs/promises";
 import path from "path";
-import baseSettings from "../config/template-config.js";
+import { BulkMatchClient as Types } from "../";
 import { BulkMatchClient } from "../src/client";
+import baseSettings from "../src/default-config";
 import { Errors } from "../src/lib";
 import { Utils } from "./lib/";
 
@@ -14,7 +15,7 @@ describe("client testing", function () {
         this.beforeAll(() => {
             client = new BulkMatchClient({
                 ...baseSettings,
-            });
+            } as Types.NormalizedOptions);
         });
         describe("_parseResourceNdjson", function () {
             it("Should work on NDJSON ", () => {

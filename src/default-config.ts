@@ -4,7 +4,7 @@ import { BulkMatchClient } from "..";
  * This file lists default values for all the available options and their descriptions.
  * @type {BulkMatchClient.ConfigFileOptions}
  */
-module.exports = {
+export default {
     // Server Configuration and Auth configuration -------------------------------------------------
     /**
      * FHIR server base URL. Can be overridden by the `-f` or `--fhir-url`
@@ -21,7 +21,7 @@ module.exports = {
      * The private key (JWK) used to sign authentication tokens. This is not
      * needed for open servers
      */
-    privateKey: {},
+    privateKey: undefined,
 
     /**
      * This is not needed for open servers
@@ -173,4 +173,4 @@ module.exports = {
      * Can be overridden from terminal parameter `--reporter`.
      */
     reporter: "cli",
-};
+} as BulkMatchClient.ConfigFileOptions;

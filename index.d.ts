@@ -168,6 +168,12 @@ export declare namespace BulkMatchClient {
         clientId?: string;
 
         /**
+         * The scope to use in the authorization request. If not set, defaults to
+         * "system/Patient.rs"
+         */
+        scope?: string;
+
+        /**
          * When we request an access token, specify its lifetime in seconds.
          * Note that if the token expires during status pooling or during
          * download another authorization request will be made to get new token
@@ -342,7 +348,7 @@ export declare namespace BulkMatchClient {
          * The scope to use in the authorization request. If not set, defaults to
          * "system/Patient.rs"
          */
-        scope: string;
+        scope?: string;
 
         // Request Modifications -----------------------------------------------------------------------
 

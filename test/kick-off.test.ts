@@ -1,6 +1,6 @@
 import { expect } from "@hapi/code";
-import baseSettings from "../config/template-config.js";
 import { BulkMatchClient } from "../src/client";
+import baseSettings from "../src/default-config";
 import { mockServer } from "./lib";
 
 describe("kick-off", () => {

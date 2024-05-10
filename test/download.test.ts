@@ -1,8 +1,8 @@
 import { expect } from "@hapi/code";
 import { existsSync, readFileSync, rmSync } from "fs";
 import { join } from "path";
-import baseSettings from "../config/template-config.js";
 import { BulkMatchClient } from "../src/client";
+import baseSettings from "../src/default-config";
 import { Utils, invoke, mockServer } from "./lib";
 
 describe("download", function () {
