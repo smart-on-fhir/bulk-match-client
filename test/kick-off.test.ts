@@ -46,36 +46,3 @@ describe("kick-off", () => {
         expect(url).to.equal(expectedUrl);
     });
 });
-
-describe.skip("status", () => {
-    describe("complete", () => {
-        it("returns the manifest", async () => {
-            mockServer.mock("/status", { status: 200, body: { output: [{}] } });
-            const client = new BulkMatchClient({
-                ...baseSettings,
-                fhirUrl: mockServer.baseUrl,
-            });
-            await client.waitForMatch(mockServer.baseUrl + "/status");
-        });
-    });
-
-    describe("error", () => {
-        it("throws the error", async () => {
-            mockServer.mock("/status", { status: 400 });
-
-            const client = new BulkMatchClient({
-                ...baseSettings,
-                fhirUrl: mockServer.baseUrl,
-            });
-
-            await client.waitForMatch(mockServer.baseUrl + "/status").then(
-                () => {
-                    throw new Error("The test should have failed");
-                },
-                () => {
-                    // Error was expected so we are good to go
-                },
-            );
-        });
-    });
-});
