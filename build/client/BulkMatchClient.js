@@ -426,6 +426,12 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
         // Then parse location information
         const location = res.response.headers.get("content-location");
         if (!location) {
+            this.emit("kickOffError", {
+                requestOptions: requestOptions,
+                capabilityStatement: capabilityStatement,
+                responseHeaders: this._formatResponseHeaders(res.response.headers),
+                error: new Error("No content location was specified in the response"),
+            });
             throw new Error("The kick-off patient match response did not include content-location header");
         }
         this.emit("kickOffEnd", {
@@ -441,14 +447,14 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
      * @param file The file to download
      * @param fileName The name that should be used to save the file
      * @param subFolder What subfolder should the file be saved to; defaults to ""
-     * @param exportType What kind of ManifestFile is this; defaults to "output" but could also be "error"
+     * @param matchType What kind of ManifestFile is this; defaults to "output" but could also be "error"
      * @returns
      */
-    async _downloadFile({ file, fileName, subFolder = "", exportType = "output", }) {
+    async _downloadFile({ file, fileName, subFolder = "", matchType = "output", }) {
         const downloadStartTime = Date.now();
         this.emit("downloadStart", {
             fileUrl: file.url,
-            itemType: exportType,
+            itemType: matchType,
             startTime: downloadStartTime,
         });
         // Start the download for the ndjson file – ndjson means the response is a string
@@ -512,7 +518,7 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
         }
     }
     /**
-     * Waits for the patient match to be completed and resolves with the export
+     * Waits for the patient match to be completed and resolves with the match
      * manifest when done. Emits one "jobStart", multiple "jobProgress"
      * and one "jobComplete" events.
      *
@@ -551,25 +557,25 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
                 const downloadMetadata = {
                     url: f.url,
                     name: fileName,
-                    exportType: "output",
+                    matchType: "output",
                     error: null,
                     ...initialState,
                 };
                 await this._downloadFile({
                     file: f,
                     fileName,
-                    subFolder: downloadMetadata.exportType === "output" ? "" : downloadMetadata.exportType,
-                    exportType: downloadMetadata.exportType,
+                    subFolder: downloadMetadata.matchType === "output" ? "" : downloadMetadata.matchType,
+                    matchType: downloadMetadata.matchType,
                 });
                 // After saving files, optionally add destination to manifest
                 if (this.options.addDestinationToManifest) {
-                    f.destination = (0, path_1.join)(this.options.destination, downloadMetadata.exportType === "output" ? "" : downloadMetadata.exportType, fileName);
+                    f.destination = (0, path_1.join)(this.options.destination, downloadMetadata.matchType === "output" ? "" : downloadMetadata.matchType, fileName);
                 }
                 return downloadMetadata;
             };
             const downloadJobs = [
-                ...(manifest.output || []).map((f) => createDownloadJob(f, { exportType: "output" })),
-                ...(manifest.error || []).map((f) => createDownloadJob(f, { exportType: "error" })),
+                ...(manifest.output || []).map((f) => createDownloadJob(f, { matchType: "output" })),
+                ...(manifest.error || []).map((f) => createDownloadJob(f, { matchType: "error" })),
             ];
             Promise.allSettled(downloadJobs).then((downloadOutcomes) => {
                 debug("All downloads settled, processing them and saving manifest");
@@ -640,7 +646,7 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
             logger.log("info", {
                 eventId: "kickoff_complete",
                 eventDetail: {
-                    exportUrl: res.response.url,
+                    matchUrl: res.response.url,
                     errorCode: res.response.status >= 400 ? res.response.status : null,
                     errorBody: res.response.status >= 400 ? res.body : null,
                     softwareName: capabilityStatement.software?.name || null,

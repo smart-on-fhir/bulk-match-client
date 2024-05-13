@@ -127,7 +127,7 @@ export declare namespace BulkMatchClient {
         reporter?: Reporter;
 
         /**
-         * Use if you have a status endpoint of an export that has already been
+         * Use if you have a status endpoint of a match that has already been
          * started.
          */
         status?: string;
@@ -489,7 +489,7 @@ export declare namespace BulkMatchClient {
          * including this instant.
          * Note: To properly meet these constraints, a FHIR Server might need
          * to wait for any pending transactions to resolve in its database
-         * before starting the export process.
+         * before starting the match process.
          */
         transactionTime: string; // FHIR instant
 
@@ -519,7 +519,7 @@ export declare namespace BulkMatchClient {
         /**
          * array of error file items following the same structure as the output
          * array.
-         * Errors that occurred during the export should only be included here
+         * Errors that occurred during the match should only be included here
          * (not in output). If no errors occurred, the server SHOULD return an
          * empty array. Only the OperationOutcome resource type is currently
          * supported, so a server SHALL generate files in the same format as
@@ -596,10 +596,10 @@ export declare namespace BulkMatchClient {
         /**
          * The value shows which part of the manifest this download comes from.
          * Can be:
-         * - "output"  - For exported files
+         * - "output"  - For matched files
          * - "error"   - For ndjson files with error operation outcomes
          */
-        readonly exportType: "output" | "error";
+        readonly matchType: "output" | "error";
     }
 }
 

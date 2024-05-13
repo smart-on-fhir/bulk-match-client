@@ -88,3 +88,37 @@ export class InvalidNdjsonError extends Error {
         Error.captureStackTrace(this, this.constructor);
     }
 }
+
+/**
+ * For managing non-200 responses at the request helper layer
+ */
+type RequestErrorArgs = {
+    res: Types.CustomBodyResponse<object>;
+    method: string;
+};
+
+export class RequestError<T> extends Error {
+    readonly method: string;
+    readonly url: string;
+    readonly status: number;
+    readonly statusText: string;
+    readonly body?: T;
+
+    constructor({ res, method }: RequestErrorArgs) {
+        const url = res.response.url;
+        const status = res.response.status;
+        const statusText = res.response.statusText;
+        const body = res.body as T;
+        super(
+            `${method || "GET"} ${url} FAILED with ` +
+                `${status}` +
+                `${statusText ? ` and message ${statusText}` : ""}.` +
+                `${body ? " Body: " + JSON.stringify(body) : ""}`,
+        );
+        this.method = method;
+        this.url = url;
+        this.status = status;
+        this.statusText = statusText;
+        this.body = body;
+    }
+}

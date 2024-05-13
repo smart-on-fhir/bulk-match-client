@@ -56,7 +56,7 @@ APP.option(
     "--reporter [cli|text]",
     'Reporter to use to render the output. "cli" renders fancy progress bars and tables. "text" is better for log files. Defaults to "cli".',
 );
-APP.option("--status [url]", "Status endpoint of already started export.");
+APP.option("--status [url]", "Status endpoint of already started match operation.");
 
 APP.action(async (args: Types.CLIOptions) => {
     const { config, ...params } = args;
@@ -127,10 +127,10 @@ APP.action(async (args: Types.CLIOptions) => {
     }
 
     process.on("SIGINT", () => {
-        console.log("\nExport canceled.".magenta.bold);
+        console.log("Match canceled.".magenta.bold);
         reporter.detach();
         client.abort();
-        // Should this cancel the export on the server?
+        // Should this cancel the match on the server?
         process.exit(0);
     });
 
@@ -164,7 +164,7 @@ APP.action(async (args: Types.CLIOptions) => {
 
     if (options.reporter === "cli") {
         const answer = prompt()(
-            "Do you want to signal the server that this export can be removed? [Y/n]".cyan,
+            "Do you want to signal the server that this match can be removed? [Y/n]".cyan,
         );
         if (!answer || answer.toLowerCase() === "y") {
             client

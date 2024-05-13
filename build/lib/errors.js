@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.InvalidNdjsonError = exports.UnknownResourceStringError = exports.OperationOutcomeError = void 0;
+exports.RequestError = exports.InvalidNdjsonError = exports.UnknownResourceStringError = exports.OperationOutcomeError = void 0;
 const utils_1 = require("./utils");
 class OperationOutcomeError extends Error {
     constructor({ res }) {
@@ -40,3 +40,21 @@ class InvalidNdjsonError extends Error {
     }
 }
 exports.InvalidNdjsonError = InvalidNdjsonError;
+class RequestError extends Error {
+    constructor({ res, method }) {
+        const url = res.response.url;
+        const status = res.response.status;
+        const statusText = res.response.statusText;
+        const body = res.body;
+        super(`${method || "GET"} ${url} FAILED with ` +
+            `${status}` +
+            `${statusText ? ` and message ${statusText}` : ""}.` +
+            `${body ? " Body: " + JSON.stringify(body) : ""}`);
+        this.method = method;
+        this.url = url;
+        this.status = status;
+        this.statusText = statusText;
+        this.body = body;
+    }
+}
+exports.RequestError = RequestError;

@@ -23,7 +23,7 @@ class TextReporter extends reporter_1.default {
     }
     onJobStart(status) {
         console.log(status.message);
-        console.log(`Status endpoint: ${status.statusEndpoint}`);
+        debug(`Status endpoint: ${status.statusEndpoint}`);
     }
     onJobProgress(status) {
         const { startedAt, elapsedTime, percentComplete, nextCheckAfter, message } = status;
@@ -37,8 +37,7 @@ class TextReporter extends reporter_1.default {
         debug(JSON.stringify(manifest));
     }
     onJobError(details) {
-        console.error("There was an error in the matching process");
-        console.error(JSON.stringify(details));
+        console.error("There was an error in the matching process: ", JSON.stringify(details));
     }
     onDownloadStart({ fileUrl, itemType, startTime, }) {
         console.log(`Begin ${itemType}-file download for ${fileUrl} at ${lib_1.Utils.formatDuration(startTime)}...`);
@@ -47,8 +46,7 @@ class TextReporter extends reporter_1.default {
         console.log(`${fileUrl} download completed in ${lib_1.Utils.formatDuration(duration)}`);
     }
     onDownloadError({ fileUrl, message, duration, }) {
-        console.log(`${fileUrl} download FAILED in ${lib_1.Utils.formatDuration(duration)}`);
-        console.log("Message: " + message);
+        console.log(`${fileUrl} download FAILED in ${lib_1.Utils.formatDuration(duration)} Message: ${message}`);
     }
     onAllDownloadsComplete(_, duration) {
         console.log(`All downloads completed in ${lib_1.Utils.formatDuration(duration)}`);

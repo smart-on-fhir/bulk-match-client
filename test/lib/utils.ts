@@ -28,7 +28,12 @@ export function parseLogFile(log: string) {
         .map((line) => JSON.parse(line));
 }
 
-export function getLogEvents(log: string, event: Logger.LogEvents) {
+export function getLogEvent(log: string, event: Logger.LogEvents) {
     const parsedLogs = parseLogFile(log);
     return parsedLogs.find((l) => l.eventId === event);
+}
+
+export function getLogEvents(log: string, event: Logger.LogEvents) {
+    const parsedLogs = parseLogFile(log);
+    return parsedLogs.filter((l) => l.eventId === event);
 }

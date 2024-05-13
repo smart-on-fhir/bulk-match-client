@@ -24,7 +24,7 @@ export default class TextReporter extends Reporter {
 
     onJobStart(status: Types.MatchStatus) {
         console.log(status.message);
-        console.log(`Status endpoint: ${status.statusEndpoint}`);
+        debug(`Status endpoint: ${status.statusEndpoint}`);
     }
 
     onJobProgress(status: Types.MatchStatus) {
@@ -48,8 +48,7 @@ export default class TextReporter extends Reporter {
         message?: string;
         responseHeaders?: object;
     }) {
-        console.error("There was an error in the matching process");
-        console.error(JSON.stringify(details));
+        console.error("There was an error in the matching process: ", JSON.stringify(details));
     }
 
     onDownloadStart({
@@ -79,8 +78,9 @@ export default class TextReporter extends Reporter {
         message: string;
         duration: number;
     }) {
-        console.log(`${fileUrl} download FAILED in ${Utils.formatDuration(duration)}`);
-        console.log("Message: " + message);
+        console.log(
+            `${fileUrl} download FAILED in ${Utils.formatDuration(duration)} Message: ${message}`,
+        );
     }
 
     onAllDownloadsComplete(_: unknown, duration: number) {

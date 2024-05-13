@@ -63,7 +63,7 @@ export interface BulkMatchClientEvents extends SmartOnFhirClientEvents {
     ) => void;
 
     /**
-     * Emitted when the export is completed
+     * Emitted when the match is completed
      * @event
      */
     jobComplete: (this: BulkMatchClient, manifest: Types.MatchManifest) => void;
