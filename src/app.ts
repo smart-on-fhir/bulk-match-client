@@ -7,6 +7,7 @@ import prompt from "prompt-sync";
 import util from "util";
 import { BulkMatchClient as Types } from "..";
 import Client from "./client/BulkMatchClient";
+import defaultConfig from "./default-config";
 import { Utils } from "./lib";
 import { createLogger } from "./logger";
 import { CLIReporter, TextReporter } from "./reporters";
@@ -60,9 +61,8 @@ APP.option("--status [url]", "Status endpoint of already started export.");
 APP.action(async (args: Types.CLIOptions) => {
     const { config, ...params } = args;
     // Will be a js file after transpilation
-    const defaultsPath = resolve(__dirname, "./default-config.js");
 
-    const base: Types.NormalizedOptions = await import(defaultsPath);
+    const base: Types.ConfigFileOptions = defaultConfig;
     // Options will be a combination of Normalized Options and CLI Options, building up from the default config
     const options: Partial<Types.NormalizedOptions & Types.CLIOptions> = {
         ...base,

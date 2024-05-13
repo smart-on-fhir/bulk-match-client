@@ -1,4 +1,5 @@
 import { expect } from "@hapi/code";
+import { BulkMatchClient as Types } from "..";
 import { BulkMatchClient } from "../src/client";
 import baseSettings from "../src/default-config";
 import { mockServer } from "./lib";
@@ -13,7 +14,7 @@ describe("kick-off", () => {
         const client = new BulkMatchClient({
             ...baseSettings,
             fhirUrl: mockServer.baseUrl,
-        });
+        } as Types.NormalizedOptions);
         await client.kickOff();
     });
     it("Waits if Kickoff results in a 429, then retry", async () => {
@@ -41,8 +42,45 @@ describe("kick-off", () => {
         const client = new BulkMatchClient({
             ...baseSettings,
             fhirUrl: mockServer.baseUrl,
-        });
+        } as Types.NormalizedOptions);
         const url = await client.kickOff();
         expect(url).to.equal(expectedUrl);
+    });
+});
+
+describe("status", () => {
+    describe("complete", () => {
+        it("returns the manifest", async () => {
+            mockServer.mock("/status", {
+                status: 200,
+                body: { output: [{}] },
+                headers: { "content-type": "application/json" },
+            });
+            const client = new BulkMatchClient({
+                ...baseSettings,
+                fhirUrl: mockServer.baseUrl,
+            } as Types.NormalizedOptions);
+            await client.waitForMatch(mockServer.baseUrl + "/status");
+        });
+    });
+
+    describe("error", () => {
+        it("throws the error", async () => {
+            mockServer.mock("/status", { status: 400 });
+
+            const client = new BulkMatchClient({
+                ...baseSettings,
+                fhirUrl: mockServer.baseUrl,
+            } as Types.NormalizedOptions);
+
+            await client.waitForMatch(mockServer.baseUrl + "/status").then(
+                () => {
+                    throw new Error("The test should have failed");
+                },
+                () => {
+                    // Error was expected so we are good to go
+                },
+            );
+        });
     });
 });
