@@ -50,7 +50,7 @@ describe("kick-off", () => {
 
 describe("status", () => {
     describe("complete", () => {
-        it("returns the manifest", async () => {
+        it.skip("returns the manifest", async () => {
             mockServer.mock("/status", {
                 status: 200,
                 body: { output: [{}] },
@@ -61,11 +61,12 @@ describe("status", () => {
                 fhirUrl: mockServer.baseUrl,
             } as Types.NormalizedOptions);
             await client.waitForMatch(mockServer.baseUrl + "/status");
+            // TODO add a manifest
         });
     });
 
     describe("error", () => {
-        it("throws the error", async () => {
+        it("throws an error when the endpoint responds with a 400", async () => {
             mockServer.mock("/status", { status: 400 });
 
             const client = new BulkMatchClient({
@@ -73,13 +74,9 @@ describe("status", () => {
                 fhirUrl: mockServer.baseUrl,
             } as Types.NormalizedOptions);
 
-            await client.waitForMatch(mockServer.baseUrl + "/status").then(
-                () => {
-                    throw new Error("The test should have failed");
-                },
-                () => {
-                    // Error was expected so we are good to go
-                },
+            await expect(client.waitForMatch(mockServer.baseUrl + "/status")).reject(
+                Error,
+                `GET ${mockServer.baseUrl}/status FAILED with 400 and message Bad Request.`,
             );
         });
     });

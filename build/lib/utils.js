@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.assert = exports.print = exports.formatDatetimeTimestamp = exports.formatDuration = exports.generateProgress = exports.humanFileSize = exports.wait = exports.parseBoolean = exports.fhirInstant = exports.displayCodeableConcept = exports.detectTokenUrl = exports.getTokenEndpointFromCapabilityStatement = exports.getTokenEndpointFromWellKnownSmartConfig = exports.getCapabilityStatement = exports.getWellKnownSmartConfig = exports.getAccessTokenExpiration = exports.filterResponseHeaders = void 0;
+exports.stringifyBody = exports.assert = exports.print = exports.formatDatetimeTimestamp = exports.formatDuration = exports.generateProgress = exports.humanFileSize = exports.wait = exports.parseBoolean = exports.fhirInstant = exports.displayCodeableConcept = exports.detectTokenUrl = exports.getTokenEndpointFromCapabilityStatement = exports.getTokenEndpointFromWellKnownSmartConfig = exports.getCapabilityStatement = exports.getWellKnownSmartConfig = exports.getAccessTokenExpiration = exports.filterResponseHeaders = void 0;
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 require("colors");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
@@ -369,3 +369,12 @@ function assert(condition, error, ctor = Error) {
     }
 }
 exports.assert = assert;
+/**
+ * Method for turning the either JSON or string content of a response body into a string
+ * @param body
+ * @returns
+ */
+function stringifyBody(body) {
+    return typeof body === "object" ? JSON.stringify(body) : body;
+}
+exports.stringifyBody = stringifyBody;

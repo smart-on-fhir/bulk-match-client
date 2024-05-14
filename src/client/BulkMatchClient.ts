@@ -9,7 +9,8 @@ import { debuglog } from "util";
 import { Logger } from "winston";
 import { BulkMatchClient as Types } from "../..";
 import { Errors, Utils } from "../lib";
-import { InvalidNdjsonError, UnknownResourceStringError } from "../lib/errors";
+import { InvalidNdjsonError, RequestError, UnknownResourceStringError } from "../lib/errors";
+import { stringifyBody } from "../lib/utils";
 import { BulkMatchClientEvents } from "./BulkMatchClientEvents";
 import SmartOnFhirClient from "./SmartOnFhirClient";
 
@@ -336,7 +337,7 @@ class BulkMatchClient extends SmartOnFhirClient {
         if (operationOutcome?.issue[0]?.severity === "fatal") {
             const msg = `Unexpected status response ${res.response.status} ${res.response.statusText}`;
             this.emit("jobError", {
-                body: JSON.stringify(res.body) || null,
+                body: stringifyBody(res.body) || null,
                 code: res.response.status || null,
                 message: msg,
                 responseHeaders: this._formatResponseHeaders(res.response.headers),
@@ -351,25 +352,7 @@ class BulkMatchClient extends SmartOnFhirClient {
     }
 
     /**
-     * Produce the error to throw when MatchStatus requests produce an unexpected response status
-     * @param status The MatchStatus
-     * @param res The statusEndpoint response
-     * @returns An error to be thrown
-     */
-    private _statusError(res: Types.CustomBodyResponse<object>): Error {
-        const msg = `Unexpected status response ${res.response.status} ${res.response.statusText}`;
-        this.emit("jobError", {
-            body: JSON.stringify(res.body) || null,
-            code: res.response.status || null,
-            message: msg,
-            responseHeaders: this._formatResponseHeaders(res.response.headers),
-        });
-
-        return new Error(msg);
-    }
-
-    /**
-     * A indirectly recursive method for making status requests and handling completion, pending and error cases
+     * An indirectly recursive method for making status requests and handling completion, pending and error cases
      * @param status The MatchStatus up to this point
      * @param statusEndpoint The statusEndpoint where we check on the status of the match request
      * @returns A Promise resolving to a MatchManifest (or throws an error)
@@ -386,32 +369,48 @@ class BulkMatchClient extends SmartOnFhirClient {
                 },
             },
             "status request",
-        ).then(async (res: Types.CustomBodyResponse<object>) => {
-            const now = Date.now();
-            const elapsedTime = now - status.startedAt;
-            status.elapsedTime = elapsedTime;
+        )
+            .then(async (res: Types.CustomBodyResponse<object>) => {
+                const now = Date.now();
+                const elapsedTime = now - status.startedAt;
+                status.elapsedTime = elapsedTime;
 
-            // match is complete
-            if (res.response.status === 200) {
-                return this._statusCompleted(status, res);
-            }
+                // match is complete
+                if (res.response.status === 200) {
+                    return this._statusCompleted(status, res);
+                }
 
-            // match is in progress
-            if (res.response.status === 202) {
-                return this._statusPending(status, statusEndpoint, res);
-            }
+                // match is in progress
+                if (res.response.status === 202) {
+                    return this._statusPending(status, statusEndpoint, res);
+                }
 
-            // server needs us to slow down requests; recalculate delay and try again
-            if (res.response.status === 429) {
-                return this._statusTooManyRequests(status, statusEndpoint, res);
-            }
+                // server needs us to slow down requests; recalculate delay and try again
+                if (res.response.status === 429) {
+                    return this._statusTooManyRequests(status, statusEndpoint, res);
+                }
 
-            // Match Error - helper throws that error
-            else {
-                const error = this._statusError(res);
-                throw error;
-            }
-        });
+                // Else, we're seeing an unexpected status code – throw
+                const msg = `Unexpected status response ${res.response.status} ${res.response.statusText}`;
+                this.emit("jobError", {
+                    body: stringifyBody(res.body) || null,
+                    code: res.response.status || null,
+                    message: msg,
+                    responseHeaders: this._formatResponseHeaders(res.response.headers),
+                });
+                throw new Error(msg);
+            })
+            .catch((err: RequestError<object>) => {
+                // If there's a non 200 error in request, we will throw; catch, emit, and continue throwing
+                const msg = `Unexpected status response ${err.status} ${err.statusText}`;
+                this.emit("jobError", {
+                    body: stringifyBody(err.body) || null,
+                    code: err.status || null,
+                    message: msg,
+                    responseHeaders: this._formatResponseHeaders(err.responseHeaders),
+                });
+                throw err;
+            });
     }
 
     /**

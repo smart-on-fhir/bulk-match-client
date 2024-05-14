@@ -400,3 +400,12 @@ export function assert(
         }
     }
 }
+
+/**
+ * Method for turning the either JSON or string content of a response body into a string
+ * @param body
+ * @returns
+ */
+export function stringifyBody(body: string | object | undefined) {
+    return typeof body === "object" ? JSON.stringify(body) : body;
+}

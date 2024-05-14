@@ -35,6 +35,7 @@ const url_1 = require("url");
 const util_1 = require("util");
 const lib_1 = require("../lib");
 const errors_1 = require("../lib/errors");
+const utils_1 = require("../lib/utils");
 const SmartOnFhirClient_1 = __importDefault(require("./SmartOnFhirClient"));
 const debug = (0, util_1.debuglog)("bulk-match-client");
 /**
@@ -307,7 +308,7 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
         if (operationOutcome?.issue[0]?.severity === "fatal") {
             const msg = `Unexpected status response ${res.response.status} ${res.response.statusText}`;
             this.emit("jobError", {
-                body: JSON.stringify(res.body) || null,
+                body: (0, utils_1.stringifyBody)(res.body) || null,
                 code: res.response.status || null,
                 message: msg,
                 responseHeaders: this._formatResponseHeaders(res.response.headers),
@@ -320,23 +321,7 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
         return this._statusPending(status, statusEndpoint, res);
     }
     /**
-     * Produce the error to throw when MatchStatus requests produce an unexpected response status
-     * @param status The MatchStatus
-     * @param res The statusEndpoint response
-     * @returns An error to be thrown
-     */
-    _statusError(res) {
-        const msg = `Unexpected status response ${res.response.status} ${res.response.statusText}`;
-        this.emit("jobError", {
-            body: JSON.stringify(res.body) || null,
-            code: res.response.status || null,
-            message: msg,
-            responseHeaders: this._formatResponseHeaders(res.response.headers),
-        });
-        return new Error(msg);
-    }
-    /**
-     * A indirectly recursive method for making status requests and handling completion, pending and error cases
+     * An indirectly recursive method for making status requests and handling completion, pending and error cases
      * @param status The MatchStatus up to this point
      * @param statusEndpoint The statusEndpoint where we check on the status of the match request
      * @returns A Promise resolving to a MatchManifest (or throws an error)
@@ -346,7 +331,8 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
             headers: {
                 accept: "application/json, application/fhir+ndjson",
             },
-        }, "status request").then(async (res) => {
+        }, "status request")
+            .then(async (res) => {
             const now = Date.now();
             const elapsedTime = now - status.startedAt;
             status.elapsedTime = elapsedTime;
@@ -362,11 +348,26 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
             if (res.response.status === 429) {
                 return this._statusTooManyRequests(status, statusEndpoint, res);
             }
-            // Match Error - helper throws that error
-            else {
-                const error = this._statusError(res);
-                throw error;
-            }
+            // Else, we're seeing an unexpected status code – throw
+            const msg = `Unexpected status response ${res.response.status} ${res.response.statusText}`;
+            this.emit("jobError", {
+                body: (0, utils_1.stringifyBody)(res.body) || null,
+                code: res.response.status || null,
+                message: msg,
+                responseHeaders: this._formatResponseHeaders(res.response.headers),
+            });
+            throw new Error(msg);
+        })
+            .catch((err) => {
+            // If there's a non 200 error in request, we will throw; catch, emit, and continue throwing
+            const msg = `Unexpected status response ${err.status} ${err.statusText}`;
+            this.emit("jobError", {
+                body: (0, utils_1.stringifyBody)(err.body) || null,
+                code: err.status || null,
+                message: msg,
+                responseHeaders: this._formatResponseHeaders(err.responseHeaders),
+            });
+            throw err;
         });
     }
     /**

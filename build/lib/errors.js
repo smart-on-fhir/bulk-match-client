@@ -45,15 +45,17 @@ class RequestError extends Error {
         const url = res.response.url;
         const status = res.response.status;
         const statusText = res.response.statusText;
+        const responseHeaders = res.response.headers;
         const body = res.body;
         super(`${method || "GET"} ${url} FAILED with ` +
             `${status}` +
             `${statusText ? ` and message ${statusText}` : ""}.` +
-            `${body ? " Body: " + JSON.stringify(body) : ""}`);
+            `${body ? " Body: " + (0, utils_1.stringifyBody)(body) : ""}`);
         this.method = method;
         this.url = url;
         this.status = status;
         this.statusText = statusText;
+        this.responseHeaders = responseHeaders;
         this.body = body;
     }
 }

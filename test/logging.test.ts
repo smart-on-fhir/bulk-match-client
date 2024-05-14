@@ -36,6 +36,7 @@ describe("Logging", function () {
 
             // Respond with a 404 indicating server error
             mockServer.mock(
+                // NOTE: Request endpoint is invalid without the "\\"
                 { method: "post", path: "/Patient/\\$bulk-match" },
                 { status: 404, body: "", headers: { "content-location": "x" } },
             );
@@ -143,19 +144,6 @@ describe("Logging", function () {
         });
 
         it("includes request parameters in kickoff log entries", async () => {
-            mockServer.mock("/metadata", {
-                status: 200,
-                headers: { "content-type": "application/json" },
-                body: {
-                    fhirVersion: 100,
-                    software: {
-                        name: "Software Name",
-                        version: "Software Version",
-                        releaseDate: "01-02-03",
-                    },
-                },
-            });
-
             mockServer.mock(
                 { method: "post", path: "/Patient/\\$bulk-match" },
                 { status: 200, headers: { "content-type": "application/json" } },
@@ -174,18 +162,8 @@ describe("Logging", function () {
         });
 
         it("kickoff_complete should include responseHeaders when logResponseHeaders is 'all'", async () => {
-            mockServer.mock("/metadata", {
-                status: 200,
-                headers: { "content-type": "application/json" },
-                body: {
-                    fhirVersion: 100,
-                    software: {
-                        name: "Software Name",
-                        version: "Software Version",
-                        releaseDate: "01-02-03",
-                    },
-                },
-            });
+            mockServer.mock("/metadata", { status: 404, body: {} });
+
             // NOTE: Request endpoint is invalid without the "\\"
             mockServer.mock(
                 { method: "post", path: "/Patient/\\$bulk-match" },
@@ -213,18 +191,8 @@ describe("Logging", function () {
         });
 
         it("kickoff_complete should filter responseHeaders based on logResponseHeaders option", async () => {
-            mockServer.mock("/metadata", {
-                status: 200,
-                headers: { "content-type": "application/json" },
-                body: {
-                    fhirVersion: 100,
-                    software: {
-                        name: "Software Name",
-                        version: "Software Version",
-                        releaseDate: "01-02-03",
-                    },
-                },
-            });
+            mockServer.mock("/metadata", { status: 404, body: {} });
+
             // NOTE: Request endpoint is invalid without the "\\"
             mockServer.mock(
                 { method: "post", path: "/Patient/\\$bulk-match" },
@@ -257,7 +225,7 @@ describe("Logging", function () {
 
     describe("status events", () => {
         it("logs status_progress events in case of 202 status responses", async () => {
-            mockServer.mock("/metadata", { status: 200, body: {} });
+            mockServer.mock("/metadata", { status: 404, body: {} });
 
             mockServer.mock(
                 { method: "post", path: "/Patient/\\$bulk-match" },
@@ -294,10 +262,8 @@ describe("Logging", function () {
             expect(logs[2].eventDetail.xProgress).to.equal("90%");
         });
 
-        it.skip("logs status_error events", async () => {
-            this.timeout(10000);
-
-            mockServer.mock("/metadata", { status: 200, body: {} });
+        it("logs status_error events", async () => {
+            mockServer.mock("/metadata", { status: 404, body: {} });
 
             mockServer.mock(
                 { method: "post", path: "/Patient/\\$bulk-match" },
@@ -327,11 +293,7 @@ describe("Logging", function () {
             });
         });
 
-        it.skip("can filter responseHeaders of status_error events with client's logResponseHeaders option", async () => {
-            this.timeout(10000);
-
-            mockServer.mock("/metadata", { status: 200, body: {} });
-
+        it("can filter responseHeaders of status_error events with client's logResponseHeaders option", async () => {
             mockServer.mock(
                 { method: "post", path: "/Patient/\\$bulk-match" },
                 {
@@ -346,7 +308,7 @@ describe("Logging", function () {
             mockServer.mock("/status", {
                 status: 404,
                 body: "Status endpoint not found",
-                headers: { "x-debugging-header": "someValue" },
+                headers: { "x-debugging-header": "someValue", "x-another-value": "another-value" },
             });
 
             const { log } = await invoke({
