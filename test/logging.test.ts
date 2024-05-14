@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 import { expect } from "@hapi/code";
 import { existsSync, rmSync } from "fs";
 import { Utils, invoke, mockServer } from "./lib";
@@ -391,7 +392,7 @@ describe("Logging", function () {
     });
 
     describe("download events", () => {
-        it.skip("download without errors", async () => {
+        it("download without errors", async () => {
             mockServer.mock("/metadata", { status: 404, body: {} });
             mockServer.mock(
                 { method: "post", path: "/Patient/\\$bulk-match" },
@@ -434,10 +435,17 @@ describe("Logging", function () {
                 },
             });
 
-            mockServer.mock("/downloads/errors", {
+            mockServer.mock("/downloads/patient-2", {
                 handler(req, res) {
                     res.set("content-type", "application/fhir+ndjson");
                     res.end('{"resourceType":"Patient"}\n{"resourceType":"Patient"}');
+                },
+            });
+
+            mockServer.mock("/downloads/errors", {
+                handler(req, res) {
+                    res.set("content-type", "application/fhir+ndjson");
+                    res.end('{"resourceType":"OperationOutcome"}');
                 },
             });
 
@@ -451,76 +459,65 @@ describe("Logging", function () {
 
             // /downloads/file1 ------------------------------------------------
             {
-                const entries = logs.filter(
-                    (e) =>
-                        e.eventId === "download_request" &&
-                        e.eventDetail.fileUrl === mockServer.baseUrl + "/downloads/file1",
+                const entries = Utils.getLogEvents(log, "download_request").filter(
+                    (e) => e.eventDetail.fileUrl === mockServer.baseUrl + "/downloads/patient-1",
                 );
                 expect(
                     entries.length,
-                    'download_request should be logged once for "/downloads/file1"',
+                    'download_request should be logged once for "/downloads/patient-1"',
                 ).to.equal(1);
                 expect(entries[0].eventDetail.fileUrl, "invalid fileUrl").to.equal(
-                    mockServer.baseUrl + "/downloads/file1",
+                    mockServer.baseUrl + "/downloads/patient-1",
                 );
                 expect(entries[0].eventDetail.itemType).to.equal("output");
-                expect(entries[0].eventDetail.resourceType).to.equal("Patient");
+                expect(entries[0].eventDetail.startTime).to.not.be.undefined();
+            }
+            {
+                const entries = Utils.getLogEvents(log, "download_complete").filter(
+                    (e) => e.eventDetail.fileUrl === mockServer.baseUrl + "/downloads/patient-1",
+                );
+
+                expect(
+                    entries.length,
+                    'download_complete should be logged once for "/downloads/patient-1"',
+                ).to.equal(1);
+                expect(entries[0].eventDetail.fileUrl, "invalid fileUrl").to.equal(
+                    mockServer.baseUrl + "/downloads/patient-1",
+                );
             }
 
+            // /downloads/file2 ------------------------------------------------
             {
-                const entries = logs.filter(
-                    (e) =>
-                        e.eventId === "download_complete" &&
-                        e.eventDetail.fileUrl === mockServer.baseUrl + "/downloads/file1",
+                const entries = Utils.getLogEvents(log, "download_request").filter(
+                    (e) => e.eventDetail.fileUrl === mockServer.baseUrl + "/downloads/patient-2",
                 );
                 expect(
                     entries.length,
-                    'download_complete should be logged once for "/downloads/file1"',
+                    'download_request should be logged once for "/downloads/patient-2"',
                 ).to.equal(1);
                 expect(entries[0].eventDetail.fileUrl, "invalid fileUrl").to.equal(
-                    mockServer.baseUrl + "/downloads/file1",
-                );
-            }
-
-            // /downloads/docRef -----------------------------------------------
-            {
-                const entries = logs.filter(
-                    (e) =>
-                        e.eventId === "download_request" &&
-                        e.eventDetail.fileUrl === mockServer.baseUrl + "/downloads/docRef",
-                );
-                expect(
-                    entries.length,
-                    'download_request should be logged once for "/downloads/docRef"',
-                ).to.equal(1);
-                expect(entries[0].eventDetail.fileUrl, "invalid fileUrl").to.equal(
-                    mockServer.baseUrl + "/downloads/docRef",
+                    mockServer.baseUrl + "/downloads/patient-2",
                 );
                 expect(entries[0].eventDetail.itemType).to.equal("output");
-                expect(entries[0].eventDetail.resourceType).to.equal("DocumentReference");
+                expect(entries[0].eventDetail.startTime).to.not.be.undefined();
             }
-
             {
-                const entries = logs.filter(
-                    (e) =>
-                        e.eventId === "download_complete" &&
-                        e.eventDetail.fileUrl === mockServer.baseUrl + "/downloads/docRef",
+                const entries = Utils.getLogEvents(log, "download_complete").filter(
+                    (e) => e.eventDetail.fileUrl === mockServer.baseUrl + "/downloads/patient-2",
                 );
                 expect(
                     entries.length,
-                    'download_complete should be logged once for "/downloads/docRef"',
+                    'download_complete should be logged once for "/downloads/patient-2"',
                 ).to.equal(1);
                 expect(entries[0].eventDetail.fileUrl, "invalid fileUrl").to.equal(
-                    mockServer.baseUrl + "/downloads/docRef",
+                    mockServer.baseUrl + "/downloads/patient-2",
                 );
             }
 
             // /downloads/errors -----------------------------------------------
             {
-                const entries = logs.filter(
-                    (e) =>
-                        e.eventId === "download_request" &&
-                        e.eventDetail.fileUrl === mockServer.baseUrl + "/downloads/errors",
+                const entries = Utils.getLogEvents(log, "download_request").filter(
+                    (e) => e.eventDetail.fileUrl === mockServer.baseUrl + "/downloads/errors",
                 );
                 expect(
                     entries.length,
@@ -530,14 +527,10 @@ describe("Logging", function () {
                     mockServer.baseUrl + "/downloads/errors",
                 );
                 expect(entries[0].eventDetail.itemType).to.equal("error");
-                expect(entries[0].eventDetail.resourceType).to.equal("OperationOutcome");
             }
-
             {
-                const entries = logs.filter(
-                    (e) =>
-                        e.eventId === "download_complete" &&
-                        e.eventDetail.fileUrl === mockServer.baseUrl + "/downloads/errors",
+                const entries = Utils.getLogEvents(log, "download_complete").filter(
+                    (e) => e.eventDetail.fileUrl === mockServer.baseUrl + "/downloads/errors",
                 );
                 expect(
                     entries.length,
@@ -548,17 +541,20 @@ describe("Logging", function () {
                 );
             }
 
-            // job_complete -------------------------------------------------
+            // all_downloads_complete -------------------------------------------------
             {
-                const entries = logs.filter((e) => e.eventId === "job_complete");
-                expect(entries.length, "job_complete should be logged once").to.equal(1);
-                expect(entries[0].eventDetail.files, "must report 4 files").to.equal(4);
-                expect(entries[0].eventDetail.resources, "must report 5 resources").to.equal(5);
+                const entries = Utils.getLogEvents(log, "all_downloads_complete");
+                expect(entries.length, "all_downloads_complete should be logged once").to.equal(1);
+                expect(entries[0].eventDetail.files, "must report 3 files").to.equal(3);
+                expect(
+                    entries[0].eventDetail.duration,
+                    "should have a duration",
+                ).to.not.be.undefined();
             }
         });
 
-        it.skip("logs download_error events on server errors", async () => {
-            mockServer.mock("/metadata", { status: 200, body: {} });
+        it("logs download_error events on server errors", async () => {
+            mockServer.mock("/metadata", { status: 404, body: {} });
 
             mockServer.mock(
                 { method: "post", path: "/Patient/\\$bulk-match" },
@@ -572,6 +568,7 @@ describe("Logging", function () {
 
             mockServer.mock("/status", {
                 status: 200,
+                headers: { "content-type": "application/json" },
                 body: {
                     transactionTime: new Date().toISOString(),
                     output: [
@@ -592,18 +589,15 @@ describe("Logging", function () {
             });
 
             const { log } = await invoke();
-            const logs = log
-                .split("\n")
-                .filter(Boolean)
-                .map((line) => JSON.parse(line));
-            const entry = logs.find((l) => l.eventId === "download_error");
+            const entry = Utils.getLogEvent(log, "download_error");
             expect(entry).to.exist();
             expect(entry.eventDetail.fileUrl).to.equal(
                 mockServer.baseUrl + "/downloads/file1.json",
             );
-            expect(entry.eventDetail.body).to.equal(null);
+            expect(entry.eventDetail.body).to.be.undefined();
+            expect(entry.eventDetail.duration).to.not.be.undefined();
             expect(entry.eventDetail.message).to.equal(
-                `Downloading the file from ${mockServer.baseUrl}/downloads/file1.json returned HTTP status code 404.`,
+                `GET ${mockServer.baseUrl}/downloads/file1.json FAILED with 404 and message Not Found.`,
             );
             expect(entry.eventDetail.responseHeaders).to.be.object();
             expect(entry.eventDetail.responseHeaders).to.include({
@@ -611,7 +605,7 @@ describe("Logging", function () {
             });
         });
 
-        it.skip("retries downloading even if initial download fails", async () => {
+        it("retries downloading even if initial download fails", async () => {
             mockServer.mock("/metadata", { status: 200, body: {} });
 
             mockServer.mock(
@@ -626,6 +620,7 @@ describe("Logging", function () {
 
             mockServer.mock("/status", {
                 status: 200,
+                headers: { "content-type": "application/json" },
                 body: {
                     transactionTime: new Date().toISOString(),
                     output: [
@@ -659,24 +654,15 @@ describe("Logging", function () {
             });
 
             const { log } = await invoke();
-            const logs = log
-                .split("\n")
-                .filter(Boolean)
-                .map((line) => JSON.parse(line));
-            const entries = logs.filter(
-                (e) =>
-                    e.eventId === "download_request" &&
-                    e.eventDetail.fileUrl === mockServer.baseUrl + "/downloads/file1.json",
-            );
+            const entries = Utils.getLogEvents(log, "download_request");
             expect(
                 entries.length,
                 'download_request should be logged twice for "/downloads/file1.json"',
-            ).to.equal(1);
+            ).to.equal(2);
             expect(entries[0].eventDetail.fileUrl).to.equal(
                 mockServer.baseUrl + "/downloads/file1.json",
             );
             expect(entries[0].eventDetail.itemType).to.equal("output");
-            expect(entries[0].eventDetail.resourceType).to.equal("Patient");
             // Evidence of Failure
             expect(numTries).to.equal(2);
         });

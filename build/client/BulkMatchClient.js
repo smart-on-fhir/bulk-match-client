@@ -57,9 +57,9 @@ const debug = (0, util_1.debuglog)("bulk-match-client");
  * ```
  */
 class BulkMatchClient extends SmartOnFhirClient_1.default {
-    _getRetryAfter(response) {
+    _getRetryAfter(headers) {
         const now = Date.now();
-        const retryAfter = String(response.headers.get("retry-after") || "").trim();
+        const retryAfter = String(headers.get("retry-after") || "").trim();
         let retryAfterMSec = this?.options?.retryAfterMSec;
         if (retryAfter) {
             if (retryAfter.match(/\d+/)) {
@@ -279,7 +279,7 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
         const progress = String(res.response.headers.get("x-progress") || "").trim();
         const progressPct = parseInt(progress, 10);
         // Get retryAfter info
-        const [retryAfter, poolDelay] = this._getRetryAfter(res.response);
+        const [retryAfter, poolDelay] = this._getRetryAfter(res.response.headers);
         Object.assign(status, {
             percentComplete: isNaN(progressPct) ? -1 : progressPct,
             nextCheckAfter: poolDelay,
@@ -421,7 +421,7 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
                 });
             }
             // Otherwise, wait and try kickoff again
-            const [, poolDelay] = this._getRetryAfter(res.response);
+            const [, poolDelay] = this._getRetryAfter(res.response.headers);
             return lib_1.Utils.wait(poolDelay, this.abortController.signal).then(() => this.kickOff());
         }
         // Then parse location information
@@ -452,6 +452,9 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
      * @returns
      */
     async _downloadFile({ file, fileName, subFolder = "", matchType = "output", }) {
+        return this._downloadFileRecursive({ file, fileName, subFolder, matchType, retries: 3 });
+    }
+    async _downloadFileRecursive({ file, fileName, subFolder = "", matchType = "output", retries = 1, }) {
         const downloadStartTime = Date.now();
         this.emit("downloadStart", {
             fileUrl: file.url,
@@ -464,7 +467,7 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
             // Download is finished – emit event and save file off
             this.emit("downloadComplete", {
                 fileUrl: file.url,
-                duration: Date.now() - downloadStartTime,
+                duration: (0, utils_1.formatDuration)(Date.now() - downloadStartTime),
             });
             const body = res.body;
             await this._saveFile(body, fileName, subFolder);
@@ -473,9 +476,23 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
             this.emit("downloadError", {
                 fileUrl: file.url,
                 message: String(e.message || "File download failed"),
-                duration: Date.now() - downloadStartTime,
+                duration: (0, utils_1.formatDuration)(Date.now() - downloadStartTime),
+                responseHeaders: this._formatResponseHeaders(e.responseHeaders),
             });
-            throw e;
+            // Only retry a fixed number of times
+            if (retries > 0) {
+                const [, poolDelay] = this._getRetryAfter(e.responseHeaders);
+                return lib_1.Utils.wait(poolDelay, this.abortController.signal).then(() => this._downloadFileRecursive({
+                    file,
+                    fileName,
+                    subFolder,
+                    matchType,
+                    retries: retries - 1,
+                }));
+            }
+            else {
+                throw e;
+            }
         });
     }
     /**
@@ -593,7 +610,7 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
                         return outcome;
                     }
                 });
-                this.emit("allDownloadsComplete", downloads, Date.now() - startTime);
+                this.emit("allDownloadsComplete", downloads, (0, utils_1.formatDuration)(Date.now() - startTime));
             });
         });
     }
@@ -708,7 +725,6 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
                 files: 0,
                 duration,
             };
-            // TODO: Add download object back in?
             downloads.forEach(() => {
                 eventDetail.files += 1;
             });

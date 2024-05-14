@@ -10,7 +10,7 @@ import { Logger } from "winston";
 import { BulkMatchClient as Types } from "../..";
 import { Errors, Utils } from "../lib";
 import { InvalidNdjsonError, RequestError, UnknownResourceStringError } from "../lib/errors";
-import { stringifyBody } from "../lib/utils";
+import { formatDuration, stringifyBody } from "../lib/utils";
 import { BulkMatchClientEvents } from "./BulkMatchClientEvents";
 import SmartOnFhirClient from "./SmartOnFhirClient";
 
@@ -44,9 +44,9 @@ interface BulkMatchClient {
  * ```
  */
 class BulkMatchClient extends SmartOnFhirClient {
-    private _getRetryAfter(response: Response): [string, number] {
+    private _getRetryAfter(headers: Headers): [string, number] {
         const now = Date.now();
-        const retryAfter = String(response.headers.get("retry-after") || "").trim();
+        const retryAfter = String(headers.get("retry-after") || "").trim();
         let retryAfterMSec = this?.options?.retryAfterMSec;
         if (retryAfter) {
             if (retryAfter.match(/\d+/)) {
@@ -297,7 +297,7 @@ class BulkMatchClient extends SmartOnFhirClient {
         const progressPct = parseInt(progress, 10);
 
         // Get retryAfter info
-        const [retryAfter, poolDelay] = this._getRetryAfter(res.response);
+        const [retryAfter, poolDelay] = this._getRetryAfter(res.response.headers);
         Object.assign(status, {
             percentComplete: isNaN(progressPct) ? -1 : progressPct,
             nextCheckAfter: poolDelay,
@@ -476,7 +476,7 @@ class BulkMatchClient extends SmartOnFhirClient {
                 });
             }
             // Otherwise, wait and try kickoff again
-            const [, poolDelay] = this._getRetryAfter(res.response);
+            const [, poolDelay] = this._getRetryAfter(res.response.headers);
             return Utils.wait(poolDelay, this.abortController.signal).then(() => this.kickOff());
         }
 
@@ -521,6 +521,21 @@ class BulkMatchClient extends SmartOnFhirClient {
         subFolder?: string;
         matchType?: string;
     }): Promise<void> {
+        return this._downloadFileRecursive({ file, fileName, subFolder, matchType, retries: 3 });
+    }
+    private async _downloadFileRecursive({
+        file,
+        fileName,
+        subFolder = "",
+        matchType = "output",
+        retries = 1,
+    }: {
+        file: Types.MatchManifestFile;
+        fileName: string;
+        subFolder?: string;
+        matchType?: string;
+        retries: number;
+    }): Promise<void> {
         const downloadStartTime = Date.now();
         this.emit("downloadStart", {
             fileUrl: file.url,
@@ -534,7 +549,7 @@ class BulkMatchClient extends SmartOnFhirClient {
                 // Download is finished – emit event and save file off
                 this.emit("downloadComplete", {
                     fileUrl: file.url,
-                    duration: Date.now() - downloadStartTime,
+                    duration: formatDuration(Date.now() - downloadStartTime),
                 });
                 const body = res.body;
                 await this._saveFile(body, fileName, subFolder);
@@ -543,9 +558,24 @@ class BulkMatchClient extends SmartOnFhirClient {
                 this.emit("downloadError", {
                     fileUrl: file.url,
                     message: String(e.message || "File download failed"),
-                    duration: Date.now() - downloadStartTime,
+                    duration: formatDuration(Date.now() - downloadStartTime),
+                    responseHeaders: this._formatResponseHeaders(e.responseHeaders),
                 });
-                throw e;
+                // Only retry a fixed number of times
+                if (retries > 0) {
+                    const [, poolDelay] = this._getRetryAfter(e.responseHeaders);
+                    return Utils.wait(poolDelay, this.abortController.signal).then(() =>
+                        this._downloadFileRecursive({
+                            file,
+                            fileName,
+                            subFolder,
+                            matchType,
+                            retries: retries - 1,
+                        }),
+                    );
+                } else {
+                    throw e;
+                }
             });
     }
 
@@ -690,7 +720,11 @@ class BulkMatchClient extends SmartOnFhirClient {
                         return outcome;
                     }
                 });
-                this.emit("allDownloadsComplete", downloads, Date.now() - startTime);
+                this.emit(
+                    "allDownloadsComplete",
+                    downloads,
+                    formatDuration(Date.now() - startTime),
+                );
             });
         });
     }
@@ -822,7 +856,6 @@ class BulkMatchClient extends SmartOnFhirClient {
                 duration,
             };
 
-            // TODO: Add download object back in?
             downloads.forEach(() => {
                 eventDetail.files += 1;
             });

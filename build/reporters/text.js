@@ -40,16 +40,18 @@ class TextReporter extends reporter_1.default {
         console.error("There was an error in the matching process: ", JSON.stringify(details));
     }
     onDownloadStart({ fileUrl, itemType, startTime, }) {
-        console.log(`Begin ${itemType}-file download for ${fileUrl} at ${lib_1.Utils.formatDuration(startTime)}...`);
+        console.log(`Begin ${itemType}-file download for ${fileUrl} at ${lib_1.Utils.formatDatetimeTimestamp(startTime)}...`);
     }
     onDownloadComplete({ fileUrl, duration }) {
-        console.log(`${fileUrl} download completed in ${lib_1.Utils.formatDuration(duration)}`);
+        console.log(`${fileUrl} download completed in ${duration}`);
     }
-    onDownloadError({ fileUrl, message, duration, }) {
-        console.log(`${fileUrl} download FAILED in ${lib_1.Utils.formatDuration(duration)} Message: ${message}`);
+    onDownloadError({ fileUrl, message, duration, responseHeaders, }) {
+        console.log(`${fileUrl} download FAILED in ${duration} Message: ${message}`);
+        if (responseHeaders)
+            debug("Headers: ", JSON.stringify(responseHeaders));
     }
     onAllDownloadsComplete(_, duration) {
-        console.log(`All downloads completed in ${lib_1.Utils.formatDuration(duration)}`);
+        console.log(`All downloads completed in ${duration}`);
     }
     onError(error) {
         console.error(error);

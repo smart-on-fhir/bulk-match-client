@@ -39,16 +39,18 @@ describe("download", function () {
             destination: join(__dirname, "./tmp/downloads"),
         } as Types.NormalizedOptions);
 
-        // @ts-expect-error
-        await client._downloadFile({
-            file: {
-                type: "Patient",
-                url: mockServer.baseUrl + "/download",
-                count: 2,
-            },
-            fileName: "1.Patient.ndjson",
-            subFolder: "",
-        });
+        await expect(
+            // @ts-expect-error
+            client._downloadFile({
+                file: {
+                    type: "Patient",
+                    url: mockServer.baseUrl + "/download",
+                    count: 2,
+                },
+                fileName: "1.Patient.ndjson",
+                subFolder: "",
+            }),
+        ).to.not.reject();
     });
 
     it("Integration: Manifest will be parsed and all output files will be downloaded", async () => {

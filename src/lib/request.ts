@@ -31,10 +31,16 @@ async function augmentedFetch<T>(
                     body = JSON.parse(body);
                 }
 
+                // Create eventual response now so we can use it in errror objects
+                const res = {
+                    response,
+                    body: body as T,
+                };
+
                 // Throw errors for all non-200's, except 429
                 if (!response.ok && response.status !== 429) {
                     throw new RequestError<T>({
-                        res: { response, body: body as T },
+                        res,
                         method: options.method || "",
                     });
                 }
@@ -98,10 +104,7 @@ async function augmentedFetch<T>(
                     }
                 }
 
-                return {
-                    response,
-                    body: body as T,
-                };
+                return res;
             })
             .catch((e: Error) => {
                 debug("FAILED fetch: ", e.message);

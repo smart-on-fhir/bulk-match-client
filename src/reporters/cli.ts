@@ -68,24 +68,26 @@ export default class CLIReporter extends Reporter {
             `Begin ${itemType === "error" ? "error-file " : " "}download for ${fileUrl} at ${Utils.formatDatetimeTimestamp(startTime)}...`,
         ).commit();
     }
-    onDownloadComplete({ fileUrl, duration }: { fileUrl: string; duration: number }) {
-        Utils.print(`${fileUrl} download complete in ${Utils.formatDuration(duration)}`).commit();
+    onDownloadComplete({ fileUrl, duration }: { fileUrl: string; duration: string }) {
+        Utils.print(`${fileUrl} download complete in ${duration}`).commit();
     }
     onDownloadError({
         fileUrl,
         message,
         duration,
+        responseHeaders,
     }: {
         fileUrl: string;
         message: string;
-        duration: number;
+        duration: string;
+        responseHeaders?: object;
     }) {
-        Utils.print(`${fileUrl} download failed in ${Utils.formatDuration(duration)}`).commit();
-        Utils.print("Message: " + message).commit();
+        Utils.print(`${fileUrl} download failed in ${duration}. Message: ${message}`).commit();
+        if (responseHeaders) debug("responseHeaders: ", JSON.stringify(responseHeaders));
     }
 
-    onAllDownloadsComplete(_: unknown, duration: number) {
-        Utils.print(`All downloads completed in ${Utils.formatDuration(duration)}`).commit();
+    onAllDownloadsComplete(_: unknown, duration: string) {
+        Utils.print(`All downloads completed in ${duration}`).commit();
     }
 
     onError(error: Error) {

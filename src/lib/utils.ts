@@ -108,10 +108,10 @@ export async function getWellKnownSmartConfig(baseUrl: string): Promise<JsonObje
  */
 export async function getCapabilityStatement(baseUrl: string): Promise<fhir4.CapabilityStatement> {
     const url = new URL("metadata", baseUrl.replace(/\/*$/, "/"));
-    return request(url)
+    return request<fhir4.CapabilityStatement>(url)
         .then(async (res) => {
             debug("Fetched CapabilityStatement from %s", url);
-            return res.body as fhir4.CapabilityStatement;
+            return res.body;
         })
         .catch((e) => {
             debug(
@@ -319,6 +319,7 @@ export function formatDuration(ms: number) {
         { n: 1000 * 60 * 60, label: "hour" },
         { n: 1000 * 60, label: "minute" },
         { n: 1000, label: "second" },
+        { n: 1, label: "millisecond" },
     ];
 
     meta.reduce((prev, cur) => {

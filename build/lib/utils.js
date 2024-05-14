@@ -299,6 +299,7 @@ function formatDuration(ms) {
         { n: 1000 * 60 * 60, label: "hour" },
         { n: 1000 * 60, label: "minute" },
         { n: 1000, label: "second" },
+        { n: 1, label: "millisecond" },
     ];
     meta.reduce((prev, cur) => {
         const chunk = Math.floor(prev / cur.n); // console.log(chunk)

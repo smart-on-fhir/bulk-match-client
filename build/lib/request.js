@@ -27,10 +27,15 @@ async function augmentedFetch(input, options = {}) {
         if (body.length && contentType.match(/\bjson\b/i)) {
             body = JSON.parse(body);
         }
+        // Create eventual response now so we can use it in errror objects
+        const res = {
+            response,
+            body: body,
+        };
         // Throw errors for all non-200's, except 429
         if (!response.ok && response.status !== 429) {
             throw new errors_1.RequestError({
-                res: { response, body: body },
+                res,
                 method: options.method || "",
             });
         }
@@ -82,10 +87,7 @@ async function augmentedFetch(input, options = {}) {
                 }
             }
         }
-        return {
-            response,
-            body: body,
-        };
+        return res;
     })
         .catch((e) => {
         debug("FAILED fetch: ", e.message);
