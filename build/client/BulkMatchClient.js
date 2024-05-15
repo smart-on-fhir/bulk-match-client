@@ -321,20 +321,24 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
         return this._statusPending(status, statusEndpoint, res);
     }
     /**
-     * Produce the error to throw when MatchStatus requests produce an unexpected response status
-     * @param status The MatchStatus
-     * @param res The statusEndpoint response
+     * Log any necessary information when MatchStatus requests produce a RequestError
+     * @param err The error – either a RequestError itself or an error from making the status calls
      * @returns never; always throws an error
      */
     _statusError(err) {
-        const msg = `Unexpected status response ${err.status} ${err.statusText}`;
-        this.emit("jobError", {
-            body: (0, utils_1.stringifyBody)(err.body) || null,
-            code: err.status || null,
-            message: msg,
-            responseHeaders: this._formatResponseHeaders(err.responseHeaders),
-        });
-        throw new Error(msg);
+        // Request errors should be logged in the context of the bulk workflow
+        if (err instanceof errors_1.RequestError) {
+            const msg = `Unexpected status response ${err.status} ${err.statusText}`;
+            this.emit("jobError", {
+                body: (0, utils_1.stringifyBody)(err.body) || null,
+                code: err.status || null,
+                message: msg,
+                responseHeaders: this._formatResponseHeaders(err.responseHeaders),
+            });
+            throw new Error(msg);
+        }
+        // Else, just keep passing the error up
+        throw err;
     }
     /**
      * An indirectly recursive method for making status requests and handling completion, pending and error cases
@@ -364,7 +368,7 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
             if (res.response.status === 429) {
                 return this._statusTooManyRequests(status, statusEndpoint, res);
             }
-            // Else, we're seeing an unexpected status code – throw
+            // Else, we're seeing an unexpected status code – throw an error ourselves
             const msg = `Unexpected status response ${res.response.status} ${res.response.statusText}`;
             this.emit("jobError", {
                 body: (0, utils_1.stringifyBody)(res.body) || null,
