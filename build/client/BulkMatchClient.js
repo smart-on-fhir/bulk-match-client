@@ -321,13 +321,29 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
         return this._statusPending(status, statusEndpoint, res);
     }
     /**
+     * Produce the error to throw when MatchStatus requests produce an unexpected response status
+     * @param status The MatchStatus
+     * @param res The statusEndpoint response
+     * @returns never; always throws an error
+     */
+    _statusError(err) {
+        const msg = `Unexpected status response ${err.status} ${err.statusText}`;
+        this.emit("jobError", {
+            body: (0, utils_1.stringifyBody)(err.body) || null,
+            code: err.status || null,
+            message: msg,
+            responseHeaders: this._formatResponseHeaders(err.responseHeaders),
+        });
+        throw new Error(msg);
+    }
+    /**
      * An indirectly recursive method for making status requests and handling completion, pending and error cases
      * @param status The MatchStatus up to this point
      * @param statusEndpoint The statusEndpoint where we check on the status of the match request
      * @returns A Promise resolving to a MatchManifest (or throws an error)
      */
     async _checkStatus(status, statusEndpoint) {
-        return this._request(statusEndpoint, {
+        return (this._request(statusEndpoint, {
             headers: {
                 accept: "application/json, application/fhir+ndjson",
             },
@@ -358,17 +374,8 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
             });
             throw new Error(msg);
         })
-            .catch((err) => {
-            // If there's a non 200 error in request, we will throw; catch, emit, and continue throwing
-            const msg = `Unexpected status response ${err.status} ${err.statusText}`;
-            this.emit("jobError", {
-                body: (0, utils_1.stringifyBody)(err.body) || null,
-                code: err.status || null,
-                message: msg,
-                responseHeaders: this._formatResponseHeaders(err.responseHeaders),
-            });
-            throw err;
-        });
+            // This always throws, but allows for some middleware-style logging
+            .catch(this._statusError));
     }
     /**
      * Makes the kick-off request for Patient Match and resolves with the status endpoint URL

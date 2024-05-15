@@ -350,6 +350,23 @@ class BulkMatchClient extends SmartOnFhirClient {
         // Otherwise, handle the response as usual, which always respects the server-responded retryAfter
         return this._statusPending(status, statusEndpoint, res);
     }
+    /**
+     * Produce the error to throw when MatchStatus requests produce an unexpected response status
+     * @param status The MatchStatus
+     * @param res The statusEndpoint response
+     * @returns never; always throws an error
+     */
+    private _statusError(err: RequestError<object>): never {
+        const msg = `Unexpected status response ${err.status} ${err.statusText}`;
+        this.emit("jobError", {
+            body: stringifyBody(err.body) || null,
+            code: err.status || null,
+            message: msg,
+            responseHeaders: this._formatResponseHeaders(err.responseHeaders),
+        });
+
+        throw new Error(msg);
+    }
 
     /**
      * An indirectly recursive method for making status requests and handling completion, pending and error cases
@@ -361,56 +378,49 @@ class BulkMatchClient extends SmartOnFhirClient {
         status: Types.MatchStatus,
         statusEndpoint: string,
     ): Promise<Types.MatchManifest> {
-        return this._request<object>(
-            statusEndpoint,
-            {
-                headers: {
-                    accept: "application/json, application/fhir+ndjson",
+        return (
+            this._request<object>(
+                statusEndpoint,
+                {
+                    headers: {
+                        accept: "application/json, application/fhir+ndjson",
+                    },
                 },
-            },
-            "status request",
-        )
-            .then(async (res: Types.CustomBodyResponse<object>) => {
-                const now = Date.now();
-                const elapsedTime = now - status.startedAt;
-                status.elapsedTime = elapsedTime;
+                "status request",
+            )
+                .then(async (res: Types.CustomBodyResponse<object>) => {
+                    const now = Date.now();
+                    const elapsedTime = now - status.startedAt;
+                    status.elapsedTime = elapsedTime;
 
-                // match is complete
-                if (res.response.status === 200) {
-                    return this._statusCompleted(status, res);
-                }
+                    // match is complete
+                    if (res.response.status === 200) {
+                        return this._statusCompleted(status, res);
+                    }
 
-                // match is in progress
-                if (res.response.status === 202) {
-                    return this._statusPending(status, statusEndpoint, res);
-                }
+                    // match is in progress
+                    if (res.response.status === 202) {
+                        return this._statusPending(status, statusEndpoint, res);
+                    }
 
-                // server needs us to slow down requests; recalculate delay and try again
-                if (res.response.status === 429) {
-                    return this._statusTooManyRequests(status, statusEndpoint, res);
-                }
+                    // server needs us to slow down requests; recalculate delay and try again
+                    if (res.response.status === 429) {
+                        return this._statusTooManyRequests(status, statusEndpoint, res);
+                    }
 
-                // Else, we're seeing an unexpected status code – throw
-                const msg = `Unexpected status response ${res.response.status} ${res.response.statusText}`;
-                this.emit("jobError", {
-                    body: stringifyBody(res.body) || null,
-                    code: res.response.status || null,
-                    message: msg,
-                    responseHeaders: this._formatResponseHeaders(res.response.headers),
-                });
-                throw new Error(msg);
-            })
-            .catch((err: RequestError<object>) => {
-                // If there's a non 200 error in request, we will throw; catch, emit, and continue throwing
-                const msg = `Unexpected status response ${err.status} ${err.statusText}`;
-                this.emit("jobError", {
-                    body: stringifyBody(err.body) || null,
-                    code: err.status || null,
-                    message: msg,
-                    responseHeaders: this._formatResponseHeaders(err.responseHeaders),
-                });
-                throw err;
-            });
+                    // Else, we're seeing an unexpected status code – throw
+                    const msg = `Unexpected status response ${res.response.status} ${res.response.statusText}`;
+                    this.emit("jobError", {
+                        body: stringifyBody(res.body) || null,
+                        code: res.response.status || null,
+                        message: msg,
+                        responseHeaders: this._formatResponseHeaders(res.response.headers),
+                    });
+                    throw new Error(msg);
+                })
+                // This always throws, but allows for some middleware-style logging
+                .catch(this._statusError)
+        );
     }
 
     /**
