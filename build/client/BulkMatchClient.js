@@ -335,7 +335,6 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
                 message: msg,
                 responseHeaders: this._formatResponseHeaders(err.responseHeaders),
             });
-            throw new Error(msg);
         }
         // Else, just keep passing the error up
         throw err;
@@ -379,7 +378,7 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
             throw new Error(msg);
         })
             // This always throws, but allows for some middleware-style logging
-            .catch(this._statusError));
+            .catch((err) => this._statusError(err)));
     }
     /**
      * Makes the kick-off request for Patient Match and resolves with the status endpoint URL
