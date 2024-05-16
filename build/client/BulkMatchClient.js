@@ -35,6 +35,7 @@ const url_1 = require("url");
 const util_1 = require("util");
 const lib_1 = require("../lib");
 const errors_1 = require("../lib/errors");
+const utils_1 = require("../lib/utils");
 const SmartOnFhirClient_1 = __importDefault(require("./SmartOnFhirClient"));
 const debug = (0, util_1.debuglog)("bulk-match-client");
 /**
@@ -56,9 +57,9 @@ const debug = (0, util_1.debuglog)("bulk-match-client");
  * ```
  */
 class BulkMatchClient extends SmartOnFhirClient_1.default {
-    _getRetryAfter(response) {
+    _getRetryAfter(headers) {
         const now = Date.now();
-        const retryAfter = String(response.headers.get("retry-after") || "").trim();
+        const retryAfter = String(headers.get("retry-after") || "").trim();
         let retryAfterMSec = this?.options?.retryAfterMSec;
         if (retryAfter) {
             if (retryAfter.match(/\d+/)) {
@@ -278,7 +279,7 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
         const progress = String(res.response.headers.get("x-progress") || "").trim();
         const progressPct = parseInt(progress, 10);
         // Get retryAfter info
-        const [retryAfter, poolDelay] = this._getRetryAfter(res.response);
+        const [retryAfter, poolDelay] = this._getRetryAfter(res.response.headers);
         Object.assign(status, {
             percentComplete: isNaN(progressPct) ? -1 : progressPct,
             nextCheckAfter: poolDelay,
@@ -307,7 +308,7 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
         if (operationOutcome?.issue[0]?.severity === "fatal") {
             const msg = `Unexpected status response ${res.response.status} ${res.response.statusText}`;
             this.emit("jobError", {
-                body: JSON.stringify(res.body) || null,
+                body: (0, utils_1.stringifyBody)(res.body) || null,
                 code: res.response.status || null,
                 message: msg,
                 responseHeaders: this._formatResponseHeaders(res.response.headers),
@@ -320,33 +321,37 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
         return this._statusPending(status, statusEndpoint, res);
     }
     /**
-     * Produce the error to throw when MatchStatus requests produce an unexpected response status
-     * @param status The MatchStatus
-     * @param res The statusEndpoint response
-     * @returns An error to be thrown
+     * Log any necessary information when MatchStatus requests produce a RequestError
+     * @param err The error – either a RequestError itself or an error from making the status calls
+     * @returns never; always throws an error
      */
-    _statusError(res) {
-        const msg = `Unexpected status response ${res.response.status} ${res.response.statusText}`;
-        this.emit("jobError", {
-            body: JSON.stringify(res.body) || null,
-            code: res.response.status || null,
-            message: msg,
-            responseHeaders: this._formatResponseHeaders(res.response.headers),
-        });
-        return new Error(msg);
+    _statusError(err) {
+        // Request errors should be logged in the context of the bulk workflow
+        if (err instanceof errors_1.RequestError) {
+            const msg = `Unexpected status response ${err.status} ${err.statusText}`;
+            this.emit("jobError", {
+                body: (0, utils_1.stringifyBody)(err.body) || null,
+                code: err.status || null,
+                message: msg,
+                responseHeaders: this._formatResponseHeaders(err.responseHeaders),
+            });
+        }
+        // Else, just keep passing the error up
+        throw err;
     }
     /**
-     * A indirectly recursive method for making status requests and handling completion, pending and error cases
+     * An indirectly recursive method for making status requests and handling completion, pending and error cases
      * @param status The MatchStatus up to this point
      * @param statusEndpoint The statusEndpoint where we check on the status of the match request
      * @returns A Promise resolving to a MatchManifest (or throws an error)
      */
     async _checkStatus(status, statusEndpoint) {
-        return this._request(statusEndpoint, {
+        return (this._request(statusEndpoint, {
             headers: {
                 accept: "application/json, application/fhir+ndjson",
             },
-        }, "status request").then(async (res) => {
+        }, "status request")
+            .then(async (res) => {
             const now = Date.now();
             const elapsedTime = now - status.startedAt;
             status.elapsedTime = elapsedTime;
@@ -362,12 +367,18 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
             if (res.response.status === 429) {
                 return this._statusTooManyRequests(status, statusEndpoint, res);
             }
-            // Match Error - helper throws that error
-            else {
-                const error = this._statusError(res);
-                throw error;
-            }
-        });
+            // Else, we're seeing an unexpected status code – throw an error ourselves
+            const msg = `Unexpected status response ${res.response.status} ${res.response.statusText}`;
+            this.emit("jobError", {
+                body: (0, utils_1.stringifyBody)(res.body) || null,
+                code: res.response.status || null,
+                message: msg,
+                responseHeaders: this._formatResponseHeaders(res.response.headers),
+            });
+            throw new Error(msg);
+        })
+            // This always throws, but allows for some middleware-style logging
+            .catch((err) => this._statusError(err)));
     }
     /**
      * Makes the kick-off request for Patient Match and resolves with the status endpoint URL
@@ -420,12 +431,18 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
                 });
             }
             // Otherwise, wait and try kickoff again
-            const [, poolDelay] = this._getRetryAfter(res.response);
+            const [, poolDelay] = this._getRetryAfter(res.response.headers);
             return lib_1.Utils.wait(poolDelay, this.abortController.signal).then(() => this.kickOff());
         }
         // Then parse location information
         const location = res.response.headers.get("content-location");
         if (!location) {
+            this.emit("kickOffError", {
+                requestOptions: requestOptions,
+                capabilityStatement: capabilityStatement,
+                responseHeaders: this._formatResponseHeaders(res.response.headers),
+                error: new Error("No content location was specified in the response"),
+            });
             throw new Error("The kick-off patient match response did not include content-location header");
         }
         this.emit("kickOffEnd", {
@@ -441,14 +458,17 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
      * @param file The file to download
      * @param fileName The name that should be used to save the file
      * @param subFolder What subfolder should the file be saved to; defaults to ""
-     * @param exportType What kind of ManifestFile is this; defaults to "output" but could also be "error"
+     * @param matchType What kind of ManifestFile is this; defaults to "output" but could also be "error"
      * @returns
      */
-    async _downloadFile({ file, fileName, subFolder = "", exportType = "output", }) {
+    async _downloadFile({ file, fileName, subFolder = "", matchType = "output", }) {
+        return this._downloadFileRecursive({ file, fileName, subFolder, matchType, retries: 3 });
+    }
+    async _downloadFileRecursive({ file, fileName, subFolder = "", matchType = "output", retries = 1, }) {
         const downloadStartTime = Date.now();
         this.emit("downloadStart", {
             fileUrl: file.url,
-            itemType: exportType,
+            itemType: matchType,
             startTime: downloadStartTime,
         });
         // Start the download for the ndjson file – ndjson means the response is a string
@@ -457,7 +477,7 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
             // Download is finished – emit event and save file off
             this.emit("downloadComplete", {
                 fileUrl: file.url,
-                duration: Date.now() - downloadStartTime,
+                duration: (0, utils_1.formatDuration)(Date.now() - downloadStartTime),
             });
             const body = res.body;
             await this._saveFile(body, fileName, subFolder);
@@ -466,9 +486,23 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
             this.emit("downloadError", {
                 fileUrl: file.url,
                 message: String(e.message || "File download failed"),
-                duration: Date.now() - downloadStartTime,
+                duration: (0, utils_1.formatDuration)(Date.now() - downloadStartTime),
+                responseHeaders: this._formatResponseHeaders(e.responseHeaders),
             });
-            throw e;
+            // Only retry a fixed number of times
+            if (retries > 0) {
+                const [, poolDelay] = this._getRetryAfter(e.responseHeaders);
+                return lib_1.Utils.wait(poolDelay, this.abortController.signal).then(() => this._downloadFileRecursive({
+                    file,
+                    fileName,
+                    subFolder,
+                    matchType,
+                    retries: retries - 1,
+                }));
+            }
+            else {
+                throw e;
+            }
         });
     }
     /**
@@ -512,7 +546,7 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
         }
     }
     /**
-     * Waits for the patient match to be completed and resolves with the export
+     * Waits for the patient match to be completed and resolves with the match
      * manifest when done. Emits one "jobStart", multiple "jobProgress"
      * and one "jobComplete" events.
      *
@@ -551,25 +585,25 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
                 const downloadMetadata = {
                     url: f.url,
                     name: fileName,
-                    exportType: "output",
+                    matchType: "output",
                     error: null,
                     ...initialState,
                 };
                 await this._downloadFile({
                     file: f,
                     fileName,
-                    subFolder: downloadMetadata.exportType === "output" ? "" : downloadMetadata.exportType,
-                    exportType: downloadMetadata.exportType,
+                    subFolder: downloadMetadata.matchType === "output" ? "" : downloadMetadata.matchType,
+                    matchType: downloadMetadata.matchType,
                 });
                 // After saving files, optionally add destination to manifest
                 if (this.options.addDestinationToManifest) {
-                    f.destination = (0, path_1.join)(this.options.destination, downloadMetadata.exportType === "output" ? "" : downloadMetadata.exportType, fileName);
+                    f.destination = (0, path_1.join)(this.options.destination, downloadMetadata.matchType === "output" ? "" : downloadMetadata.matchType, fileName);
                 }
                 return downloadMetadata;
             };
             const downloadJobs = [
-                ...(manifest.output || []).map((f) => createDownloadJob(f, { exportType: "output" })),
-                ...(manifest.error || []).map((f) => createDownloadJob(f, { exportType: "error" })),
+                ...(manifest.output || []).map((f) => createDownloadJob(f, { matchType: "output" })),
+                ...(manifest.error || []).map((f) => createDownloadJob(f, { matchType: "error" })),
             ];
             Promise.allSettled(downloadJobs).then((downloadOutcomes) => {
                 debug("All downloads settled, processing them and saving manifest");
@@ -586,7 +620,7 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
                         return outcome;
                     }
                 });
-                this.emit("allDownloadsComplete", downloads, Date.now() - startTime);
+                this.emit("allDownloadsComplete", downloads, (0, utils_1.formatDuration)(Date.now() - startTime));
             });
         });
     }
@@ -640,7 +674,7 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
             logger.log("info", {
                 eventId: "kickoff_complete",
                 eventDetail: {
-                    exportUrl: res.response.url,
+                    matchUrl: res.response.url,
                     errorCode: res.response.status >= 400 ? res.response.status : null,
                     errorBody: res.response.status >= 400 ? res.body : null,
                     softwareName: capabilityStatement.software?.name || null,
@@ -701,7 +735,6 @@ class BulkMatchClient extends SmartOnFhirClient_1.default {
                 files: 0,
                 duration,
             };
-            // TODO: Add download object back in?
             downloads.forEach(() => {
                 eventDetail.files += 1;
             });

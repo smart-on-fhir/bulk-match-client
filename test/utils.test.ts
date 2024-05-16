@@ -4,7 +4,7 @@ import { BulkMatchClient as Types } from "../";
 import { filterResponseHeaders, getAccessTokenExpiration } from "../src/lib/utils";
 
 describe("Utils Library", function () {
-    describe("filterExportHeaders", () => {
+    describe("filterResponseHeaders", () => {
         it("returns undefined if headers is undefined or null", () => {
             // @ts-expect-error
             expect(filterResponseHeaders(undefined)).to.equal(undefined);

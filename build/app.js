@@ -34,6 +34,7 @@ const path_1 = require("path");
 const prompt_sync_1 = __importDefault(require("prompt-sync"));
 const util_1 = __importDefault(require("util"));
 const BulkMatchClient_1 = __importDefault(require("./client/BulkMatchClient"));
+const default_config_1 = __importDefault(require("./default-config"));
 const lib_1 = require("./lib");
 const logger_1 = require("./logger");
 const reporters_1 = require("./reporters");
@@ -55,12 +56,11 @@ APP.option("-c, --count [number]", "The maximum number of records to return per 
 APP.option("-F, --_outputFormat [string]", `The output format you expect.`);
 APP.option("-d, --destination [destination]", "Download destination. See config/template-config.js for examples");
 APP.option("--reporter [cli|text]", 'Reporter to use to render the output. "cli" renders fancy progress bars and tables. "text" is better for log files. Defaults to "cli".');
-APP.option("--status [url]", "Status endpoint of already started export.");
+APP.option("--status [url]", "Status endpoint of already started match operation.");
 APP.action(async (args) => {
     const { config, ...params } = args;
     // Will be a js file after transpilation
-    const defaultsPath = (0, path_1.resolve)(__dirname, "./default-config.js");
-    const base = await Promise.resolve(`${defaultsPath}`).then(s => __importStar(require(s)));
+    const base = default_config_1.default;
     // Options will be a combination of Normalized Options and CLI Options, building up from the default config
     const options = {
         ...base,
@@ -114,10 +114,10 @@ APP.action(async (args) => {
         client.addLogger(logger);
     }
     process.on("SIGINT", () => {
-        console.log("\nExport canceled.".magenta.bold);
+        console.log("Match canceled.".magenta.bold);
         reporter.detach();
         client.abort();
-        // Should this cancel the export on the server?
+        // Should this cancel the match on the server?
         process.exit(0);
     });
     process.on("uncaughtException", (e) => {
@@ -143,7 +143,7 @@ APP.action(async (args) => {
     // - Create some sort of UI that makes it easier to define which responses in the
     //   match should move onto a final step where we do something like the steps above
     if (options.reporter === "cli") {
-        const answer = (0, prompt_sync_1.default)()("Do you want to signal the server that this export can be removed? [Y/n]".cyan);
+        const answer = (0, prompt_sync_1.default)()("Do you want to signal the server that this match can be removed? [Y/n]".cyan);
         if (!answer || answer.toLowerCase() === "y") {
             client
                 .cancelMatch(statusEndpoint)

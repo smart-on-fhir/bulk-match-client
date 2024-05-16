@@ -8,6 +8,7 @@ require("colors");
 const prompt_sync_1 = __importDefault(require("prompt-sync"));
 const util_1 = __importDefault(require("util"));
 const package_json_1 = __importDefault(require("../../package.json"));
+const errors_1 = require("./errors");
 const utils_1 = require("./utils");
 const debug = util_1.default.debuglog("bulk-match-request");
 async function augmentedFetch(input, options = {}) {
@@ -26,13 +27,17 @@ async function augmentedFetch(input, options = {}) {
         if (body.length && contentType.match(/\bjson\b/i)) {
             body = JSON.parse(body);
         }
+        // Create eventual response now so we can use it in errror objects
+        const res = {
+            response,
+            body: body,
+        };
         // Throw errors for all non-200's, except 429
         if (!response.ok && response.status !== 429) {
-            const message = `${options.method} ${input} FAILED with ` +
-                `${response.status}` +
-                `${response.statusText ? ` and message ${response.statusText}` : ""}.` +
-                `${body ? " Body: " + JSON.stringify(body) : ""}`;
-            throw new Error(message);
+            throw new errors_1.RequestError({
+                res,
+                method: options.method || "",
+            });
         }
         debug("\n=======================================================" +
             "\n--------------------- Request -------------------------" +
@@ -82,10 +87,7 @@ async function augmentedFetch(input, options = {}) {
                 }
             }
         }
-        return {
-            response,
-            body: body,
-        };
+        return res;
     })
         .catch((e) => {
         debug("FAILED fetch: ", e.message);

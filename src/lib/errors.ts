@@ -1,5 +1,5 @@
 import { BulkMatchClient as Types } from "../..";
-import { displayCodeableConcept } from "./utils";
+import { displayCodeableConcept, stringifyBody } from "./utils";
 
 /**
  * For throwing operationOutcome-related information as an error
@@ -86,5 +86,42 @@ export class InvalidNdjsonError extends Error {
         this.errorMessage = errorMessage;
 
         Error.captureStackTrace(this, this.constructor);
+    }
+}
+
+/**
+ * For managing non-200 responses at the request helper layer
+ */
+type RequestErrorArgs<T> = {
+    res: Types.CustomBodyResponse<T>;
+    method: string;
+};
+
+export class RequestError<T> extends Error {
+    readonly method: string;
+    readonly url: string;
+    readonly status: number;
+    readonly statusText: string;
+    readonly responseHeaders: Headers;
+    readonly body?: T;
+
+    constructor({ res, method }: RequestErrorArgs<T>) {
+        const url = res.response.url;
+        const status = res.response.status;
+        const statusText = res.response.statusText;
+        const responseHeaders = res.response.headers;
+        const body = res.body as T;
+        super(
+            `${method || "GET"} ${url} FAILED with ` +
+                `${status}` +
+                `${statusText ? ` and message ${statusText}` : ""}.` +
+                `${body ? " Body: " + stringifyBody(body) : ""}`,
+        );
+        this.method = method;
+        this.url = url;
+        this.status = status;
+        this.statusText = statusText;
+        this.responseHeaders = responseHeaders;
+        this.body = body;
     }
 }

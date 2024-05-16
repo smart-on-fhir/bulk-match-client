@@ -63,7 +63,7 @@ export interface BulkMatchClientEvents extends SmartOnFhirClientEvents {
     ) => void;
 
     /**
-     * Emitted when the export is completed
+     * Emitted when the match is completed
      * @event
      */
     jobComplete: (this: BulkMatchClient, manifest: Types.MatchManifest) => void;
@@ -90,7 +90,8 @@ export interface BulkMatchClientEvents extends SmartOnFhirClientEvents {
         details: {
             fileUrl: string;
             message?: string;
-            duration: number;
+            duration: string;
+            responseHeaders?: object;
         },
     ) => void;
 
@@ -102,7 +103,7 @@ export interface BulkMatchClientEvents extends SmartOnFhirClientEvents {
         this: BulkMatchClient,
         detail: {
             fileUrl: string;
-            duration: number;
+            duration: string;
         },
     ) => void;
 
@@ -113,7 +114,7 @@ export interface BulkMatchClientEvents extends SmartOnFhirClientEvents {
     allDownloadsComplete: (
         this: BulkMatchClient,
         downloads: (Types.FileDownload | PromiseRejectedResult)[],
-        duration: number,
+        duration: string,
     ) => void;
 
     // Extending types for SmartOnFhir Client Events

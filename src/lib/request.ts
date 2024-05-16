@@ -4,6 +4,7 @@ import prompt from "prompt-sync";
 import util from "util";
 import { BulkMatchClient as Types } from "../..";
 import pkg from "../../package.json";
+import { RequestError } from "./errors";
 import { print } from "./utils";
 
 const debug = util.debuglog("bulk-match-request");
@@ -30,14 +31,18 @@ async function augmentedFetch<T>(
                     body = JSON.parse(body);
                 }
 
+                // Create eventual response now so we can use it in errror objects
+                const res = {
+                    response,
+                    body: body as T,
+                };
+
                 // Throw errors for all non-200's, except 429
                 if (!response.ok && response.status !== 429) {
-                    const message =
-                        `${options.method} ${input} FAILED with ` +
-                        `${response.status}` +
-                        `${response.statusText ? ` and message ${response.statusText}` : ""}.` +
-                        `${body ? " Body: " + JSON.stringify(body) : ""}`;
-                    throw new Error(message);
+                    throw new RequestError<T>({
+                        res,
+                        method: options.method || "",
+                    });
                 }
                 debug(
                     "\n=======================================================" +
@@ -99,10 +104,7 @@ async function augmentedFetch<T>(
                     }
                 }
 
-                return {
-                    response,
-                    body: body as T,
-                };
+                return res;
             })
             .catch((e: Error) => {
                 debug("FAILED fetch: ", e.message);

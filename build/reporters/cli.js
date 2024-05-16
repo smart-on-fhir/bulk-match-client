@@ -44,14 +44,15 @@ class CLIReporter extends reporter_1.default {
         lib_1.Utils.print(`Begin ${itemType === "error" ? "error-file " : " "}download for ${fileUrl} at ${lib_1.Utils.formatDatetimeTimestamp(startTime)}...`).commit();
     }
     onDownloadComplete({ fileUrl, duration }) {
-        lib_1.Utils.print(`${fileUrl} download complete in ${lib_1.Utils.formatDuration(duration)}`).commit();
+        lib_1.Utils.print(`${fileUrl} download complete in ${duration}`).commit();
     }
-    onDownloadError({ fileUrl, message, duration, }) {
-        lib_1.Utils.print(`${fileUrl} download failed in ${lib_1.Utils.formatDuration(duration)}`).commit();
-        lib_1.Utils.print("Message: " + message).commit();
+    onDownloadError({ fileUrl, message, duration, responseHeaders, }) {
+        lib_1.Utils.print(`${fileUrl} download failed in ${duration}. Message: ${message}`).commit();
+        if (responseHeaders)
+            debug("responseHeaders: ", JSON.stringify(responseHeaders));
     }
     onAllDownloadsComplete(_, duration) {
-        lib_1.Utils.print(`All downloads completed in ${lib_1.Utils.formatDuration(duration)}`).commit();
+        lib_1.Utils.print(`All downloads completed in ${duration}`).commit();
     }
     onError(error) {
         console.error(error);

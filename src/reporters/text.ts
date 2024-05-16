@@ -24,7 +24,7 @@ export default class TextReporter extends Reporter {
 
     onJobStart(status: Types.MatchStatus) {
         console.log(status.message);
-        console.log(`Status endpoint: ${status.statusEndpoint}`);
+        debug(`Status endpoint: ${status.statusEndpoint}`);
     }
 
     onJobProgress(status: Types.MatchStatus) {
@@ -48,8 +48,7 @@ export default class TextReporter extends Reporter {
         message?: string;
         responseHeaders?: object;
     }) {
-        console.error("There was an error in the matching process");
-        console.error(JSON.stringify(details));
+        console.error("There was an error in the matching process: ", JSON.stringify(details));
     }
 
     onDownloadStart({
@@ -62,29 +61,31 @@ export default class TextReporter extends Reporter {
         startTime: number;
     }) {
         console.log(
-            `Begin ${itemType}-file download for ${fileUrl} at ${Utils.formatDuration(startTime)}...`,
+            `Begin ${itemType}-file download for ${fileUrl} at ${Utils.formatDatetimeTimestamp(startTime)}...`,
         );
     }
 
-    onDownloadComplete({ fileUrl, duration }: { fileUrl: string; duration: number }) {
-        console.log(`${fileUrl} download completed in ${Utils.formatDuration(duration)}`);
+    onDownloadComplete({ fileUrl, duration }: { fileUrl: string; duration: string }) {
+        console.log(`${fileUrl} download completed in ${duration}`);
     }
 
     onDownloadError({
         fileUrl,
         message,
         duration,
+        responseHeaders,
     }: {
         fileUrl: string;
         message: string;
-        duration: number;
+        duration: string;
+        responseHeaders?: object;
     }) {
-        console.log(`${fileUrl} download FAILED in ${Utils.formatDuration(duration)}`);
-        console.log("Message: " + message);
+        console.log(`${fileUrl} download FAILED in ${duration} Message: ${message}`);
+        if (responseHeaders) debug("Headers: ", JSON.stringify(responseHeaders));
     }
 
-    onAllDownloadsComplete(_: unknown, duration: number) {
-        console.log(`All downloads completed in ${Utils.formatDuration(duration)}`);
+    onAllDownloadsComplete(_: unknown, duration: string) {
+        console.log(`All downloads completed in ${duration}`);
     }
 
     onError(error: Error) {
