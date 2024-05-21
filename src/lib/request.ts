@@ -5,7 +5,7 @@ import util from "util";
 import { BulkMatchClient as Types } from "../..";
 import pkg from "../../package.json";
 import { RequestError } from "./errors";
-import { print } from "./utils";
+import { isJsonResponse, print } from "./utils";
 
 const debug = util.debuglog("bulk-match-request");
 
@@ -73,11 +73,7 @@ async function augmentedFetch<T>(
                 // reporter is "text", then there may be no way to render a
                 // question prompt so transient errors should be handled
                 // downstream by the postprocessing components
-                if (
-                    options?.context?.interactive &&
-                    body &&
-                    response.headers.get("Content-Type") === "application/json"
-                ) {
+                if (options?.context?.interactive && body && isJsonResponse(response)) {
                     // @ts-ignore OperationOutcome errors
                     // Parse the body from above into JSON
                     const oo = JSON.parse(body) as fhir4.OperationOutcome;
