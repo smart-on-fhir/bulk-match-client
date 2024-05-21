@@ -31,7 +31,7 @@ async function augmentedFetch<T>(
                     body = JSON.parse(body);
                 }
 
-                // Create eventual response now so we can use it in errror objects
+                // Create eventual response now so we can use it in error objects
                 const res = {
                     response,
                     body: body as T,
