@@ -410,3 +410,12 @@ export function assert(
 export function stringifyBody(body: string | object | undefined) {
     return typeof body === "object" ? JSON.stringify(body) : body;
 }
+
+/**
+ * Given a response object, detects if it can be parsed as json. Accepts FHIR
+ * json types and ignores the charset portion of the content-type header
+ */
+export function isJsonResponse(response: Response): boolean {
+    const type = response.headers.get("Content-Type") || "";
+    return !!type.match(/^application\/(json|fhir\+json|json\+fhir)\b/);
+}
