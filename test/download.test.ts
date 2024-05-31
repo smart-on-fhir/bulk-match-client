@@ -8,13 +8,19 @@ import baseSettings from "../src/default-config";
 import { Utils, invoke, mockServer } from "./lib";
 
 describe("download", function () {
+    // Set longer timeout
     this.timeout(60000);
 
+    // Start/stop/refresh mock server
+    before(async () => await mockServer.start());
+    after(async () => await mockServer.stop());
+    afterEach(() => mockServer.clear());
+
+    // Clean up tmp folder as needed
     after(async () => {
         Utils.emptyFolder(__dirname + "/tmp/downloads/error");
         Utils.emptyFolder(__dirname + "/tmp/downloads");
     });
-
     afterEach(async () => {
         if (existsSync(__dirname + "/tmp/log.ndjson")) {
             rmSync(__dirname + "/tmp/log.ndjson");
