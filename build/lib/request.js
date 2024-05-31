@@ -27,7 +27,7 @@ async function augmentedFetch(input, options = {}) {
         if (body.length && contentType.match(/\bjson\b/i)) {
             body = JSON.parse(body);
         }
-        // Create eventual response now so we can use it in errror objects
+        // Create eventual response now so we can use it in error objects
         const res = {
             response,
             body: body,
@@ -59,9 +59,7 @@ async function augmentedFetch(input, options = {}) {
         // reporter is "text", then there may be no way to render a
         // question prompt so transient errors should be handled
         // downstream by the postprocessing components
-        if (options?.context?.interactive &&
-            body &&
-            response.headers.get("Content-Type") === "application/json") {
+        if (options?.context?.interactive && body && (0, utils_1.isJsonResponse)(response)) {
             // @ts-ignore OperationOutcome errors
             // Parse the body from above into JSON
             const oo = JSON.parse(body);
