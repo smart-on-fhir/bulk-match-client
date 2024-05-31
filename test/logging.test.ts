@@ -52,6 +52,7 @@ describe("Logging", function () {
                 options: { logResponseHeaders: [] },
             });
             console.log(log);
+            console.log(mockServer);
             const entryStart = Utils.getLogEvent(log, "kickoff_start");
             expect(entryStart, "kickoff log entry not found").to.exist();
             expect(entryStart.eventDetail).to.equal(
