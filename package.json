@@ -20,9 +20,6 @@
     ],
     "license": "ISC",
     "main": "build/app.js",
-    "bin": {
-        "bulk-match-client": "./build/app.js"
-    },
     "scripts": {
         "build": "tsc",
         "build:watch": "tsc --watch",
