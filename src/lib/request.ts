@@ -26,8 +26,7 @@ async function augmentedFetch<T>(
             // After requests – handle logging and retrying
             .then(async (response) => {
                 let body = await response.text();
-                const contentType = response.headers.get("content-type") || "";
-                if (body.length && contentType.match(/\bjson\b/i)) {
+                if (body.length && isJsonResponse(response)) {
                     body = JSON.parse(body);
                 }
 
@@ -75,8 +74,8 @@ async function augmentedFetch<T>(
                 // downstream by the postprocessing components
                 if (options?.context?.interactive && body && isJsonResponse(response)) {
                     // @ts-ignore OperationOutcome errors
-                    // Parse the body from above into JSON
-                    const oo = JSON.parse(body) as fhir4.OperationOutcome;
+                    // Treat the body as an operationOutcome to check for errors
+                    const oo = body as fhir4.OperationOutcome;
                     if (oo.resourceType === "OperationOutcome") {
                         if (oo.issue.every((i) => i.code === "transient")) {
                             const msg = oo.issue

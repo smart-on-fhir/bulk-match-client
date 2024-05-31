@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import { expect } from "@hapi/code";
 import { BulkMatchClient as Types } from "../";
-import { filterResponseHeaders, getAccessTokenExpiration } from "../src/lib/utils";
+import { filterResponseHeaders, getAccessTokenExpiration, isJsonResponse } from "../src/lib/utils";
 
 describe("Utils Library", function () {
     describe("filterResponseHeaders", () => {
@@ -125,6 +125,32 @@ describe("Utils Library", function () {
             expect(getAccessTokenExpiration(tokenResponse))
                 .to.be.greaterThan(now + 300 - delta)
                 .to.be.lessThan(now + 300 + delta);
+        });
+    });
+    describe("isJsonResponse", () => {
+        it("Should recognize if content-type is `application/json`", () => {
+            const response = new Response();
+            const type = "application/json";
+            response.headers.set("content-type", type);
+            expect(isJsonResponse(response)).to.be.true;
+        });
+        it("Should recognize if content-type is `application/nd+json`", () => {
+            const response = new Response();
+            const type = "application/ndjson";
+            response.headers.set("content-type", type);
+            expect(isJsonResponse(response)).to.be.true;
+        });
+        it("Should NOT recognize if content-type is undefined", () => {
+            const response = new Response();
+            // const type = "application/pdf";
+            // response.headers.set("content-type", type);
+            expect(isJsonResponse(response)).to.be.true;
+        });
+        it("Should NOT recognize if content-type is unrelated to JSON", () => {
+            const response = new Response();
+            const type = "application/pdf";
+            response.headers.set("content-type", type);
+            expect(isJsonResponse(response)).to.be.true;
         });
     });
 });
