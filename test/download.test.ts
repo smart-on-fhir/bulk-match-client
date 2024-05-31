@@ -13,15 +13,15 @@ describe("download", function () {
 
     // Start/stop/refresh mock server
     before(async () => await mockServer.start());
-    after(async () => await mockServer.stop());
-    afterEach(() => mockServer.clear());
-
-    // Clean up tmp folder as needed
     after(async () => {
+        await mockServer.stop();
+        // Clean up tmp folder as needed
         Utils.emptyFolder(__dirname + "/tmp/downloads/error");
         Utils.emptyFolder(__dirname + "/tmp/downloads");
     });
     afterEach(async () => {
+        mockServer.clear();
+        // Clean up tmp folder as needed
         if (existsSync(__dirname + "/tmp/log.ndjson")) {
             rmSync(__dirname + "/tmp/log.ndjson");
         }
