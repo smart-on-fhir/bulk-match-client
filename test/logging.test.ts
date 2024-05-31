@@ -51,6 +51,7 @@ describe("Logging", function () {
             const { log } = await invoke({
                 options: { logResponseHeaders: [] },
             });
+            console.log(log);
             const entryStart = Utils.getLogEvent(log, "kickoff_start");
             expect(entryStart, "kickoff log entry not found").to.exist();
             expect(entryStart.eventDetail).to.equal(
