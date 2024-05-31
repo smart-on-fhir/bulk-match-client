@@ -7,7 +7,7 @@ import { mockServer } from "./lib";
 
 describe("status", function () {
     // Set longer timeout
-    this.timeout(60000);
+    this.timeout(10000);
 
     // Start/stop/refresh mock server
     before(async () => await mockServer.start());
