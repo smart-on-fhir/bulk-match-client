@@ -1,9 +1,11 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import { expect } from "@hapi/code";
 import { existsSync, rmSync } from "fs";
-import { Utils, invoke, mockServer } from "./lib";
+import { Utils, invoke } from "./lib";
+import MockServer from "./lib/MockServer";
 
 describe("Logging", function () {
+    const mockServer = new MockServer("MockServer", true);
     // Set longer timeout
     this.timeout(10000);
 
@@ -49,6 +51,7 @@ describe("Logging", function () {
             );
 
             const { log } = await invoke({
+                mockServer,
                 options: { logResponseHeaders: [] },
             });
             console.log(log);
@@ -101,6 +104,7 @@ describe("Logging", function () {
             );
 
             const { log } = await invoke({
+                mockServer,
                 options: { logResponseHeaders: [] },
             });
             const entryStart = Utils.getLogEvent(log, "kickoff_start");
@@ -141,6 +145,7 @@ describe("Logging", function () {
             );
 
             const { log } = await invoke({
+                mockServer,
                 options: { logResponseHeaders: [] },
             });
             const entryStart = Utils.getLogEvent(log, "kickoff_start");
@@ -159,6 +164,7 @@ describe("Logging", function () {
             );
 
             const { log } = await invoke({
+                mockServer,
                 args: ["--count", "3"],
             });
 
@@ -187,6 +193,7 @@ describe("Logging", function () {
             );
 
             const { log } = await invoke({
+                mockServer,
                 options: { logResponseHeaders: "all" },
             });
             // Should be able to find debugging header in log entries
@@ -217,6 +224,7 @@ describe("Logging", function () {
             );
 
             const { log } = await invoke({
+                mockServer,
                 options: {
                     logResponseHeaders: ["x-debugging-header", "content-location"],
                 },
@@ -262,7 +270,7 @@ describe("Logging", function () {
                 },
             });
 
-            const { log } = await invoke();
+            const { log } = await invoke({ mockServer });
             const logs = Utils.getLogEvents(log, "status_progress");
 
             expect(logs.length, "must have 3 status_progress log entries").to.equal(3);
@@ -291,7 +299,7 @@ describe("Logging", function () {
                 headers: { "x-debugging-header": "someValue" },
             });
 
-            const { log } = await invoke();
+            const { log } = await invoke({ mockServer });
             const entry = Utils.getLogEvent(log, "status_error");
             expect(entry).to.exist();
             expect(entry.eventDetail.code).to.equal(404);
@@ -321,6 +329,7 @@ describe("Logging", function () {
             });
 
             const { log } = await invoke({
+                mockServer,
                 options: { logResponseHeaders: ["x-debugging-header"] },
             });
             const entry = Utils.getLogEvent(log, "status_error");
@@ -357,7 +366,7 @@ describe("Logging", function () {
                 },
             });
 
-            const { log } = await invoke();
+            const { log } = await invoke({ mockServer });
             const entry = Utils.getLogEvent(log, "status_complete");
             expect(entry).to.exist();
             expect(entry.eventDetail.transactionTime).to.exist();
@@ -387,7 +396,7 @@ describe("Logging", function () {
                 headers: { "content-type": "application/json" },
             });
 
-            const { log } = await invoke();
+            const { log } = await invoke({ mockServer });
             const entry = Utils.getLogEvent(log, "status_error");
             expect(entry).to.exist();
             expect(entry.eventDetail.code).to.equal(200);
@@ -457,7 +466,7 @@ describe("Logging", function () {
                 },
             });
 
-            const { log } = await invoke();
+            const { log } = await invoke({ mockServer });
 
             const start = Utils.getLogEvent(log, "kickoff_start");
             expect(start).to.exist();
@@ -596,7 +605,7 @@ describe("Logging", function () {
                 headers: { "x-debugging-header": "someValue" },
             });
 
-            const { log } = await invoke();
+            const { log } = await invoke({ mockServer });
             const entry = Utils.getLogEvent(log, "download_error");
             expect(entry).to.exist();
             expect(entry.eventDetail.fileUrl).to.equal(
@@ -661,7 +670,7 @@ describe("Logging", function () {
                 },
             });
 
-            const { log } = await invoke();
+            const { log } = await invoke({ mockServer });
             const entries = Utils.getLogEvents(log, "download_request");
             expect(
                 entries.length,

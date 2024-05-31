@@ -3,9 +3,10 @@ import { BulkMatchClient as Types } from "..";
 import { BulkMatchClient } from "../src/client";
 import baseSettings from "../src/default-config";
 import { RequestError } from "../src/lib/errors";
-import { mockServer } from "./lib";
-
+import MockServer from "./lib/MockServer";
 describe("status", function () {
+    const mockServer = new MockServer("MockServer", true);
+
     // Set longer timeout
     this.timeout(10000);
 
@@ -18,7 +19,7 @@ describe("status", function () {
         it("returns the manifest", async () => {
             mockServer.mock("/status", {
                 status: 200,
-                headers: { "content-type": "application/json" },
+                headers: { "Content-Type": "application/json" },
                 body: { output: [{}] },
             });
             const client = new BulkMatchClient({

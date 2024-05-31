@@ -2,9 +2,10 @@ import { expect } from "@hapi/code";
 import { BulkMatchClient as Types } from "..";
 import { BulkMatchClient } from "../src/client";
 import baseSettings from "../src/default-config";
-import { mockServer } from "./lib";
+import MockServer from "./lib/MockServer";
 
 describe("kick-off", function () {
+    const mockServer = new MockServer("MockServer", true);
     // Set longer timeout
     this.timeout(10000);
 

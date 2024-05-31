@@ -5,9 +5,11 @@ import { join } from "path";
 import { BulkMatchClient as Types } from "..";
 import { BulkMatchClient } from "../src/client";
 import baseSettings from "../src/default-config";
-import { Utils, invoke, mockServer } from "./lib";
+import { Utils, invoke } from "./lib";
+import MockServer from "./lib/MockServer";
 
 describe("download", function () {
+    const mockServer = new MockServer("MockServer", true);
     // Set longer timeout
     this.timeout(10000);
 
@@ -105,6 +107,7 @@ describe("download", function () {
         mockServer.mock("/output/file_1.ndjson", mockResponse);
 
         await invoke({
+            mockServer,
             options: {
                 fhirUrl: mockServer.baseUrl,
                 destination: join(__dirname, "./tmp/downloads"),
