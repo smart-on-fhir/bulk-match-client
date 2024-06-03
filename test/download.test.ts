@@ -5,17 +5,25 @@ import { join } from "path";
 import { BulkMatchClient as Types } from "..";
 import { BulkMatchClient } from "../src/client";
 import baseSettings from "../src/default-config";
-import { Utils, invoke, mockServer } from "./lib";
+import { Utils, invoke } from "./lib";
+import MockServer from "./lib/MockServer";
 
 describe("download", function () {
-    this.timeout(60000);
+    const mockServer = new MockServer("MockServer", true);
+    // Set longer timeout
+    this.timeout(10000);
 
+    // Start/stop/refresh mock server
+    before(async () => await mockServer.start());
     after(async () => {
+        await mockServer.stop();
+        // Clean up tmp folder as needed
         Utils.emptyFolder(__dirname + "/tmp/downloads/error");
         Utils.emptyFolder(__dirname + "/tmp/downloads");
     });
-
     afterEach(async () => {
+        mockServer.clear();
+        // Clean up tmp folder as needed
         if (existsSync(__dirname + "/tmp/log.ndjson")) {
             rmSync(__dirname + "/tmp/log.ndjson");
         }
@@ -99,6 +107,7 @@ describe("download", function () {
         mockServer.mock("/output/file_1.ndjson", mockResponse);
 
         await invoke({
+            mockServer,
             options: {
                 fhirUrl: mockServer.baseUrl,
                 destination: join(__dirname, "./tmp/downloads"),

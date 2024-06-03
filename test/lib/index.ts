@@ -3,26 +3,19 @@ import { readFileSync, writeFileSync } from "fs";
 import { join } from "path";
 import baseSettings from "../../config/template-config.js";
 import { BulkMatchClient as types } from "../../index";
-import MockServer from "./MockServer";
+import MockServer from "./MockServer.js";
 export * as Utils from "./utils";
-
-// Setup server for use by tests
-export const mockServer = new MockServer("Mock Server", true);
-before(async () => {
-    await mockServer.start();
-});
-after(async () => {
-    await mockServer.stop();
-});
-afterEach(async () => {
-    mockServer.clear();
-});
 
 /**
  * Invokes the client and replies with a promise that will resolve when the
  * download is complete
  */
 interface InvokeArguments {
+    /**
+     * The server to use in executing out bulk match invocation
+     */
+    mockServer: MockServer;
+
     /**
      * Any custom options to pass
      */
@@ -44,11 +37,12 @@ interface InvokeArguments {
     stdio?: StdioOptions;
 }
 export async function invoke({
+    mockServer,
     options = {},
     args = [],
     timeout = 30000,
     stdio = "pipe",
-}: InvokeArguments = {}): Promise<{
+}: InvokeArguments): Promise<{
     config: types.NormalizedOptions;
     log: string;
     exitCode: number | null;

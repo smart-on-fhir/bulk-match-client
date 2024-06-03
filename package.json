@@ -20,9 +20,6 @@
     ],
     "license": "ISC",
     "main": "build/app.js",
-    "bin": {
-        "bulk-match-client": "./build/app.js"
-    },
     "scripts": {
         "build": "tsc",
         "build:watch": "tsc --watch",
@@ -30,7 +27,7 @@
         "lint-fix": "npx eslint --fix",
         "prettier": "npx prettier . --write",
         "prettier-fix": "npx prettier . --write",
-        "test": "nyc --reporter=lcov ts-mocha -p ./test/tsconfig.json ./test/*.test.ts",
+        "test": "NODE_ENV=test nyc --reporter=lcov ts-mocha -p ./test/tsconfig.json ./test/*.test.ts",
         "test:watch": "npm test -- -w --watch-files='**/*.ts'",
         "prepare": "husky"
     },

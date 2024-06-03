@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.stringifyBody = exports.assert = exports.print = exports.formatDatetimeTimestamp = exports.formatDuration = exports.generateProgress = exports.humanFileSize = exports.wait = exports.parseBoolean = exports.fhirInstant = exports.displayCodeableConcept = exports.detectTokenUrl = exports.getTokenEndpointFromCapabilityStatement = exports.getTokenEndpointFromWellKnownSmartConfig = exports.getCapabilityStatement = exports.getWellKnownSmartConfig = exports.getAccessTokenExpiration = exports.filterResponseHeaders = void 0;
+exports.isJsonResponse = exports.stringifyBody = exports.assert = exports.print = exports.formatDatetimeTimestamp = exports.formatDuration = exports.generateProgress = exports.humanFileSize = exports.wait = exports.parseBoolean = exports.fhirInstant = exports.displayCodeableConcept = exports.detectTokenUrl = exports.getTokenEndpointFromCapabilityStatement = exports.getTokenEndpointFromWellKnownSmartConfig = exports.getCapabilityStatement = exports.getWellKnownSmartConfig = exports.getAccessTokenExpiration = exports.filterResponseHeaders = void 0;
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 require("colors");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
@@ -379,3 +379,12 @@ function stringifyBody(body) {
     return typeof body === "object" ? JSON.stringify(body) : body;
 }
 exports.stringifyBody = stringifyBody;
+/**
+ * Given a response object, detects if it can be parsed as json. Accepts FHIR
+ * json types and ignores the charset portion of the content-type header
+ */
+function isJsonResponse(response) {
+    const type = response.headers.get("Content-Type") || "";
+    return !!type.match(/^application\/(json|fhir\+json|json\+fhir)\b/);
+}
+exports.isJsonResponse = isJsonResponse;
