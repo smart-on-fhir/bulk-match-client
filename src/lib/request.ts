@@ -103,9 +103,6 @@ async function augmentedFetch<T>(
             })
             .catch((e: Error) => {
                 debug("FAILED fetch: ", e.message);
-                if (process.env.NODE_ENV !== "test") {
-                    console.error(e);
-                }
                 throw e;
             })
     );

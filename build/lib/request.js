@@ -23,8 +23,7 @@ async function augmentedFetch(input, options = {}) {
         // After requests – handle logging and retrying
         .then(async (response) => {
         let body = await response.text();
-        const contentType = response.headers.get("content-type") || "";
-        if (body.length && contentType.match(/\bjson\b/i)) {
+        if (body.length && (0, utils_1.isJsonResponse)(response)) {
             body = JSON.parse(body);
         }
         // Create eventual response now so we can use it in error objects
@@ -61,8 +60,8 @@ async function augmentedFetch(input, options = {}) {
         // downstream by the postprocessing components
         if (options?.context?.interactive && body && (0, utils_1.isJsonResponse)(response)) {
             // @ts-ignore OperationOutcome errors
-            // Parse the body from above into JSON
-            const oo = JSON.parse(body);
+            // Treat the body as an operationOutcome to check for errors
+            const oo = body;
             if (oo.resourceType === "OperationOutcome") {
                 if (oo.issue.every((i) => i.code === "transient")) {
                     const msg = oo.issue
@@ -89,7 +88,6 @@ async function augmentedFetch(input, options = {}) {
     })
         .catch((e) => {
         debug("FAILED fetch: ", e.message);
-        console.error(e);
         throw e;
     }));
 }

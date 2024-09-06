@@ -41,7 +41,7 @@ class CLIReporter extends reporter_1.default {
         lib_1.Utils.print("There was an error in the matching process: " + JSON.stringify(details)).commit();
     }
     onDownloadStart({ fileUrl, itemType, startTime, }) {
-        lib_1.Utils.print(`Begin ${itemType === "error" ? "error-file " : " "}download for ${fileUrl} at ${lib_1.Utils.formatDatetimeTimestamp(startTime)}...`).commit();
+        lib_1.Utils.print(`Begin ${itemType === "error" ? "error-file " : ""}download for ${fileUrl} at ${lib_1.Utils.formatDatetimeTimestamp(startTime)}...`).commit();
     }
     onDownloadComplete({ fileUrl, duration }) {
         lib_1.Utils.print(`${fileUrl} download complete in ${duration}`).commit();

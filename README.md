@@ -26,7 +26,7 @@ node . [options]
 node . --help
 
 # An example of running the CLI with a custom config, and a CLI-specified FHIR URL and pointer to a patients.ndjson file
-node . --config config/my-config.json -f https://bulk-match-provider-df228d68a43b.herokuapp.com/fhir/ --resource data/patients-to-match.ndjson
+node . --config config/my-config.json -f https://bulk-match.smarthealthit.org/fhir/ --resource data/patients-to-match.ndjson
 ```
 
 ## Options

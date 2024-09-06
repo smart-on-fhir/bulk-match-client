@@ -65,7 +65,7 @@ export default class CLIReporter extends Reporter {
         startTime: number;
     }) {
         Utils.print(
-            `Begin ${itemType === "error" ? "error-file " : " "}download for ${fileUrl} at ${Utils.formatDatetimeTimestamp(startTime)}...`,
+            `Begin ${itemType === "error" ? "error-file " : ""}download for ${fileUrl} at ${Utils.formatDatetimeTimestamp(startTime)}...`,
         ).commit();
     }
     onDownloadComplete({ fileUrl, duration }: { fileUrl: string; duration: string }) {
